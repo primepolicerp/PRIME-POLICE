@@ -369,6 +369,7 @@ async function decideTransfer(req: Request) {
       let description = accepted
         ? "RRHH UCOP aceptó tu solicitud y te asignó el rol Traslado. Contacta con UCOP para coordinar tu entrevista IC."
         : "RRHH UCOP revisó tu solicitud de traslado y, por el momento, no fue aprobada." + (reason ? "\nMotivo: " + reason : "");
+      if (!accepted) description += "\n\n**¿Quieres conocer los motivos de rechazo?** [Entra aquí](https://discord.com/channels/1539970134469378068/1566297302665269479) para consultar las causas habituales.";
       await sendPrivateDiscordMessage(String(item.discord_user_id), { embeds: [{ title: accepted ? "🚔 Traslado aceptado · PRIME POLICE" : "📋 Resultado de solicitud de traslado", description, color: accepted ? 0x45b879 : 0xd5ad5a }] });
       notified = true;
     } catch (e) { console.error("Private transfer result DM failed:", String(e)); }
@@ -536,6 +537,7 @@ async function decide(req: Request) {
       const retryAt = Math.ceil(((Number.isFinite(reviewedAt) ? reviewedAt : Date.now()) + waitHours * 3600000) / 1000);
       description += "\n\nDebes esperar **" + waitHours + " horas** desde este rechazo. Podrás volver a postularte <t:" + retryAt + ":F> (<t:" + retryAt + ":R>).";
     }
+    if (!accepted) description += "\n\n**¿Quieres conocer los motivos de rechazo?** [Entra aquí](https://discord.com/channels/1539970134469378068/1566297302665269479) para consultar las causas habituales.";
     try {
       await sendPrivateDiscordMessage(String(app.discord_user_id), {
         embeds: [{ title: accepted ? "🎉 Resultado de postulación · Aceptada" : "📋 Resultado de postulación · PRIME POLICE", description, color: accepted ? 0x45b879 : 0xd5ad5a, footer: { text: "RRHH UCOP · Intento " + attempt + "/3 · Mensaje privado" } }],
