@@ -2,7 +2,7 @@ import { authenticatePanelSession } from "./panel-sessions.ts";
 import { discordRequest, discordFailure } from "./discord-client.ts";
 import { writeAudit } from "./audit-events.ts";
 import { accessMember } from "./access-member.ts";
-import {realRank,realRankRows,sameRankTrack,rankedNickname} from '../_shared/real-ranks.ts';
+import {realRank,realRankRows,sameRankTrack,rankedNickname,shouldAssignUcopBranch} from '../_shared/real-ranks.ts';
 const GUILD_ID = "1539970134469378068";
 const POLICE_ROLE_ID = "1539970134482092038";
 const PRESELECTION_ROLE_ID = "1564685481457877012";
@@ -42,8 +42,8 @@ async function updatePersonnelNickname(memberId: string, name: string, plate: st
   return nickname;
 }
 
-async function syncPersonnelBranch(memberId: string, unit: string, originalRoles: string[]) {
-  const wanted = BRANCH_ROLES[unit];
+async function syncPersonnelBranch(memberId: string, unit: string, originalRoles: string[],selectedRankId?:string) {
+  const wanted = unit==='UCOP'&&!shouldAssignUcopBranch(originalRoles,selectedRankId)?undefined:BRANCH_ROLES[unit];
   if (!VALID_UNITS.has(unit)) throw new Error("Rama inválida");
   const added: string[] = [], removed: string[] = [];
   const restore = async () => {
@@ -217,7 +217,7 @@ async function registerPersonnel(req: Request) {
     }
     if (!memberRoles.includes(rankRoleId)) { await discord("/guilds/" + GUILD_ID + "/members/" + enc(id) + "/roles/" + rankRoleId, { method: "PUT", body: "{}" }); addedTargetRole = true; }
     for (const roleId of oldRoles) await discord("/guilds/" + GUILD_ID + "/members/" + enc(id) + "/roles/" + roleId, { method: "DELETE" });
-    restoreBranch = await syncPersonnelBranch(id, unit, memberRoles);
+    restoreBranch = await syncPersonnelBranch(id, unit, memberRoles,rankRoleId);
     await updatePersonnelNickname(id, nameIc, plate, "PRIME POLICE UCOP: sincronización de nombre IC y placa al asignar rango"); nicknameChanged = true;
     const username = String(member.user?.global_name || member.user?.username || id);
     const now = new Date().toISOString();
@@ -494,7 +494,7 @@ async function admitPreselection(req:Request,fromTransfer=false){
    if(addedPolice)await discord('/guilds/'+GUILD_ID+'/members/'+target+'/roles/'+POLICE_ROLE_ID,{method:'PUT',body:'{}'});
    if(rankRoleId&&!roles.includes(rankRoleId)){await discord('/guilds/'+GUILD_ID+'/members/'+target+'/roles/'+rankRoleId,{method:'PUT',body:'{}'});addedRanks.push(rankRoleId);}
     for(const old of configuredRanks||[])if(rankRoleId&&sameRankTrack(old.role_id,rankRoleId)&&old.role_id!==rankRoleId&&roles.includes(old.role_id)&&!PROTECTED_ROLE_IDS.has(old.role_id)){await discord('/guilds/'+GUILD_ID+'/members/'+target+'/roles/'+old.role_id,{method:'DELETE'});removedRanks.push(old.role_id);}
-   restoreBranch=await syncPersonnelBranch(target,unit,roles);
+   restoreBranch=await syncPersonnelBranch(target,unit,roles,rankRoleId);
    try{await updatePersonnelNickname(target,name,plate,'PRIME POLICE: ingreso administrativo tras entrevista IC');nicknameChanged=true;}
    catch(error){if(!String(error).includes('403'))throw error;warnings.push('Discord no permitió cambiar el apodo. Revisa la jerarquía del bot; el propietario debe cambiarlo manualmente.');}
   }catch(error){try{await rollback();}catch{console.error('Admission role rollback failed');}throw error;}
@@ -607,7 +607,7 @@ async function changeRank(req: Request) {
     if (!memberRoles.includes(targetRoleId)) { await discord("/guilds/" + GUILD_ID + "/members/" + enc(targetId) + "/roles/" + targetRoleId, { method: "PUT", body: "{}" }); addedTargetRole = true; }
     didChangeDiscord = true;
     for (const roleId of oldRoles) await discord("/guilds/" + GUILD_ID + "/members/" + enc(targetId) + "/roles/" + roleId, { method: "DELETE" });
-    restoreBranch = await syncPersonnelBranch(targetId, priorProfile.unit || "POLICIA", memberRoles);
+    restoreBranch = await syncPersonnelBranch(targetId, priorProfile.unit || "POLICIA", memberRoles,targetRoleId);
     await updatePersonnelNickname(targetId, fullName, requestedPlate || String(priorProfile.plate || ""), "PRIME POLICE UCOP: sincronización de nombre IC y placa al cambiar rango"); nicknameChanged = true;
     const now = new Date().toISOString();
     const effectiveAt = effectiveDate.toISOString();
