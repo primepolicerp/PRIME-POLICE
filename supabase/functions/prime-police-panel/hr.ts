@@ -3,6 +3,7 @@ import { discordRequest, discordFailure } from "./discord-client.ts";
 import { writeAudit } from "./audit-events.ts";
 import { accessMember } from "./access-member.ts";
 import {realRank,realRankRows,sameRankTrack,rankedNickname,shouldAssignUcopBranch} from '../_shared/real-ranks.ts';
+import {announcePromotion,isRealPromotion} from './promotion-announcements.ts';
 const GUILD_ID = "1539970134469378068";
 const POLICE_ROLE_ID = "1539970134482092038";
 const PRESELECTION_ROLE_ID = "1564685481457877012";
@@ -223,7 +224,11 @@ async function registerPersonnel(req: Request) {
     const now = new Date().toISOString();
     const rows = await db("police_personnel?on_conflict=discord_user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=representation" }, body: JSON.stringify({ discord_user_id: id, discord_username: username, full_name: nameIc, name_ooc: nameOoc, steam_username: String(body.steam_username ?? existing.steam_username ?? "").trim().slice(0,100), plate, unit, rank_name: String(rank.role_name), rank_role_id: rankRoleId, source_application_id: existing.source_application_id ?? null, status: existing.status || "active", updated_at: now, last_rank_change_at: existing.rank_role_id === rankRoleId ? (existing.last_rank_change_at || now) : now }) });
     await postRankAuditLog("🗂️ Ficha policial actualizada",0x6499ff,[{name:"Agente",value:nameIc},{name:"Placa",value:plate},{name:"Rama",value:unit},{name:"Rango",value:String(rank.role_name)},{name:"Gestor",value:auth.userId!}]);
-    return json({ ok: true, personnel: rows?.[0] ?? null, message: "Rango, nombre IC y placa sincronizados en Discord." });
+    let announcementWarning='';
+    if(profiles?.length&&isRealPromotion(currentRank?.role_id,rankRoleId)){
+     const actor=requestMembers.get(req);announcementWarning=await announcePromotion({eventId:crypto.randomUUID(),userId:id,name:nameIc,plate,previousRank:currentRank.role_name,newRank:rank.role_name,approvedById:auth.userId!,approvedByName:String(actor?.nick||actor?.user?.global_name||actor?.user?.username||auth.userId),timestamp:now});
+    }
+    return json({ ok: true, personnel: rows?.[0] ?? null, message: "Rango, nombre IC y placa sincronizados en Discord.",warning:announcementWarning||undefined });
   } catch (error) {
     console.error("Personnel register error:", String(error));
     try {
@@ -541,7 +546,7 @@ async function reviewRankAuthorization(req:Request){
   applied=true;
   await db("police_rank_authorizations?id=eq."+enc(id)+"&status=eq.processing",{method:"PATCH",body:JSON.stringify({status:"approved",review_reason:reason||"Autorizado por Directiva"})});
   await postRankAuditLog("✅ Ascenso autorizado por Directiva",0x45b879,[{name:"Agente",value:proposal.full_name},{name:"Rango",value:proposal.new_rank_name},{name:"Propuesto por",value:proposal.requested_by},{name:"Autorizado por",value:auth.userId!}]);
-  return json({ok:true,message:result.message||"Ascenso autorizado y aplicado."});
+  return json({ok:true,message:result.message||"Ascenso autorizado y aplicado.",warning:result.warning});
  }catch(error){console.error("Review authorization:",String(error));
   if(applied)return json({ok:true,warning:"El rango fue aplicado, pero falta cerrar el registro de autorización. No repitas el ascenso.",message:"Cambio aplicado en Discord."});
   if(claimed)try{await db("police_rank_authorizations?id=eq."+enc(id)+"&status=eq.processing",{method:"PATCH",body:JSON.stringify({status:"failed",review_reason:String(error).slice(0,500)})});}catch{/* leave processing to avoid a duplicate approval */}
@@ -619,7 +624,7 @@ async function changeRank(req: Request) {
     };
     await db("police_personnel?on_conflict=discord_user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=representation" }, body: JSON.stringify(updated) });
     const previousRank = currentRank ?? (priorProfile?.rank_name ? { role_id: priorProfile.rank_role_id, role_name: priorProfile.rank_name } : null);
-    await db("police_rank_history", { method: "POST", body: JSON.stringify({
+    const history=await db("police_rank_history", { method: "POST", body: JSON.stringify({
       discord_user_id: targetId, discord_username: username, full_name: fullName, action_type: actionType,
       previous_role_id: previousRank?.role_id ?? null, previous_rank_name: previousRank?.role_name ?? priorProfile?.rank_name ?? "",
       new_role_id: targetRoleId, new_rank_name: String(targetRank.role_name), reason,
@@ -639,7 +644,8 @@ async function changeRank(req: Request) {
         { name: "Motivo", value: reason },
       ],
     );
-    return json({ ok: true, message: (actionType === "promotion" ? "Ascenso" : actionType === "demotion" ? "Descenso" : "Rango asignado") + " aplicado. Apodo de Discord sincronizado con rango, nombre IC y placa." });
+    const announcementWarning=actionType==='promotion'?await announcePromotion({eventId:String(history?.[0]?.id||crypto.randomUUID()),userId:targetId,name:fullName,plate:updated.plate,previousRank:String(previousRank?.role_name||'Sin rango'),newRank:String(targetRank.role_name),approvedById:auth.userId!,approvedByName:actorName,timestamp:now}):'';
+    return json({ ok: true, message: (actionType === "promotion" ? "Ascenso" : actionType === "demotion" ? "Descenso" : "Rango asignado") + " aplicado. Apodo de Discord sincronizado con rango, nombre IC y placa.",warning:announcementWarning||undefined });
   } catch (error) {
     console.error("Rank change failed:", String(error));
     if (didChangeDiscord && target) {

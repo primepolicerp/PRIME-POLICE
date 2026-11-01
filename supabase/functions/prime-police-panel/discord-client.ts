@@ -23,7 +23,7 @@ export async function discordRequest(path:string,init:RequestInit={}):Promise<an
   for(let attempt=0;attempt<2;attempt++){
    const wait=Math.max(globalWait,routeWaits.get(key)||0)-Date.now();if(wait>3500)throw new DiscordFailure(429,Math.ceil(wait/1000));if(wait>0)await pause(wait);
    let response:Response;
-   try{response=await fetch('https://discord.com/api/v10'+path,{...init,headers:{Authorization:'Bot '+token,'Content-Type':'application/json',...(init.headers||{})},signal:AbortSignal.timeout(10000)});}
+   try{response=await fetch('https://discord.com/api/v10'+path,{...init,headers:{Authorization:'Bot '+token,'Content-Type':'application/json',...(init.headers||{})},signal:init.signal??AbortSignal.timeout(10000)});}
    catch{if(method==='GET'&&attempt===0){await pause(200);continue;}throw new DiscordFailure(0);}
    const body=response.status===204?null:await response.json().catch(()=>null);
    if(response.ok){if(response.headers.get('x-ratelimit-remaining')==='0'){const delay=Number(response.headers.get('x-ratelimit-reset-after'));if(Number.isFinite(delay)&&delay>0)routeWaits.set(key,Date.now()+delay*1000);}return body;}
