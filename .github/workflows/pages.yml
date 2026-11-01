@@ -51,6 +51,7 @@ jobs:
           node --experimental-strip-types scripts/check-automatic-review-alerts.mjs
           node --experimental-strip-types scripts/check-rejection-history.mjs
           node --experimental-strip-types scripts/check-personnel-membership.mjs
+          node --experimental-strip-types scripts/check-real-ranks.mjs
           npm run build
           node scripts/check-public-build.mjs
       - name: Upload site

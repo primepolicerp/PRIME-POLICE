@@ -2,6 +2,7 @@ import { authenticatePanelSession } from "./panel-sessions.ts";
 import { discordRequest, discordFailure } from "./discord-client.ts";
 import { writeAudit } from "./audit-events.ts";
 import { accessMember } from "./access-member.ts";
+import {realRank,realRankRows,sameRankTrack,rankedNickname} from '../_shared/real-ranks.ts';
 const GUILD_ID = "1539970134469378068";
 const POLICE_ROLE_ID = "1539970134482092038";
 const PRESELECTION_ROLE_ID = "1564685481457877012";
@@ -30,21 +31,15 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json", "Access-Control-Allow-Origin": "https://primepolicerp.github.io", "Access-Control-Allow-Headers": "authorization, apikey, content-type", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", Vary: "Origin", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "no-referrer" } });
 
-function personnelNickname(name: string, plate: string) {
-  const cleanName = name.trim().replace(/\s+/g, " ");
-  const cleanPlate = plate.trim().replace(/\s+/g, " ");
-  if (!cleanPlate) return cleanName.slice(0, 32);
-  const suffix = " #" + cleanPlate;
-  if (suffix.length >= 32) return "#" + cleanPlate.slice(0, 31);
-  return cleanName.slice(0, 32 - suffix.length).trimEnd() + suffix;
-}
-
 async function updatePersonnelNickname(memberId: string, name: string, plate: string, reason: string) {
-  return await discord("/guilds/" + GUILD_ID + "/members/" + enc(memberId), {
+  const member=await discord('/guilds/'+GUILD_ID+'/members/'+enc(memberId)) as any;
+  const nickname=rankedNickname(name,plate,member.roles||[]);
+  await discord("/guilds/" + GUILD_ID + "/members/" + enc(memberId), {
     method: "PATCH",
     headers: { "X-Audit-Log-Reason": encodeURIComponent(reason) },
-    body: JSON.stringify({ nick: personnelNickname(name, plate) }),
+    body: JSON.stringify({ nick: nickname }),
   });
+  return nickname;
 }
 
 async function syncPersonnelBranch(memberId: string, unit: string, originalRoles: string[]) {
@@ -80,6 +75,9 @@ async function db(path: string, init: RequestInit = {}) {
   let body: any;
   try { body = text ? JSON.parse(text) : null; } catch { body = text; }
   if (!response.ok) throw new Error("Database " + response.status + ": " + JSON.stringify(body));
+  if(path.startsWith('police_rank_roles?')&&(!init.method||init.method==='GET')&&Array.isArray(body)){
+   return realRankRows(body).sort((a:any,b:any)=>path.includes('rank_order.desc')?b.rank_order-a.rank_order:a.rank_order-b.rank_order);
+  }
   return body;
 }
 
@@ -136,10 +134,11 @@ const explainRankSaveFailure = (error: unknown) => {
   return "No se pudo guardar la escala de rangos. Detalle: " + message.slice(0, 320);
 };
 function isAssignableRankRole(role: any) {
-  if (!role || role.managed || PROTECTED_ROLE_IDS.has(String(role.id))) return false;
+  if (!role || !realRank(role.id) || role.managed || PROTECTED_ROLE_IDS.has(String(role.id))) return false;
   try { return (BigInt(String(role.permissions ?? "0")) & BLOCKED_ROLE_PERMISSION_FLAGS) === 0n; }
   catch { return false; }
 }
+function isCatalogRankRole(role:any){return Boolean(role&&!role.managed&&realRank(role.id));}
 async function allowed(req: Request) {
   const userId = await authorizedUser(req);
   if (!userId) return { error: json({ error: "No tienes permiso para gestionar el personal." }, 403) };
@@ -200,17 +199,19 @@ async function registerPersonnel(req: Request) {
     member = guildMember as any;
     const rank = (configuredRanks ?? []).find((item: any) => item.role_id === rankRoleId);
     if (!rank) return json({ error: "Configura primero la escala y elige un rango válido." }, 400);
+    const liveRoles=await discord('/guilds/'+GUILD_ID+'/roles') as any[];
+    if(!isAssignableRankRole(liveRoles.find(r=>r.id===rankRoleId)))return json({error:'Ese rol está protegido o no es un rango asignable.'},400);
     const memberRoles: string[] = member.roles ?? [];
     if (!memberRoles.includes(POLICE_ROLE_ID)) return json({ error: "El agente debe tener el rol base de Policía para registrarlo." }, 409);
 
     if (memberRoles.includes(EXPELLED_ROLE_ID)) return json({ error: "No se puede registrar a una persona con el rol de expulsado." }, 409);
-    oldRoles = (configuredRanks ?? []).filter((item: any) => memberRoles.includes(String(item.role_id)) && item.role_id !== rankRoleId).map((item: any) => String(item.role_id));
+    oldRoles = (configuredRanks ?? []).filter((item: any) => sameRankTrack(item.role_id,rankRoleId)&&memberRoles.includes(String(item.role_id)) && item.role_id !== rankRoleId).map((item: any) => String(item.role_id));
     const existing = profiles?.[0] ?? {};
     if(recordAction==="create"&&profiles?.length)return json({error:"Este ID de Discord ya tiene una ficha. Busca al agente en Personal y pulsa Editar; registrar de nuevo no crea otra persona."},409);
     if(recordAction==="update"&&!profiles?.length)return json({error:"La ficha ya no existe. Actualiza Personal antes de registrar al agente."},409);
     if (existing.unit && !VALID_UNITS.has(existing.unit)) return json({ error: "Este perfil pertenece a otra unidad y no puede administrarse desde UCOP." }, 409);
-    const currentRank=(configuredRanks??[]).filter((r:any)=>memberRoles.includes(r.role_id)).sort((a:any,b:any)=>Number(b.rank_order)-Number(a.rank_order))[0];
-    const firstRank=(configuredRanks??[])[0];
+    const currentRank=(configuredRanks??[]).filter((r:any)=>sameRankTrack(r.role_id,rankRoleId)&&memberRoles.includes(r.role_id)).sort((a:any,b:any)=>Number(b.rank_order)-Number(a.rank_order))[0];
+    const firstRank=(configuredRanks??[]).filter((r:any)=>sameRankTrack(r.role_id,rankRoleId))[0];
     if(!auth.director && ((!currentRank&&rankRoleId!==firstRank?.role_id)||(currentRank&&Number(rank.rank_order)>Number(currentRank.rank_order)))) {
       return await queueRankAuthorization(auth.userId!,id,nameIc,currentRank?.role_id||null,rank,"register",body);
     }
@@ -222,7 +223,7 @@ async function registerPersonnel(req: Request) {
     const now = new Date().toISOString();
     const rows = await db("police_personnel?on_conflict=discord_user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=representation" }, body: JSON.stringify({ discord_user_id: id, discord_username: username, full_name: nameIc, name_ooc: nameOoc, steam_username: String(body.steam_username ?? existing.steam_username ?? "").trim().slice(0,100), plate, unit, rank_name: String(rank.role_name), rank_role_id: rankRoleId, source_application_id: existing.source_application_id ?? null, status: existing.status || "active", updated_at: now, last_rank_change_at: existing.rank_role_id === rankRoleId ? (existing.last_rank_change_at || now) : now }) });
     await postRankAuditLog("🗂️ Ficha policial actualizada",0x6499ff,[{name:"Agente",value:nameIc},{name:"Placa",value:plate},{name:"Rama",value:unit},{name:"Rango",value:String(rank.role_name)},{name:"Gestor",value:auth.userId!}]);
-    return json({ ok: true, personnel: rows?.[0] ?? null, message: "Rango y apodo de Discord sincronizados como " + personnelNickname(nameIc, plate) + "." });
+    return json({ ok: true, personnel: rows?.[0] ?? null, message: "Rango, nombre IC y placa sincronizados en Discord." });
   } catch (error) {
     console.error("Personnel register error:", String(error));
     try {
@@ -245,19 +246,19 @@ async function rankConfig(req: Request) {
       db("police_rank_roles?select=role_id,role_name,rank_order,minimum_days&order=rank_order.asc"),
       discord("/guilds/" + GUILD_ID + "/roles") as Promise<any[]>,
     ]);
-    const roles = (guildRoles ?? []).map((r: any) => ({ id: String(r.id), name: String(r.name), position: Number(r.position), managed: Boolean(r.managed), permissions: String(r.permissions ?? "0") }));
+    const roles = (guildRoles ?? []).map((r: any) => ({ id: String(r.id), name: realRank(r.id)?.name ?? String(r.name), position: Number(r.position), managed: Boolean(r.managed), permissions: String(r.permissions ?? "0") }));
     const byId = new Map(roles.map((r: any) => [r.id, r]));
-    const available = roles.filter((r: any) => r.id !== GUILD_ID && isAssignableRankRole(r)).sort((a: any, b: any) => a.position - b.position || a.name.localeCompare(b.name, "es"));
+    const available = roles.filter((r: any) => r.id !== GUILD_ID && isCatalogRankRole(r)).sort((a: any, b: any) => realRank(a.id)!.order-realRank(b.id)!.order);
     if (!(configured ?? []).length && !available.length) return json({ error: "Discord respondió, pero no hay roles asignables. Comprueba los permisos del bot y vuelve a desplegar prime-police-panel." }, 409);
     const configuredIds = new Set((configured ?? []).map((rank: any) => String(rank.role_id)));
     if (auth.director && available.some((role: any) => !configuredIds.has(role.id))) {
       const synced = await importAllRankRoles(req);
       const result = await synced.json().catch(() => ({}));
       if (!synced.ok) return json(result, synced.status);
-      const ranks = (result.ranks ?? []).map((rank: any) => ({ ...rank, role_name: byId.get(String(rank.role_id))?.name ?? rank.role_name }));
+      const ranks = (result.ranks ?? []).map((rank: any) => ({ ...rank, role_name: realRank(rank.role_id)?.name ?? rank.role_name,assignable:isAssignableRankRole(byId.get(String(rank.role_id))) }));
       return json({ ok: true, ranks, available_roles: [], imported_count: Number(result.imported_count ?? 0), auto_synced: true });
     }
-    const ranks = (configured ?? []).map((r: any) => ({ ...r, role_name: byId.get(r.role_id)?.name ?? r.role_name }));
+    const ranks = (configured ?? []).map((r: any) => ({ ...r, role_name: realRank(r.role_id)?.name ?? r.role_name,assignable:isAssignableRankRole(byId.get(String(r.role_id))) }));
     return json({ ok: true, ranks, available_roles: available });
   } catch (error) { console.error("Rank configuration read error:", String(error)); return json({ error: explainRankConfigFailure(error) }, 502); }
 }
@@ -271,7 +272,7 @@ async function importAllRankRoles(req: Request) {
       discord("/guilds/" + GUILD_ID + "/roles") as Promise<any[]>,
     ]);
     const eligible = (guildRoles ?? [])
-      .filter((role: any) => String(role.id) !== GUILD_ID && isAssignableRankRole(role))
+      .filter((role: any) => String(role.id) !== GUILD_ID && isCatalogRankRole(role))
       .sort((a: any, b: any) => Number(a.position) - Number(b.position) || String(a.name).localeCompare(String(b.name), "es"));
     if (!eligible.length) return json({ error: "Discord no devolvió rangos asignables. Revisa los permisos del bot y la jerarquía de roles del servidor." }, 409);
     const roleById = new Map(eligible.map((role: any) => [String(role.id), role]));
@@ -306,7 +307,7 @@ async function saveRankConfig(req: Request) {
   try {
     const guildRoles = await discord("/guilds/" + GUILD_ID + "/roles") as any[];
     const byId = new Map((guildRoles ?? []).map((r: any) => [String(r.id), r]));
-    for (const id of ids) { const role: any = byId.get(id); if (!isAssignableRankRole(role)) return json({ error: "La lista incluye un rol protegido, privilegiado o que no existe en el servidor." }, 400); }
+    for (const id of ids) { const role: any = byId.get(id); if (!isCatalogRankRole(role)) return json({ error: "La lista incluye un rol que no es un rango real o que no existe en el servidor." }, 400); }
     const existing = await db("police_rank_roles?select=role_id,role_name,rank_order,minimum_days&order=rank_order.asc");
     const suppliedDays = body?.minimum_days_by_role && typeof body.minimum_days_by_role === "object" && !Array.isArray(body.minimum_days_by_role) ? body.minimum_days_by_role : {};
     for (const value of Object.values(suppliedDays) as any[]) if (!Number.isInteger(Number(value)) || Number(value) < 0 || Number(value) > 3650) return json({ error: "Los días mínimos deben ser un número entero entre 0 y 3650." }, 400);
@@ -316,7 +317,7 @@ async function saveRankConfig(req: Request) {
       const inUse = await db("police_personnel?select=discord_user_id,rank_role_id&rank_role_id=in.(" + removed.map((r: any) => r.role_id).join(",") + ")&limit=1");
       if (inUse?.length) return json({ error: "No quites un rango que todavía tiene oficiales asignados. Cambia primero sus rangos." }, 409);
     }
-    const mapped = ids.map((id: string, index: number) => ({ role_id: id, role_name: String(byId.get(id).name), rank_order: index + 1, minimum_days: Number(Object.prototype.hasOwnProperty.call(suppliedDays, id) ? suppliedDays[id] : existingDays.get(id) ?? 0), updated_at: new Date().toISOString() }));
+    const mapped = ids.map((id: string, index: number) => ({ role_id: id, role_name: realRank(id)!.name, rank_order: realRank(id)!.order, minimum_days: Number(Object.prototype.hasOwnProperty.call(suppliedDays, id) ? suppliedDays[id] : existingDays.get(id) ?? 0), updated_at: new Date().toISOString() }));
     try {
       await db("police_rank_roles?role_id=not.is.null", { method: "DELETE" });
       if (mapped.length) await db("police_rank_roles", { method: "POST", body: JSON.stringify(mapped) });
@@ -324,7 +325,7 @@ async function saveRankConfig(req: Request) {
       if (existing?.length) { try { await db("police_rank_roles", { method: "POST", body: JSON.stringify(existing) }); } catch (restoreError) { console.error("Rank config restore failed:", String(restoreError)); } }
       throw error;
     }
-    return json({ ok: true, ranks: mapped });
+    return json({ ok: true, ranks: mapped.map((rank:any)=>({...rank,rank_track:realRank(rank.role_id)!.track,assignable:isAssignableRankRole(byId.get(rank.role_id))})) });
   } catch (error) { console.error("Rank configuration save error:", String(error)); return json({ error: explainRankSaveFailure(error) }, 500); }
 }async function rankHistory(req: Request) {
   const auth = await allowed(req); if (auth.error) return auth.error;
@@ -492,7 +493,7 @@ async function admitPreselection(req:Request,fromTransfer=false){
   try{
    if(addedPolice)await discord('/guilds/'+GUILD_ID+'/members/'+target+'/roles/'+POLICE_ROLE_ID,{method:'PUT',body:'{}'});
    if(rankRoleId&&!roles.includes(rankRoleId)){await discord('/guilds/'+GUILD_ID+'/members/'+target+'/roles/'+rankRoleId,{method:'PUT',body:'{}'});addedRanks.push(rankRoleId);}
-   for(const old of configuredRanks||[])if(old.role_id!==rankRoleId&&roles.includes(old.role_id)&&!PROTECTED_ROLE_IDS.has(old.role_id)){await discord('/guilds/'+GUILD_ID+'/members/'+target+'/roles/'+old.role_id,{method:'DELETE'});removedRanks.push(old.role_id);}
+    for(const old of configuredRanks||[])if(rankRoleId&&sameRankTrack(old.role_id,rankRoleId)&&old.role_id!==rankRoleId&&roles.includes(old.role_id)&&!PROTECTED_ROLE_IDS.has(old.role_id)){await discord('/guilds/'+GUILD_ID+'/members/'+target+'/roles/'+old.role_id,{method:'DELETE'});removedRanks.push(old.role_id);}
    restoreBranch=await syncPersonnelBranch(target,unit,roles);
    try{await updatePersonnelNickname(target,name,plate,'PRIME POLICE: ingreso administrativo tras entrevista IC');nicknameChanged=true;}
    catch(error){if(!String(error).includes('403'))throw error;warnings.push('Discord no permitió cambiar el apodo. Revisa la jerarquía del bot; el propietario debe cambiarlo manualmente.');}
@@ -532,7 +533,7 @@ async function reviewRankAuthorization(req:Request){
    return json({ok:true,message:"Ascenso rechazado; no se modificó ningún rol."});
   }
   const [member,ranks]=await Promise.all([discord("/guilds/"+GUILD_ID+"/members/"+enc(proposal.target_id)) as Promise<any>,db("police_rank_roles?select=role_id,rank_order&order=rank_order.desc")]);
-  const current=(ranks||[]).find((r:any)=>(member.roles||[]).includes(r.role_id));
+  const current=(ranks||[]).find((r:any)=>sameRankTrack(r.role_id,proposal.new_role_id)&&(member.roles||[]).includes(r.role_id));
   if((current?.role_id||null)!==(proposal.previous_role_id||null))throw Error("El rango del agente cambió después de la solicitud. Envía una propuesta nueva.");
   const internal=new Request("https://internal/",{method:"POST",headers:{authorization:req.headers.get("authorization")||"","content-type":"application/json"},body:JSON.stringify(proposal.payload)});
   const response=proposal.operation==="register"?await registerPersonnel(internal):await changeRank(internal);
@@ -575,6 +576,8 @@ async function changeRank(req: Request) {
     ranks = await db("police_rank_roles?select=role_id,role_name,rank_order&order=rank_order.asc");
     const targetRank = (ranks ?? []).find((r: any) => r.role_id === targetRoleId);
     if (!targetRank) return json({ error: "El rango elegido no está en la escala autorizada." }, 400);
+    const liveRoles=await discord('/guilds/'+GUILD_ID+'/roles') as any[];
+    if(!isAssignableRankRole(liveRoles.find(r=>r.id===targetRoleId)))return json({error:'Ese rol está protegido o no es un rango asignable.'},400);
     const [guildMember, profiles] = await Promise.all([
       discord("/guilds/" + GUILD_ID + "/members/" + enc(targetId)),
       db("police_personnel?select=*&discord_user_id=eq." + enc(targetId) + "&unit=in.(POLICIA,UCOP,CIC)&limit=1"),
@@ -586,7 +589,7 @@ async function changeRank(req: Request) {
     const memberRoles: string[] = member.roles ?? [];
     if (!memberRoles.includes(POLICE_ROLE_ID)) return json({ error: "El oficial debe conservar el rol de Policía para cambiar de rango." }, 409);
     if (memberRoles.includes(EXPELLED_ROLE_ID)) return json({ error: "La persona tiene el rol de expulsado." }, 409);
-    const currentRanks = (ranks ?? []).filter((r: any) => memberRoles.includes(r.role_id)).sort((a: any, b: any) => Number(b.rank_order) - Number(a.rank_order));
+    const currentRanks = (ranks ?? []).filter((r: any) => sameRankTrack(r.role_id,targetRoleId)&&memberRoles.includes(r.role_id)).sort((a: any, b: any) => Number(b.rank_order) - Number(a.rank_order));
     const currentRank = currentRanks[0] ?? null;
     if (currentRank?.role_id === targetRoleId) return json({ error: "Ese rango ya está asignado." }, 409);
     if (!currentRank && actionType !== "assignment") return json({ error: "Este oficial no tiene un rango configurado; usa Asignación inicial." }, 409);
@@ -636,7 +639,7 @@ async function changeRank(req: Request) {
         { name: "Motivo", value: reason },
       ],
     );
-    return json({ ok: true, message: (actionType === "promotion" ? "Ascenso" : actionType === "demotion" ? "Descenso" : "Rango asignado") + " aplicado. Apodo de Discord sincronizado como " + personnelNickname(fullName, requestedPlate || String(priorProfile.plate || "")) + "." });
+    return json({ ok: true, message: (actionType === "promotion" ? "Ascenso" : actionType === "demotion" ? "Descenso" : "Rango asignado") + " aplicado. Apodo de Discord sincronizado con rango, nombre IC y placa." });
   } catch (error) {
     console.error("Rank change failed:", String(error));
     if (didChangeDiscord && target) {
@@ -684,8 +687,8 @@ export async function handleHr(req: Request, action: string): Promise<Response |
       const p=profiles?.[0];if(!p?.full_name||!p?.plate)return json({error:"Completa el nombre IC y la placa en la ficha de Personal."},409);
       const member=await discord("/guilds/"+GUILD_ID+"/members/"+enc(id)) as any;
       if(!(member.roles||[]).includes(POLICE_ROLE_ID))return json({error:"El agente todavía no tiene el rol Policía."},409);
-      await updatePersonnelNickname(id,p.full_name,p.plate,"PRIME POLICE: resincronización de nombre y placa por "+auth.userId);
-      return json({ok:true,message:"Apodo actualizado en Discord: "+personnelNickname(p.full_name,p.plate)});
+      const nickname=await updatePersonnelNickname(id,p.full_name,p.plate,"PRIME POLICE: resincronización de rango, nombre y placa por "+auth.userId);
+      return json({ok:true,message:"Apodo actualizado en Discord: "+nickname});
     }catch(error){
       console.error("Nickname sync:",String(error));
       if(String(error).includes("Discord API 403")){
@@ -748,3 +751,4 @@ export async function handleHr(req: Request, action: string): Promise<Response |
   if (action === "rank-change" && req.method === "POST") return await changeRank(req);
   return null;
 }
+

@@ -455,12 +455,13 @@ $("profileClose").addEventListener("click",closePersonnelProfile);$("personnelPr
 async function deletePersonnelRecord(person){const id=String(person.discord_user_id||"");const name=person.full_name||person.discord_username||id;if(!confirm("¿Eliminar a "+name+" del registro de personal UCOP?\n\nSe borrará su ficha de personal. Se conservarán sus postulaciones y el historial administrativo. Esta acción no quita roles de Discord."))return;try{const result=await request("personnel-delete",{method:"POST",body:{discord_user_id:id}});showToast(result.message||"Agente eliminado del registro.");await loadPersonnel();}catch(error){showToast(error.message);}}
 async function loadPersonnel(){const rows=$("personnelRows");rows.innerHTML='<tr><td colspan="9" class="muted">Cargando personal UCOP…</td></tr>';try{const r=await request("personnel");personnel=(r.personnel||[]).filter(p=>!p.unit||["POLICIA","UCOP","CIC"].includes(p.unit));renderPersonnel();}catch(e){rows.replaceChildren();const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=9;td.className="muted";td.textContent=e.message;tr.append(td);rows.append(tr);}}
 function rankToday(){const d=new Date(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return d.getFullYear()+"-"+m+"-"+day;}
+function rankChoice(rank){const option=new Option(rank.role_name+(rank.assignable===false?' · gestión manual en Discord':''),rank.role_id);option.disabled=rank.assignable===false;return option;}
 function renderRankTargetOptions(){
   const target=$("rankTarget"),selectedId=$("rankMember").value,person=personnel.find(p=>p.discord_user_id===selectedId),action=$("rankAction").value;
   const current=person&&(rankRoles.find(r=>r.role_id===person.rank_role_id)||rankRoles.find(r=>r.role_name===person.rank_name));
-  const eligible=rankRoles.filter(r=>current?action==="promotion"&&Number(r.rank_order)>Number(current.rank_order)||action==="demotion"&&Number(r.rank_order)<Number(current.rank_order):action==="assignment");
+  const eligible=rankRoles.filter(r=>current?(!r.rank_track||!current.rank_track||r.rank_track===current.rank_track)&&(action==="promotion"&&Number(r.rank_order)>Number(current.rank_order)||action==="demotion"&&Number(r.rank_order)<Number(current.rank_order)):action==="assignment");
   const old=target.value;target.replaceChildren(new Option(person?eligible.length?"Selecciona rango de destino":"No hay rangos válidos para este movimiento":"Busca y selecciona un oficial", ""));
-  eligible.forEach(r=>target.add(new Option(r.role_name,r.role_id)));
+  eligible.forEach(r=>target.add(rankChoice(r)));
   if(eligible.some(r=>r.role_id===old))target.value=old;
 }
 function renderRankRoles(){
@@ -477,13 +478,13 @@ function renderRankRoles(){
     entry.append(label,dayWrap,controls);list.append(entry);
   });
   renderRankTargetOptions();renderEligiblePromotions();
-  const personRank=$("personRank"),rankValue=personRank.value;personRank.replaceChildren(new Option(rankRoles.length?"Selecciona un rango":rankConfigError?"Error al cargar rangos":"No hay rangos sincronizados",""));rankRoles.forEach(r=>personRank.add(new Option(r.role_name,r.role_id)));if(rankRoles.some(r=>r.role_id===rankValue))personRank.value=rankValue;
+  const personRank=$("personRank"),rankValue=personRank.value;personRank.replaceChildren(new Option(rankRoles.length?"Selecciona un rango":rankConfigError?"Error al cargar rangos":"No hay rangos sincronizados",""));rankRoles.forEach(r=>personRank.add(rankChoice(r)));if(rankRoles.some(r=>r.role_id===rankValue))personRank.value=rankValue;
 }
 function renderEligiblePromotions(){
   const list=$("rankEligibleList"),count=$("rankEligibleCount");if(!list||!count)return;list.replaceChildren();
   const ranked=personnel.filter(p=>p.status==="active").map(person=>{
     const index=rankRoles.findIndex(r=>r.role_id===person.rank_role_id);if(index<0||index>=rankRoles.length-1)return null;
-    const current=rankRoles[index],next=rankRoles[index+1],start=Date.parse(person.last_rank_change_at||person.created_at||"");
+    const current=rankRoles[index],next=rankRoles.slice(index+1).find(r=>!r.rank_track||!current.rank_track||r.rank_track===current.rank_track),start=Date.parse(person.last_rank_change_at||person.created_at||"");if(!next)return null;
     const days=Number.isFinite(start)?Math.max(0,Math.floor((Date.now()-start)/86400000)):0,required=Math.max(0,Number(current.minimum_days)||0);
     return {person,current,next,days,required,remaining:Math.max(0,required-days)};
   }).filter(Boolean).sort((a,b)=>a.remaining-b.remaining||String(a.person.plate).localeCompare(String(b.person.plate),"es"));
@@ -522,7 +523,7 @@ $("rankPlateSearch").addEventListener("keydown",event=>{if(event.key==="Enter"){
 $("rankAction").addEventListener("change",renderRankTargetOptions);
 $("refreshRankEligibility").addEventListener("click",()=>Promise.all([loadRankConfig(),loadPersonnel()]));
 document.querySelectorAll("[data-rank-tab]").forEach(button=>button.addEventListener("click",()=>{const history=button.dataset.rankTab==="history";$("rankPromotionsTab").classList.toggle("hidden",history);$("rankHistoryTab").classList.toggle("hidden",!history);document.querySelectorAll("[data-rank-tab]").forEach(tab=>tab.classList.toggle("active",tab===button));if(history)loadRankHistory();}));
-$("rankChangeForm").addEventListener("submit",async e=>{e.preventDefault();const selected=personnel.find(p=>p.discord_user_id===$("rankMember").value);if(!selected){showToast("Busca y selecciona primero al oficial por placa.");return;}const body={discord_user_id:selected.discord_user_id,action_type:$("rankAction").value,rank_role_id:$("rankTarget").value,reason:$("rankReason").value.trim(),effective_date:$("rankEffectiveDate").value,full_name:selected.full_name,name_ooc:selected.name_ooc,plate:selected.plate};if(!body.rank_role_id){showToast("Selecciona un rango de destino válido.");return;}const target=rankRoles.find(r=>r.role_id===body.rank_role_id);if(!confirm("¿Confirmas el cambio de "+(selected.rank_name||"rango actual")+" a "+(target?.role_name||"rango seleccionado")+" para "+selected.full_name+"? También se sincronizará su apodo de Discord con nombre IC y placa."))return;const b=$("rankChangeButton");b.disabled=true;b.textContent="Aplicando…";try{const r=await request("rank-change",{method:"POST",body});showToast(r.message||"Rango y apodo de Discord sincronizados.");loadRankAuthorizations();e.target.reset();$("rankMember").value="";$("rankSelectedOfficer").textContent="Ingresa una placa para buscar."; $("rankEffectiveDate").value=rankToday();await Promise.all([loadPersonnel(),loadRankHistory()]);renderRankTargetOptions();}catch(x){showToast(x.message);}finally{b.disabled=false;b.textContent="Ejecutar ascenso manual";}});
+$("rankChangeForm").addEventListener("submit",async e=>{e.preventDefault();const selected=personnel.find(p=>p.discord_user_id===$("rankMember").value);if(!selected){showToast("Busca y selecciona primero al oficial por placa.");return;}const body={discord_user_id:selected.discord_user_id,action_type:$("rankAction").value,rank_role_id:$("rankTarget").value,reason:$("rankReason").value.trim(),effective_date:$("rankEffectiveDate").value,full_name:selected.full_name,name_ooc:selected.name_ooc,plate:selected.plate};if(!body.rank_role_id){showToast("Selecciona un rango de destino válido.");return;}const target=rankRoles.find(r=>r.role_id===body.rank_role_id);if(!confirm("¿Confirmas el cambio de "+(selected.rank_name||"rango actual")+" a "+(target?.role_name||"rango seleccionado")+" para "+selected.full_name+"? También se sincronizará su apodo de Discord con rango, nombre IC y placa."))return;const b=$("rankChangeButton");b.disabled=true;b.textContent="Aplicando…";try{const r=await request("rank-change",{method:"POST",body});showToast(r.message||"Rango y apodo de Discord sincronizados.");loadRankAuthorizations();e.target.reset();$("rankMember").value="";$("rankSelectedOfficer").textContent="Ingresa una placa para buscar."; $("rankEffectiveDate").value=rankToday();await Promise.all([loadPersonnel(),loadRankHistory()]);renderRankTargetOptions();}catch(x){showToast(x.message);}finally{b.disabled=false;b.textContent="Ejecutar ascenso manual";}});
 $("sanctionForm").addEventListener("submit", async event => {
   event.preventDefault();
   const discordId=$("sanctionDiscordId").value.trim();
@@ -628,4 +629,5 @@ if (oauthErrorFromUrl) {
   showLogin();
 }
 $("refreshAuthorizations").addEventListener("click",loadRankAuthorizations);
+
 
