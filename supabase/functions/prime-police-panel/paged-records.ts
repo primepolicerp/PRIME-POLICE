@@ -29,7 +29,8 @@ export async function listPagedRecords(req:Request,json:(v:unknown,status?:numbe
  const rank=p.get('rank');if(rank&&kind==='personnel')filter+='&rank_name=eq.'+encodeURIComponent(rank.slice(0,100));
  const projection=kind==='personnel'&&p.get('directory')==='true'?'discord_user_id,discord_username,full_name,name_ooc,plate,rank_name,rank_role_id,unit,status,last_rank_change_at,updated_at':'*';
  const ordering=kind==='personnel'?'plate_number.asc.nullslast,plate.asc,discord_user_id.asc':config.date+'.desc,'+(kind==='preselections'?'discord_user_id':'id')+'.desc';
- const table=review==='ai'?'police_rejected_ai_applications':config.table;
+ const baseTable=kind==='applications'?'police_available_applications':config.table;
+ const table=review==='ai'?'police_rejected_ai_applications':baseTable;
  const result=await query(table+'?select='+projection+'&order='+ordering+'&limit='+limit+'&offset='+offset+filter);
  if(['preselections','transfers'].includes(kind))result.rows=await attachPersonnelMembership(result.rows,query);
  if(['applications','transfers'].includes(kind))result.rows=await attachRejectionHistory(result.rows,config.table,query);
@@ -41,6 +42,6 @@ export async function listPagedRecords(req:Request,json:(v:unknown,status?:numbe
   }catch{result.rows=result.rows.map((row:any)=>({...row,automatic_review:{unavailable:true}}));}
  }
  const counts:Record<string,number>={};
- if(p.get('counts')==='true')await Promise.all(config.statuses.map(async s=>{counts[s]=(await query(config.table+'?select='+config.date+'&status=eq.'+s+'&limit=1')).count;}));
+ if(p.get('counts')==='true')await Promise.all(config.statuses.map(async s=>{counts[s]=(await query(baseTable+'?select='+config.date+'&status=eq.'+s+'&limit=1')).count;}));
  return json({ok:true,records:result.rows,total:result.count,counts,next_offset:offset+result.rows.length<result.count?offset+limit:null});
 }

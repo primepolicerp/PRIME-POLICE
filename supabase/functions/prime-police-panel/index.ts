@@ -14,6 +14,7 @@ import { interceptChanges } from "./change-requests.ts";
 import { writeAudit } from "./audit-events.ts";
 import { withOperationLock } from "./operation-lock.ts";
 import { accessMember } from "./access-member.ts";
+import { applicationPermissions, applicationScopeAllowed, UCOP_APPLICATION_ROLES, UCOP_TRAINEE_ROLE } from './application-permissions.ts';
 import { handleHr } from "./hr.ts";
 
 const GUILD_ID = "1539970134469378068";
@@ -284,7 +285,7 @@ async function listApplications(req: Request) {
   if (!userId) return json({ error: "Sesión caducada o sin permisos de gestión." }, 403);
   try {
     const applications = await db(
-      "police_applications?select=id,discord_user_id,discord_username,full_name,age,previous_experience,motivation,availability,status,decision_reason,reviewed_by_discord_id,reviewed_by_name,created_at,reviewed_at,role_assigned_at,discord_message_id,attempt_number,answers&order=created_at.desc&limit=100",
+      "police_available_applications?select=id,discord_user_id,discord_username,full_name,age,previous_experience,motivation,availability,status,decision_reason,reviewed_by_discord_id,reviewed_by_name,created_at,reviewed_at,role_assigned_at,discord_message_id,attempt_number,answers&order=created_at.desc&limit=100",
     );
     return json({ ok: true, applications: applications ?? [] });
   } catch (e) {
@@ -623,6 +624,12 @@ async function dispatchHttp(req:Request):Promise<Response>{try{
  if(req.method==='OPTIONS')return routePanel(req);
  if(!await rateLimitRequest(req,action))return json({error:'Demasiadas peticiones. Espera un minuto antes de volver a intentarlo.'},429);
  const sessionResponse=await sessionRoutes(req,action,json);if(sessionResponse)return sessionResponse;
+ if(action&&!['login','oauth-start','oauth-callback'].includes(action)){
+  const actor=await authorizedUser(req);
+  if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);
+  const member=await accessMember(actor);
+  if(applicationPermissions(member.roles||[]).applicationsOnly&&!applicationScopeAllowed(action,new URL(req.url).searchParams))return json({error:'Este apartado está reservado al personal gestor.',code:'trainee_scope'},403);
+ }
  const prepared=await preparePlate(req,action,db,authorizedUser);if(prepared instanceof Response)return prepared;
  const assignedPlate=prepared!==req?String((await prepared.clone().json()).plate||''):'';req=prepared;
  const intercepted=await interceptChanges(req,action,{db,authorizedUser,discord,dispatch:routePanel,json});
@@ -639,6 +646,7 @@ const STRIKE_CHANNEL_ID = "1539970136512143481";
 const MANAGER_ROLE_IDS = new Set([
   "1539970134565982313", "1539970134544748562", "1539970134544748556",
   "1539970134544748557", "1539970134519578773", "1539970134519578774",
+  ...UCOP_APPLICATION_ROLES, UCOP_TRAINEE_ROLE,
 ]);
 const MANAGER_ROLE_LABELS = new Map([
   ["1539970134565982313", "Gobierno · Alta Directiva"],
@@ -647,6 +655,11 @@ const MANAGER_ROLE_LABELS = new Map([
   ["1539970134544748557", "Dev Discord"],
   ["1539970134519578773", "UCOP · Asuntos Internos"],
   ["1539970134519578774", "Directiva"],
+  [UCOP_TRAINEE_ROLE, 'Pasante UCOP'],
+  ['1539970134519578769','Oficial UCOP'],
+  ['1539970134519578770','RH UCOP'],
+  ['1539970134544748558','Sub-Jefe UCOP'],
+  ['1539970134544748559','Jefe UCOP'],
 ]);
 const authorizedRequests = new WeakMap<Request,string|null>();
 async function authorizedUser(req: Request): Promise<string | null> {
@@ -679,7 +692,7 @@ async function currentUser(req: Request) {
       : "https://cdn.discordapp.com/embed/avatars/" + String(Number((BigInt(userId) >> 22n) % 6n)) + ".png";
     const roles: string[] = member?.roles ?? [];
     const accessRoles = roles.filter((role) => MANAGER_ROLE_IDS.has(role)).map((role) => MANAGER_ROLE_LABELS.get(role) ?? "Gestión autorizada");
-    return json({ user: { id: userId, username, display_name: displayName, avatar_url: avatarUrl, access_roles: accessRoles, can_manage_shifts_direct: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774","1539970134519578773"].includes(id)), can_authorize_promotions: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774"].includes(id)) } });
+    return json({ user: { id: userId, username, display_name: displayName, avatar_url: avatarUrl, access_roles: accessRoles, restricted_to_applications: applicationPermissions(roles).applicationsOnly, can_decide_applications_direct: applicationPermissions(roles).direct, can_manage_shifts_direct: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774","1539970134519578773"].includes(id)), can_authorize_promotions: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774"].includes(id)) } });
   } catch (e) {
     console.error("Discord profile lookup failed:", String(e));
     return json({ error: "No se pudo cargar tu perfil de Discord." }, 502);

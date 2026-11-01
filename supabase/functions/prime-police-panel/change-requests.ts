@@ -2,6 +2,8 @@ import { discordFailure } from "./discord-client.ts";
 import { accessMember } from './access-member.ts';
 import { withOperationLock } from './operation-lock.ts';
 import { writeAudit } from './audit-events.ts';
+import { applicationPermissions } from './application-permissions.ts';
+import { validateDecisionCorrection } from './decision-correction.ts';
 export const CHANGE_ACTIONS:Record<string,string>={
  'personnel-note-add':'Añadir observación a ficha','personnel-note-edit':'Editar observación de ficha','personnel-note-archive':'Archivar observación de ficha',
  'preselection-admit':'Ingresar preseleccionado a Personal','transfer-admit':'Ingresar traslado aceptado a Personal','personnel-register':'Editar o registrar personal','personnel-delete':'Eliminar ficha de personal',
@@ -119,12 +121,34 @@ export async function interceptChanges(req:Request,action:string,c:Context):Prom
   });
  }
  if(action==='absence-register'||action==='absence-review')return null;
- if(action==='decision'&&payload.action==='accept'&&(member.roles||[]).includes('1539970134519578773'))return null;
+ if(action==='decision'){
+  try{
+   const initial=await snapshot(action,payload,c);
+   return await withOperationLock(initial.resource,async()=>{
+    const before=await snapshot(action,payload,c);
+    if(before.resource!==initial.resource)throw new ChangeInputError('La postulación cambió. Actualiza la lista.');
+    const queued=await c.db('police_change_requests?select=id&action=eq.decision&resource_key=eq.'+encodeURIComponent(before.resource)+'&status=in.(pending,processing)&limit=1');
+    if(queued?.length)return c.json({error:'Esta postulación ya está en revisión por Directiva. Actualiza la lista para evitar una decisión duplicada.'},409);
+    const fresh=await accessMember(actor,true);
+    if(applicationPermissions(fresh.roles||[]).direct)return c.dispatch(req);
+    if(!['accept','reject'].includes(payload.action))return c.json({error:'Decisión inválida.'},400);
+    const record=before.state.record;
+    const correctionError=await validateDecisionCorrection(payload,record,'police_applications',c.db);
+    if(correctionError)return c.json({error:correctionError},409);
+    if(record.status!=='pending'&&!(payload.action==='accept'&&(record.status==='rejected'&&payload.correct_rejection===true||record.status==='accepted'&&!record.role_assigned_at)))return c.json({error:'La postulación ya fue resuelta. Actualiza la lista.'},409);
+    return queueChange(before);
+   });
+  }catch(error){return queueError(error);}
+ }
  if(isDirector||((action==='shift-close'||action==='shift-delete')&&(member.roles||[]).includes('1539970134519578773')))return null;
  try{
   const before=await snapshot(action,payload,c);
+  return await queueChange(before);
+ }catch(error){return queueError(error);}
+ async function queueChange(before:{resource:string,state:any}){
   const rows=await c.db('police_change_requests',{method:'POST',body:JSON.stringify({action,resource_key:before.resource,requested_by:actor,requested_by_name:actorName,payload,before_state:before.state,fingerprint:await fingerprint(before.state)})});
   await writeAudit('⏳ Cambio pendiente de Directiva',[{name:'Cambio',value:CHANGE_ACTIONS[action]},{name:'Propuesto por',value:actorName},{name:'Referencia',value:before.resource}]);
   return c.json({ok:true,pending_approval:true,request_id:rows?.[0]?.id,message:'Propuesta enviada a Pendientes del panel principal. Directiva debe aprobarla antes de que se aplique.'});
- }catch(error){console.error('Queue pending change:',String(error));if(error instanceof ChangeInputError)return c.json({error:error.message},409);const upstream=discordFailure(error);if(upstream)return c.json(upstream.body,upstream.status);if(String(error).includes('409'))return c.json({error:'Ya hay una propuesta de este tipo pendiente para este registro.'},409);return c.json({error:'No se pudo preparar la propuesta. Revisa el registro y las migraciones.'},400);}
+ }
+ function queueError(error:unknown){console.error('Queue pending change:',String(error));if(error instanceof ChangeInputError)return c.json({error:error.message},409);const upstream=discordFailure(error);if(upstream)return c.json(upstream.body,upstream.status);if(String(error).includes('409'))return c.json({error:'Ya hay una propuesta de este tipo pendiente para este registro.'},409);return c.json({error:'No se pudo preparar la propuesta. Revisa el registro y las migraciones.'},400);}
 }

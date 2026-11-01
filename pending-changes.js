@@ -41,6 +41,7 @@ function changeContext(item,record){
  return context;
 }
 async function loadPendingChanges(){
+ if(restrictedToApplications)return;
  const sequence=++pendingChangeSequence,box=$('pendingChanges');box.textContent='Cargando pendientes…';
  document.querySelectorAll('[data-change-status]').forEach(b=>b.classList.toggle('active',b.dataset.changeStatus===pendingChangeStatus));
  try{
@@ -77,4 +78,4 @@ async function loadPendingChanges(){
 $('refreshPendingChanges').addEventListener('click',loadPendingChanges);
 document.querySelectorAll('[data-change-status]').forEach(b=>b.addEventListener('click',()=>{pendingChangeStatus=b.dataset.changeStatus;pendingChangeOffset=0;loadPendingChanges();}));
 window.addEventListener('pending-change-created',()=>{pendingChangeStatus='pending';pendingChangeOffset=0;loadPendingChanges();});
-if(token&&!$('appView').classList.contains('hidden'))loadPendingChanges();
+// The dashboard loads the inbox after account permissions have been checked.

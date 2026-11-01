@@ -41,6 +41,8 @@ let rankConfigError = "";
 let toastTimer;
 let canAuthorizePromotions=false;
 let canManageShiftsDirect=false;
+let canDecideApplicationsDirect=false;
+let restrictedToApplications=false;
 
 const $ = (id) => document.getElementById(id);
 function showToast(message) {
@@ -59,7 +61,7 @@ function showLogin() {
   $("loginView").classList.remove("hidden");
   $("appView").classList.add("hidden");
 }
-function openDashboardWhenReady(){const open=()=>{if(token&&typeof loadDashboard==='function')document.querySelector('button[data-view="dashboard"]').click();};if(typeof loadDashboard==='function')open();else document.addEventListener('DOMContentLoaded',open,{once:true});}
+function openDashboardWhenReady(){const open=()=>{if(token&&typeof loadDashboard==='function')document.querySelector(restrictedToApplications?'button[data-view="applications"]':'button[data-view="dashboard"]').click();};if(typeof loadDashboard==='function')open();else document.addEventListener('DOMContentLoaded',open,{once:true});}
 function showApp() {
   $("menuToggle").hidden=false;
   $("sideNav").classList.remove("hidden");
@@ -101,7 +103,10 @@ async function loadAccountProfile() {
     const user = result.user || {};
     canAuthorizePromotions=Boolean(user.can_authorize_promotions);
     canManageShiftsDirect=Boolean(user.can_manage_shifts_direct);
-    $('managementPolicy').textContent=canAuthorizePromotions?'Directiva: puedes aplicar cambios y revisar las propuestas del panel principal.':canManageShiftsDirect?'UCOP: puedes aceptar postulaciones y cerrar o eliminar bitácoras directamente. Los demás cambios requieren aprobación de Directiva.':'Puedes preparar cualquier cambio. Quedará pendiente en el panel principal hasta que Directiva lo apruebe.';
+    canDecideApplicationsDirect=Boolean(user.can_decide_applications_direct);
+    restrictedToApplications=Boolean(user.restricted_to_applications);
+    document.querySelectorAll('.workspace-tab').forEach(button=>button.classList.toggle('hidden',restrictedToApplications&&button.dataset.view!=='applications'));
+    $('managementPolicy').textContent=canAuthorizePromotions?'Directiva: puedes aplicar cambios y revisar las propuestas del panel principal.':restrictedToApplications?'Pasante UCOP: tus propuestas de aceptación o rechazo se envían a Directiva. Mientras se revisan, salen de Postulaciones para evitar decisiones duplicadas.':canDecideApplicationsDirect?'UCOP: puedes aceptar y rechazar postulaciones directamente. Los ascensos y demás cambios conservan su aprobación correspondiente.':'Puedes preparar cambios para que Directiva los revise en el panel principal.';
     $("accountName").textContent = user.display_name || user.username || "Cuenta Discord";
     $("accountId").textContent = (user.username ? "@" + user.username + " · " : "") + "ID " + (user.id || "—");
     const accessRoles = Array.isArray(user.access_roles) ? user.access_roles : [];
@@ -234,8 +239,8 @@ function renderApplications() {
     const pending = app.status === "pending";
     const retryRole = app.status === "accepted" && !app.role_assigned_at;
     if (pending || retryRole) {
-      actions.append(decisionButton(retryRole ? "Reintentar asignación de Preselección" : "Aceptar y asignar Preselección", "accept", "accept", app));
-      if (pending) actions.append(decisionButton("Rechazar", "reject", "reject", app));
+      actions.append(decisionButton(retryRole ? "Reintentar asignación de Preselección" : canDecideApplicationsDirect ? "Aceptar y asignar Preselección" : "Proponer aceptación", "accept", "accept", app));
+      if (pending) actions.append(decisionButton(canDecideApplicationsDirect?"Rechazar":"Proponer rechazo", "reject", "reject", app));
     } else {
       const done = document.createElement("span");
       done.className = "muted";
@@ -382,11 +387,11 @@ async function reviewRankRequest(item,decision,button) {
   catch(error){showToast(error.message);button.disabled=false;button.textContent=decision==="accept"?(policeOnly?"Aprobar y asignar Policía":"Aprobar Policía + rango"):"Rechazar";}
 }
 async function decide(app, action, button) {
-  if (action === "accept" && !confirm("¿Aceptar a " + app.full_name + " y asignarle el rol Preselección en Discord? El rol de Policía se asignará después de la entrevista, al aprobar su solicitud de rango.")) return;
+  if (action === "accept" && !confirm((canDecideApplicationsDirect?"":"Se enviará una propuesta a Directiva. ")+"¿Aceptar a " + app.full_name + " y asignarle el rol Preselección en Discord? El rol de Policía se asignará después de la entrevista, al aprobar su solicitud de rango.")) return;
   let reason = "";
   if(action==='accept'&&app.status==='rejected'){const entered=prompt('Motivo para corregir este rechazo y aceptar la postulación:','');if(entered===null)return;reason=entered.trim();if(reason.length<3){showToast('Indica un motivo de al menos 3 caracteres.');return;}}
   if (action === "reject") {
-    if (!confirm("¿Rechazar la candidatura de " + app.full_name + "?")) return;
+    if (!confirm((canDecideApplicationsDirect?"¿Rechazar la candidatura de ":"¿Proponer a Directiva el rechazo de ") + app.full_name + "?")) return;
     reason = prompt("Motivo del rechazo (opcional):", "") || "";
   }
   button.disabled = true;

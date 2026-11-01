@@ -53,6 +53,7 @@ jobs:
           node --experimental-strip-types scripts/check-personnel-membership.mjs
           node --experimental-strip-types scripts/check-real-ranks.mjs
           node --experimental-strip-types scripts/check-promotion-announcements.mjs
+          node --experimental-strip-types scripts/check-application-permissions.mjs
           npm run build
           node scripts/check-public-build.mjs
       - name: Upload site
