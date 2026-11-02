@@ -11,7 +11,7 @@ export function validatePersonnelMovement(body:any,person:any,action:string){
  const date=String(body.effective_date||''),reason=String(body.reason||'').trim();
  if(!/^[a-f0-9-]{36}$/i.test(body.operation_id||'')||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date||date>new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'})||reason.length<3||reason.length>2000)return 'Completa la fecha y una observación de entre 3 y 2000 caracteres.';
  if(!body.expected_updated_at||Date.parse(body.expected_updated_at)!==Date.parse(person.updated_at))return 'La ficha cambió. Actualiza Personal antes de continuar.';
- if(action==='personnel-departure')return person.status!=='active'?'El agente ya está de baja.':!Object.prototype.hasOwnProperty.call(DEPARTURE_TYPES,body.departure_type)||departureRoleChoice(body.departure_type,body.departure_role)===null?'Selecciona un motivo y un rol de baja válidos.':'';
+ if(action==='personnel-departure')return person.status!=='active'?'El agente ya está de baja.':!Object.prototype.hasOwnProperty.call(DEPARTURE_TYPES,body.departure_type)||!['voluntary','expelled','banned'].includes(departureRoleChoice(body.departure_type,body.departure_role))?'Selecciona un motivo y uno de los tres roles de baja.':'';
  if(person.status!=='inactive')return 'El agente ya está activo.';
  if(['banned','expelled'].includes(person.departure_role))return 'El agente tiene una expulsión o veto registrado. Debe resolverse antes de permitir su reingreso.';
  if(person.departure_date&&date<person.departure_date)return 'El reingreso no puede ser anterior a la baja.';
@@ -29,13 +29,24 @@ export async function changePersonnelStatus(req:Request,action:string,actor:stri
  const invalid=validatePersonnelMovement(body,person,action);if(invalid)return c.json({error:invalid},409);
  const memberPath='/guilds/1539970134469378068/members/'+target;
  let member:any;try{member=await c.discord(memberPath);}catch(error){if(departure&&((error as any)?.status===404||String(error).includes('404')))member=null;else throw error;}
- const original:string[]=member?.roles||[],desired=new Set<string>(original.filter(r=>!managed.has(r))),changed:Array<[string,string]>=[];
+ const original:string[]=member?.roles||[],desired=new Set<string>(departure?[]:original.filter(r=>!managed.has(r))),changed:Array<[string,string]>=[];
+ let automaticRoles:string[]=[],departureRolesAttempted=false;
+ const sameRoles=(a:string[],b:string[])=>{const left=[...a].sort(),right=[...b].sort();return left.length===right.length&&left.every((r,i)=>r===right[i]);};
  const departureRole=departure?departureRoleChoice(body.departure_type,body.departure_role):null;
  if(departure&&((original.includes(DEPARTURE_ROLES.banned.id)&&departureRole!=='banned')||(original.includes(DEPARTURE_ROLES.expelled.id)&&!['expelled','banned'].includes(departureRole))))return c.json({error:'El agente ya tiene una restricción más grave. No se puede retirar un veto o una expulsión mediante otra baja.'},409);
- if(departure&&member&&departureRole!=='none'){
+ if(departure&&member){
   const selected=DEPARTURE_ROLES[departureRole as keyof typeof DEPARTURE_ROLES],live=await c.discord('/guilds/1539970134469378068/roles');
   const role=live.find((r:any)=>r.id===selected.id);
   if(!role||role.managed||(BigInt(role.permissions||'0')&blocked)!==0n)return c.json({error:'El rol de baja no existe o tiene permisos administrativos. Revisa la configuración de Discord.'},409);
+  const self=await c.discord('/users/@me'),bot=await c.discord('/guilds/1539970134469378068/members/'+self.id);
+  const top=Math.max(-1,...live.filter((r:any)=>(bot.roles||[]).includes(r.id)).map((r:any)=>Number(r.position)));
+  for(const id of original){
+   const existing=live.find((r:any)=>r.id===id);
+   if(!existing)return c.json({error:'Los roles del agente cambiaron. Actualiza la ficha y vuelve a intentarlo.'},409);
+   if(existing.managed){desired.add(id);automaticRoles.push(String(existing.name||id));}
+   else if(id!==selected.id&&Number(existing.position)>=top)return c.json({error:'No se puede completar la baja: el rol «'+existing.name+'» está a la misma altura o por encima del bot. Sube el rol del bot antes de confirmar la baja.'},409);
+  }
+  if(Number(role.position)>=top)return c.json({error:'El rol de baja debe estar por debajo del rol del bot.'},409);
   desired.add(selected.id);
  }
  let restoredPreviousRank=false;
@@ -55,8 +66,15 @@ export async function changePersonnelStatus(req:Request,action:string,actor:stri
  }
  let committing=false,result:any,warning='';
  try{
-  for(const role of original.filter(r=>managed.has(r)&&!desired.has(r))){await c.discord(memberPath+'/roles/'+role,{method:'DELETE'});changed.push([role,'PUT']);}
-  for(const role of [...desired].filter(r=>!original.includes(r))){await c.discord(memberPath+'/roles/'+role,{method:'PUT',body:'{}'});changed.push([role,'DELETE']);}
+  if(departure&&member){
+   departureRolesAttempted=true;
+   const applied=await c.discord(memberPath,{method:'PATCH',body:JSON.stringify({roles:[...desired]}),headers:{'X-Audit-Log-Reason':encodeURIComponent('PRIME POLICE: baja de personal autorizada por '+c.actorName)}});
+   const confirmed=Array.isArray(applied?.roles)?applied:await c.discord(memberPath);
+   if(!sameRoles(confirmed.roles||[],[...desired]))throw Error('Discord no confirmó la retirada completa de los roles.');
+  }else{
+   for(const role of original.filter(r=>managed.has(r)&&!desired.has(r))){await c.discord(memberPath+'/roles/'+role,{method:'DELETE'});changed.push([role,'PUT']);}
+   for(const role of [...desired].filter(r=>!original.includes(r))){await c.discord(memberPath+'/roles/'+role,{method:'PUT',body:'{}'});changed.push([role,'DELETE']);}
+  }
   committing=true;
   result=await c.db('rpc/change_police_personnel_status',{method:'POST',body:JSON.stringify({p_operation:body.operation_id,p_user:target,p_kind:kind,p_departure_role:departureRole,p_type:departure?body.departure_type:null,p_date:body.effective_date,p_reason:String(body.reason).trim(),p_actor:actor,p_actor_name:c.actorName,p_expected_updated_at:body.expected_updated_at,p_rank_id:departure?null:body.rank_role_id,p_rank_name:departure?null:realRank(body.rank_role_id)!.name,p_unit:departure?null:body.unit})});
   if(!result?.ok){committing=false;throw Error(result?.error||'No se pudo guardar el movimiento.');}
@@ -65,12 +83,22 @@ export async function changePersonnelStatus(req:Request,action:string,actor:stri
    let saved:any[];try{saved=await c.db(eventPath);}catch{return c.json({error:'No se pudo confirmar el resultado. Actualiza la ficha antes de repetir el movimiento.'},503);}
    if(saved?.length)result={ok:true};else committing=false;
   }
-  if(!result?.ok){let rollbackFailed=false;for(const [role,method]of changed.reverse())try{await c.discord(memberPath+'/roles/'+role,{method,...(method==='PUT'?{body:'{}'}:{})});}catch{rollbackFailed=true;}
+  if(!result?.ok){let rollbackFailed=false;
+   if(departureRolesAttempted)try{
+    const current=await c.discord(memberPath);
+    if(!sameRoles(current.roles||[],original)){
+     const restored=await c.discord(memberPath,{method:'PATCH',body:JSON.stringify({roles:original})});
+     const confirmed=Array.isArray(restored?.roles)?restored:await c.discord(memberPath);
+     if(!sameRoles(confirmed.roles||[],original))rollbackFailed=true;
+    }
+   }catch{rollbackFailed=true;}
+   for(const [role,method]of changed.reverse())try{await c.discord(memberPath+'/roles/'+role,{method,...(method==='PUT'?{body:'{}'}:{})});}catch{rollbackFailed=true;}
    console.error('Personnel status change:',String(error));return c.json({error:rollbackFailed?'No se guardó el movimiento y falta restaurar algún rol. Revisa Discord antes de reintentar.':'No se guardó el movimiento. '+(String(error).includes('Discord')?'Comprueba que el bot pueda administrar los roles del agente.':String(error).replace(/^Error: /,''))},502);
   }
  }
  if(member)try{await c.discord(memberPath,{method:'PATCH',body:JSON.stringify({nick:rankedNickname(person.full_name,person.plate,[...desired])})});}catch{warning='Movimiento guardado; no se pudo actualizar el apodo de Discord.';}
  else warning='Baja guardada. La persona ya no está en el servidor de Discord.';
+ if(automaticRoles.length)warning=[warning,'Discord conserva '+automaticRoles.length+' rol(es) automático(s) de integración; no se pueden retirar manualmente.'].filter(Boolean).join(' ');
  if(departure){const notice=await announceDeparture({eventId:body.operation_id,userId:target,name:person.full_name,plate:person.plate,rank:person.rank_name,type:DEPARTURE_TYPES[body.departure_type],role:departureRole==='none'?'Sin rol adicional':DEPARTURE_ROLES[departureRole].name,date:body.effective_date,approvedBy:c.actorName,timestamp:result.movement?.created_at||new Date().toISOString()},c.discord);warning=[warning,notice].filter(Boolean).join(' ');}
  await writeAudit(departure?'📉 Baja de personal':'↩️ Reingreso de personal',[{name:'Agente',value:person.full_name+' #'+person.plate},{name:'Gestor',value:c.actorName},{name:'Tipo',value:departure?DEPARTURE_TYPES[body.departure_type]:'Reingreso'},{name:'Rol de baja',value:departure?(departureRole==='none'?'Sin rol adicional':DEPARTURE_ROLES[departureRole].name):'Retirada de Baja Voluntaria'},{name:'Motivo',value:body.reason},{name:'Fecha',value:body.effective_date}]);
  if(restoredPreviousRank)await writeAudit('🔐 Rango anterior restaurado por Directiva',[{name:'Agente',value:person.full_name+' #'+person.plate},{name:'Rango',value:person.rank_name},{name:'Autorizado por',value:c.actorName}]);

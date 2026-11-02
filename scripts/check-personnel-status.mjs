@@ -13,9 +13,11 @@ function scenario(options={}){
  const context=vm.createContext({Request,Response,Date,BigInt,Set,console:{error(){}},REAL_RANKS,realRank,rankedNickname,shouldAssignUcopBranch,DEPARTURE_ROLES,departureRoleChoice,hasPersonnelRestriction,writeAudit:async()=>{},announceDeparture:async notice=>{assert.equal(state.person.status,'inactive');assert.equal(notice.approvedBy,'Directiva de prueba');state.announcements.push(notice);return '';}});vm.runInContext(source,context);
  const c={actorName:'Directiva de prueba',actorIsDirector:options.director!==false,json:(body,status=200)=>Response.json(body,{status}),
   discord:async(path,init)=>{
-   state.calls++;if(path.endsWith('/roles')&&!init)return[{id:rank,permissions:options.protected?'8':'0'},{id:pasante,permissions:'0'},{id:'1539970134544748559',permissions:'8'},...Object.values(DEPARTURE_ROLES).map(r=>({id:r.id,permissions:'0'}))];
+   state.calls++;if(path==='/users/@me')return{id:'999999999999999999'};if(path.endsWith('/members/999999999999999999'))return{roles:['bot-role']};
+   if(path.endsWith('/roles')&&!init)return[{id:'integration-role',position:200,managed:true,permissions:'0'},...Array.from({length:80},(_,i)=>({id:'extra-'+i,position:5,managed:false,permissions:'0'})),{id:'bot-role',position:100,permissions:'268435456'},{id:staff,name:'Staff',position:options.highRole?101:20,managed:false,permissions:'8'},{id:police,position:2,permissions:'0'},{id:ucop,position:15,permissions:'0'},{id:rank,position:3,permissions:options.protected?'8':'0'},{id:pasante,position:4,permissions:'0'},{id:'1539970134544748559',position:30,permissions:'8'},...Object.values(DEPARTURE_ROLES).map(r=>({id:r.id,position:1,permissions:'0'}))];
    if(!init)return{roles:[...state.roles],nick:'Anterior'};
-   state.writes.push({path,...init});if(options.discordFail&&!state.failed&&state.writes.length===2){state.failed=true;throw Error('Discord API 403');}
+   state.writes.push({path,...init});if(options.discordFail&&!state.failed&&state.writes.length===1){state.failed=true;throw Error('Discord API 403');}
+   const payload=init.body?JSON.parse(init.body):{};if(init.method==='PATCH'&&payload.roles){state.roles=new Set(payload.roles);if(options.partialRoleFailure&&!state.failed){state.failed=true;state.roles.add(staff);}return{roles:[...state.roles]};}
    const id=path.split('/').at(-1);if(init.method==='DELETE')state.roles.delete(id);if(init.method==='PUT')state.roles.add(id);return{};
   },
   db:async(path,init)=>{
@@ -31,9 +33,9 @@ function scenario(options={}){
  const run=()=>context.changePersonnelStatus(new Request('https://test',{method:'POST',body:JSON.stringify(body)}),options.reentry?'personnel-reentry':'personnel-departure',actor,c);
  return{state,body,run};
 }
-let t=scenario();assert.equal((await t.run()).status,200);assert.equal(t.state.person.status,'inactive');assert.deepEqual([...t.state.roles].sort(),[staff,DEPARTURE_ROLES.expelled.id].sort());assert.equal(t.state.events.length,1);assert.equal(t.state.announcements.length,1);const n=t.state.calls;await t.run();assert.equal(t.state.calls,n);assert.equal(t.state.announcements.length,1);assert.equal(t.state.events.length,1);
+let t=scenario();assert.equal((await t.run()).status,200);assert.equal(t.state.person.status,'inactive');assert.deepEqual([...t.state.roles].sort(),[DEPARTURE_ROLES.expelled.id].sort());assert.equal(t.state.events.length,1);assert.equal(t.state.announcements.length,1);const n=t.state.calls;await t.run();assert.equal(t.state.calls,n);assert.equal(t.state.announcements.length,1);assert.equal(t.state.events.length,1);
 for(const options of [{discordFail:true},{dbFail:true}]){t=scenario(options);assert.equal((await t.run()).status,502);assert.equal(t.state.person.status,'active');assert.deepEqual([...t.state.roles].sort(),[police,rank,ucop,staff].sort());assert.equal(t.state.events.length,0);assert.equal(t.state.announcements.length,0);}
-t=scenario({replyLost:true});assert.equal((await t.run()).status,200);assert.equal(t.state.person.status,'inactive');assert.equal(t.state.events.length,1);assert.deepEqual([...t.state.roles].sort(),[staff,DEPARTURE_ROLES.expelled.id].sort());
+t=scenario({replyLost:true});assert.equal((await t.run()).status,200);assert.equal(t.state.person.status,'inactive');assert.equal(t.state.events.length,1);assert.deepEqual([...t.state.roles].sort(),[DEPARTURE_ROLES.expelled.id].sort());
 t=scenario({reentry:true,protected:true});assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);
 t=scenario({reentry:true,pasante:true});assert.equal((await t.run()).status,200);assert(t.state.roles.has(police));assert(t.state.roles.has(pasante));assert(t.state.roles.has(staff));assert(!t.state.roles.has(ucop));assert(!t.state.roles.has(rank));assert.equal(t.state.announcements.length,0);
 t=scenario();t.body.expected_updated_at='2025-01-01T00:00:00Z';assert.equal((await t.run()).status,409);assert.equal(t.state.calls,0);
@@ -54,3 +56,10 @@ t=scenario({reentry:true,chief:true,restore:true,proof:true});assert.equal((awai
 for(const options of [{director:false,proof:true},{proof:false},{restore:false,proof:true}]){t=scenario({reentry:true,chief:true,restore:true,...options});assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);}
 t=scenario({reentry:true,chief:true,restore:true,proof:true});t.state.person.rank_role_id=rank;assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);
 console.log('Protected previous UCOP rank: explicit consent, trusted Directiva approval and matching documented departure required; no new protected assignments: PASS');
+
+t=scenario();for(let i=0;i<80;i++)t.state.roles.add('extra-'+i);assert.equal((await t.run()).status,200);assert.deepEqual([...t.state.roles],[DEPARTURE_ROLES.expelled.id]);assert.equal(t.state.writes.filter(w=>w.body&&JSON.parse(w.body).roles).length,1);
+t=scenario({highRole:true});assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);assert.equal(t.state.events.length,0);
+t=scenario({partialRoleFailure:true});assert.equal((await t.run()).status,502);assert.deepEqual([...t.state.roles].sort(),[police,rank,ucop,staff].sort());assert.equal(t.state.events.length,0);
+t=scenario();t.state.roles.add('integration-role');const automatic=await t.run();assert.equal(automatic.status,200);assert.deepEqual([...t.state.roles].sort(),['integration-role',DEPARTURE_ROLES.expelled.id].sort());assert((await automatic.json()).warning.includes('automático'));
+t=scenario();t.body.departure_role='none';assert.equal((await t.run()).status,409);assert.equal(t.state.calls,0);
+console.log('Full departure removal: staff and 80 other manual roles removed in one update; hierarchy blocks before writes; failed confirmation rolls back; automatic roles reported; marker required: PASS');

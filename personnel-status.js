@@ -1,5 +1,5 @@
 const departureRoleLabels={none:'Sin rol adicional',voluntary:'Baja Voluntaria',expelled:'Expulsado',banned:'Vetado'};
-function suggestedDepartureRole(type){return ['renuncia','jubilacion'].includes(type)?'voluntary':['despido','corrupcion'].includes(type)?'expelled':'none';}
+function suggestedDepartureRole(type){return ['renuncia','jubilacion'].includes(type)?'voluntary':['despido','corrupcion'].includes(type)?'expelled':'';}
 const departureLabels={pkt:'PKT',ck:'Muerte (CK)',despido:'Despido',corrupcion:'Corrupción',renuncia:'Renuncia',jubilacion:'Jubilación',transferencia:'Transferencia',inactividad:'Inactividad',otro:'Otro'};
 let statusPerson=null,statusBusy=false,statusOperation='',profileMovementOffset=0,profileMovementNext=null;
 function updatePersonnelStatusButton(person,loading){
@@ -17,9 +17,9 @@ async function openPersonnelStatus(person){
  if(statusBusy)return;statusPerson={...person};statusOperation=crypto.randomUUID();const reentry=person.status!=='active';
  $('personnelStatusForm').reset();$('personnelRestoreRankField').hidden=true;$('personnelStatusTitle').textContent=reentry?'Reingresar al agente':'Dar de baja al agente';
  $('personnelStatusName').textContent=person.full_name+' · Placa '+person.plate;
- $('personnelStatusPolicy').textContent=(canAuthorizePromotions?'El cambio se aplicará al confirmar.':'Se enviará a Directiva para su aprobación.')+' '+(reentry?'Se conserva la misma ficha y placa. Se asignarán el rango y la división seleccionados.':'Se conserva la ficha. Se retirarán los roles policiales y se cerrarán las bitácoras abiertas.');
+ $('personnelStatusPolicy').textContent=(canAuthorizePromotions?'El cambio se aplicará al confirmar.':'Se enviará a Directiva para su aprobación.')+' '+(reentry?'Se conserva la misma ficha y placa. Se asignarán el rango y la división seleccionados.':'Se conserva la ficha. Se retirarán todos los roles manuales, incluidos los de administración, y quedará el rol de baja seleccionado. Se cerrarán las bitácoras abiertas. Discord conserva los roles automáticos de integración.');
  $('personnelStatusDate').value=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'});$('personnelStatusDate').max=$('personnelStatusDate').value;
- $('personnelDepartureField').hidden=reentry;$('personnelDepartureType').required=!reentry;$('personnelDepartureRoleField').hidden=reentry;$('personnelDepartureRole').required=!reentry;$('personnelDepartureRole').value='none';
+ $('personnelDepartureField').hidden=reentry;$('personnelDepartureType').required=!reentry;$('personnelDepartureRoleField').hidden=reentry;$('personnelDepartureRole').required=!reentry;$('personnelDepartureRole').value='';
  $('personnelReentryFields').hidden=!reentry;$('personnelReentryRank').required=reentry;$('personnelReentryUnit').value=person.unit||'POLICIA';
  $('personnelStatusFeedback').textContent='';$('personnelStatusSave').textContent=canAuthorizePromotions?(reentry?'Confirmar reingreso':'Confirmar baja'):'Enviar a Directiva';$('personnelStatusSave').disabled=reentry;
  $('personnelStatusSave').className='btn '+(reentry?'accept':'reject');

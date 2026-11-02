@@ -12,7 +12,7 @@ function changeValue(value,item){
  return changeValueLabels[value]||roleName(value??'—');
 }
 function changePlan(item){
- if(item.action==='personnel-departure')return{title:'Dar de baja al agente',effect:'Se retirarán sus roles policiales, se cerrarán sus bitácoras abiertas y se conservará la ficha. Rol de baja: '+(departureRoleLabels[item.payload?.departure_role??suggestedDepartureRole(item.payload?.departure_type)]||'Sin rol adicional')+'.',approve:'Confirmar baja',tone:'danger'};
+ if(item.action==='personnel-departure')return{title:'Dar de baja al agente',effect:'Se retirarán todos sus roles manuales, incluidos los de administración, se cerrarán sus bitácoras abiertas y se conservará la ficha. Rol de baja: '+(departureRoleLabels[item.payload?.departure_role??suggestedDepartureRole(item.payload?.departure_type)]||'Sin rol adicional')+'.',approve:'Confirmar baja',tone:'danger'};
  if(item.action==='personnel-reentry')return{title:'Reingresar al agente',effect:'Se activará la misma ficha y se asignarán el rango y la división propuestos en Discord.',approve:'Confirmar reingreso',tone:'positive'};
  const payload=item.payload||{},decision=payload.action||payload.decision;
  const kinds={decision:['postulación','la postulación','Preselección'],'transfer-decision':['traslado','la solicitud de traslado','Traslado'],'rank-request-review':['nuevo ingreso','el nuevo ingreso','Policía']};
