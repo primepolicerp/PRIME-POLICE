@@ -19,7 +19,8 @@ async function loadPersonnelFile(person,refresh=false){
  const sequence=++profileSequence,session=token;
  if(!refresh){profileFocus=document.activeElement;profileNoteOffset=0;profileHistoryOffset=0;profileNoteNext=null;profileHistoryNext=null;$('profileNoteFeedback').textContent='';$('profileNotesPager').hidden=true;$('profileHistoryPager').hidden=true;}
  profilePerson={...person};if(!refresh)profileMovementOffset=0;updatePersonnelStatusButton(person,true);const modal=$('personnelProfileModal');modal.classList.remove('hidden');document.body.style.overflow='hidden';
- if(!refresh){$('profileClose').focus();$('profileHistoryDetails').open=false;restoreProfileDraft();}
+ if(!refresh){$('profileClose').focus();for(const details of modal.querySelectorAll('.profile-body details'))details.open=false;accessSequence++;$('profileAccessStatus').textContent='Abre este apartado para comprobar los roles actuales.';$('profileAccessSync').disabled=true;profileEmpty($('profileMovements'),'Abre este apartado para consultar los movimientos.');restoreProfileDraft();modal.querySelector('.profile-body').scrollTop=0;}
+ const sections=['summary',...[...modal.querySelectorAll('[data-profile-section][open]')].map(el=>el.dataset.profileSection)];
  $('profileAvatar').textContent=(person.full_name||'PP').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
  profileText('profileName',person.full_name||'Ficha policial');profileText('profileDiscord',(person.discord_username?'@'+person.discord_username+' · ':'')+'ID '+person.discord_user_id);
  for(const [id,value] of [['profileIc',person.full_name],['profileOoc',person.name_ooc],['profileSteam',person.steam_username],['profilePlate',person.plate],['profileRank',person.rank_name],['profileUnit',unitLabel(person.unit)],['profileUpdated',niceDate(person.updated_at)],['profileJoined',niceDate(person.created_at)]])profileText(id,value);
@@ -28,26 +29,26 @@ async function loadPersonnelFile(person,refresh=false){
  $('profileNotesPolicy').textContent=canAuthorizePromotions?'Las observaciones se guardan directamente. Se conserva el historial de cambios.':'Las observaciones se enviarán a Pendientes para que Directiva las apruebe.';
  $('profileReadFeedback').textContent='Actualizando ficha…';$('saveProfileNote').disabled=true;for(const id of ['profileEditButton','profileSanctionButton','profileAbsenceButton'])$(id).disabled=true;
  $('profileNotesCount').textContent='';for(const id of ['profileNotesPrevious','profileNotesNext','profileHistoryPrevious','profileHistoryNext'])$(id).disabled=true;
- for(const id of ['profileNotes','profileHistory','profileAbsences','profileSanctions'])profileEmpty($(id),'Cargando…');
+ for(const [section,id]of [['notes','profileNotes'],['history','profileHistory'],['absences','profileAbsences'],['sanctions','profileSanctions']])if(sections.includes(section)||!refresh)profileEmpty($(id),sections.includes(section)?'Cargando…':'Abre este apartado para consultarlo.');
  try{
-  const data=await request('personnel-profile',{method:'GET',query:{discord_user_id:person.discord_user_id,note_offset:profileNoteOffset,history_offset:profileHistoryOffset,movement_offset:profileMovementOffset}});
+  const data=await request('personnel-profile',{method:'GET',query:{discord_user_id:person.discord_user_id,sections:sections.join(','),note_offset:profileNoteOffset,history_offset:profileHistoryOffset,movement_offset:profileMovementOffset}});
   if(sequence!==profileSequence||token!==session)return;
-  profilePerson=data.person;if(typeof loadProfileAccess==='function')loadProfileAccess(data.person);const p=data.person,summary=data.summary,failed=new Set(data.failed_sections||[]);
+  profilePerson=data.person;const p=data.person,summary=data.summary,failed=new Set(data.failed_sections||[]);
   for(const [id,value] of [['profileName',p.full_name],['profileIc',p.full_name],['profileOoc',p.name_ooc||p.discord_username],['profileSteam',p.steam_username],['profilePlate',p.plate],['profileRank',p.rank_name],['profileUnit',unitLabel(p.unit)],['profileUpdated',niceDate(p.updated_at)],['profileJoined',niceDate(p.created_at)]])profileText(id,value);
   const available=p.status!=='active'?'Baja':summary?.on_absence?'Ausencia vigente':'Activo';profileText('profileStatus',available);
   if(summary){const seconds=Number(summary.week_seconds)||0;profileText('profileWeeklyHours',Math.floor(seconds/3600)+'h '+Math.floor(seconds%3600/60)+'m');
-   for(const [id,value] of [['profileWarnings',summary.warnings],['profileStrikes',summary.strikes],['profileWeeklyShifts',summary.shifts_week],['profileAbsenceCount',summary.absence_count],['profileDaysInRank',summary.days_in_rank===null?'Sin fecha':summary.days_in_rank+' días'],['profileLastService',summary.last_service?niceDate(summary.last_service):'Sin turnos registrados']])profileText(id,value);
+   for(const [id,value] of [['profileWarnings',summary.warnings],['profileStrikes',summary.strikes],['profileWeeklyShifts',summary.shifts_week],['profileAbsenceCount',summary.absence_count],['profileDaysInRank',summary.days_in_rank===null||summary.days_in_rank===undefined?'Sin fecha':summary.days_in_rank+' días'],['profileLastService',summary.last_service?niceDate(summary.last_service):'Sin turnos registrados']])profileText(id,value);
    profileText('profileDuty',summary.on_duty?'● En servicio':'● Fuera de servicio');$('profileDuty').classList.toggle('is-on-duty',Boolean(summary.on_duty));
   }else profileText('profileDuty','Servicio no disponible');
-  updatePersonnelStatusButton(p,false);renderPersonnelMovements(data.movements||[],data.movement_next_offset,failed.has('movements'));
-  renderProfileNotes(data.notes||[],failed.has('notes'));renderProfileHistory(data.history||[],failed.has('history'));
-  renderProfileSanctions(data.sanctions||[],failed.has('sanctions'));renderProfileAbsences(data.absences||[],failed.has('absences'));
+  updatePersonnelStatusButton(p,false);if(sections.includes('movements'))renderPersonnelMovements(data.movements||[],data.movement_next_offset,failed.has('movements'));
+  if(sections.includes('notes'))renderProfileNotes(data.notes||[],failed.has('notes'));if(sections.includes('history'))renderProfileHistory(data.history||[],failed.has('history'));
+  if(sections.includes('sanctions'))renderProfileSanctions(data.sanctions||[],failed.has('sanctions'));if(sections.includes('absences'))renderProfileAbsences(data.absences||[],failed.has('absences'));
   profileNoteNext=data.note_next_offset;profileHistoryNext=data.history_next_offset;
   $('profileNotesPrevious').disabled=profileNoteOffset===0;$('profileNotesNext').disabled=profileNoteNext===null;
   $('profileHistoryPrevious').disabled=profileHistoryOffset===0;$('profileHistoryNext').disabled=profileHistoryNext===null;
   $('profileNotesPager').hidden=profileNoteOffset===0&&profileNoteNext===null;$('profileHistoryPager').hidden=profileHistoryOffset===0&&profileHistoryNext===null;
   profileText('profileNotesCount',summary?summary.notes_count+(Number(summary.notes_count)===1?' observación':' observaciones'):'');
-  $('profileReadFeedback').textContent=failed.size?'Algunas secciones no se pudieron cargar. Pulsa Actualizar ficha para reintentar.':'Datos actualizados · Observaciones privadas del equipo de gestión.';
+  $('profileReadFeedback').textContent=failed.size?'Algunas secciones no se pudieron cargar. Pulsa Actualizar ficha para reintentar.':'Ficha actualizada';
   $('saveProfileNote').disabled=false;$('profileEditButton').disabled=false;$('profileSanctionButton').disabled=p.status!=='active';$('profileAbsenceButton').disabled=false;
  }catch(error){if(sequence!==profileSequence||token!==session)return;$('profileReadFeedback').textContent=error.message;for(const id of ['profileNotes','profileHistory','profileAbsences','profileSanctions'])profileEmpty($(id),'No se pudo cargar esta sección. Actualiza la ficha.');}
 }
@@ -79,7 +80,9 @@ async function saveProfileObservation(operation,note=null){
 $('profileNoteText').addEventListener('input',()=>{if(profilePerson)profileDrafts.set(profilePerson.discord_user_id,{content:$('profileNoteText').value,edit:profileEditingNote,id:profileNoteId});});
 $('profileNoteForm').addEventListener('submit',event=>{event.preventDefault();saveProfileObservation(profileEditingNote?'edit':'add');});
 $('cancelProfileNoteEdit').addEventListener('click',()=>{if(!profileSaving)resetProfileNote();});
-$('profileRefresh').addEventListener('click',()=>{if(profilePerson&&!profileSaving)loadPersonnelFile(profilePerson,true);});
+$('profileRefresh').addEventListener('click',()=>{if(profilePerson&&!profileSaving){loadPersonnelFile(profilePerson,true);if($('profileAccessDetails').open)loadProfileAccess(profilePerson);}});
+for(const details of document.querySelectorAll('[data-profile-section]'))details.addEventListener('toggle',()=>{if(details.open&&profilePerson&&!profileSaving)loadPersonnelFile(profilePerson,true);});
+$('profileAccessDetails').addEventListener('toggle',()=>{if($('profileAccessDetails').open&&profilePerson)loadProfileAccess(profilePerson);});
 for(const [button,type,direction]of [['profileNotesNext','note',1],['profileNotesPrevious','note',-1],['profileHistoryNext','history',1],['profileHistoryPrevious','history',-1]])$(button).addEventListener('click',()=>{if(!profilePerson||profileSaving)return;if(type==='note')profileNoteOffset=direction===1?profileNoteNext:Math.max(0,profileNoteOffset-25);else profileHistoryOffset=direction===1?profileHistoryNext:Math.max(0,profileHistoryOffset-20);loadPersonnelFile(profilePerson,true);});
 $('profileEditButton').addEventListener('click',()=>{if(!profilePerson||profileSaving)return;const person={...profilePerson};closePersonnelProfile();document.querySelector('[data-view="personnel"]').click();openPersonnelForm(person);});
 $('profileSanctionButton').addEventListener('click',()=>{if(!profilePerson||profileSaving)return;const person={...profilePerson};if(person.status!=='active')return showToast('El agente debe estar activo.');closePersonnelProfile();document.querySelector('[data-view="sanctions"]').click();selectSanctionAgent(person);$('sanctionReason').focus();});

@@ -34,3 +34,40 @@
 @media(max-width:600px){.career-header{padding:16px}.career-header h2{font-size:19px}.career-body{padding:18px 16px}.career-person{align-items:flex-start;flex-direction:column;gap:14px}.career-person h3{font-size:21px}.career-rank{width:100%;box-sizing:border-box}.career-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.career-metric{border-bottom:1px solid #2c3b4f;padding:12px}.career-metric:nth-child(2){border-right:0}.career-metric:nth-child(3),.career-metric:nth-child(4){border-bottom:0}.career-metric strong{font-size:20px}.career-entry{grid-template-columns:1fr;gap:8px}.career-entry time{font-size:11px}.career-entry-main{padding-left:13px}.career-pager{flex-wrap:wrap}.career-pager span{order:-1;flex-basis:100%;text-align:center}.career-pager .btn{flex:1}.career-open{min-height:40px!important}}
 
 #personnelRestoreRankField[hidden]{display:none}#personnelRestoreRankField{padding:12px;border:1px solid #78623a;border-radius:10px;background:#322a1a}#personnelRestoreRank{width:18px;height:18px;min-height:18px!important;flex-shrink:0}
+
+/* Compact file: one scroll area, essential data first, histories on demand. */
+#personnelProfileModal{backdrop-filter:none;background:#070b12df}
+#personnelProfileModal .profile-dialog{width:min(900px,100%);max-height:90dvh}
+#personnelProfileModal .profile-head{padding:16px 20px}
+#personnelProfileModal .profile-avatar{width:46px;height:46px;border-radius:12px;font-size:20px}
+#personnelProfileModal .profile-body{min-height:0;flex:1;padding:16px 20px}
+#personnelProfileModal .profile-overview{padding-bottom:12px}
+#personnelProfileModal .profile-key-fields{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#personnelProfileModal .profile-key-fields .profile-field{padding:10px 12px;border:0;background:#202630!important}
+#personnelProfileModal .profile-key-fields .profile-field strong{font-size:13px}
+#personnelProfileModal .career-open{margin-top:5px;padding:4px 0;min-height:24px;background:transparent;border:0;color:#9fbfeb}
+#personnelProfileModal .profile-metrics{gap:0;margin:12px 0 16px;border-bottom:1px solid #303946}
+#personnelProfileModal .profile-metrics .profile-stat{padding:10px 12px;border:0;border-radius:0;background:transparent!important}
+#personnelProfileModal .profile-metrics .profile-stat strong{font-size:18px;color:#d4dfec!important}
+#personnelProfileModal .profile-columns{display:block}
+#personnelProfileModal .profile-section.profile-fold{padding:0;margin-bottom:8px;border:1px solid #303946;border-radius:8px;background:#181d24!important}
+#personnelProfileModal .profile-fold>summary{padding:13px 15px;min-height:42px;box-sizing:border-box;font-size:12px;font-weight:550;color:#c6d3e4}
+#personnelProfileModal .profile-fold>summary small{font-size:10px;font-weight:400;color:#8e9eb4;margin-left:8px}
+#personnelProfileModal .profile-fold[open]>summary{border-bottom:1px solid #303946;margin-bottom:12px}
+#personnelProfileModal .profile-fold>*:not(summary){margin-left:15px;margin-right:15px}
+#personnelProfileModal .profile-fold>*:last-child{margin-bottom:14px}
+#personnelProfileModal .profile-access p{font-size:12px;line-height:1.6}
+#personnelProfileModal .dossier-intro{padding:10px 0;margin:0 0 12px;background:transparent!important;border:0;gap:15px}
+#personnelProfileModal .dossier-intro h3{font-size:12px;margin:0 0 4px}
+#personnelProfileModal .dossier-intro p{font-size:11px;margin:0;color:#8f9fb4}
+#personnelProfileModal .dossier-intro .btn{font-size:11px;background:#263346;border:1px solid #3a4d66;padding:8px 10px;white-space:nowrap}
+#personnelProfileModal .profile-last-service{font-size:11px;color:#8f9fb4;margin:12px 0}
+#personnelProfileModal .profile-footer{padding:11px 20px;gap:8px}
+#personnelProfileModal .profile-footer .btn{font-size:11px;padding:9px 11px}
+#personnelProfileModal [hidden]{display:none!important}
+#personnelProfileModal .profile-head{backdrop-filter:none}
+#personnelProfileModal .profile-key-fields .profile-field{border:0!important}
+#personnelProfileModal .profile-metrics .profile-stat{border:0!important;border-radius:0!important;background:transparent!important}
+#personnelProfileModal .dossier-intro{border:0!important;background:transparent!important;border-radius:0!important}
+#personnelProfileModal .dossier-intro .btn{background:#263346!important;border-color:#3a4d66!important;color:#b9d1f0!important}
+@media(max-width:700px){#personnelProfileModal .profile-dialog{max-height:calc(100dvh - 16px)}#personnelProfileModal .profile-body{padding:14px}#personnelProfileModal .profile-key-fields{grid-template-columns:repeat(2,minmax(0,1fr))}#personnelProfileModal .profile-head{padding:14px}#personnelProfileModal .profile-footer{padding:10px}#personnelProfileModal .profile-footer .btn{min-width:120px;min-height:40px}#personnelProfileModal .profile-metrics .profile-stat{padding:9px 8px}#personnelProfileModal .dossier-intro{align-items:flex-start}#personnelProfileModal .profile-read-feedback{flex-direction:row;align-items:center}}

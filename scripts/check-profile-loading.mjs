@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {managePersonnelProfile} from '../supabase/functions/prime-police-panel/personnel-profile.ts';
+import {applicationScopeAllowed} from '../supabase/functions/prime-police-panel/application-permissions.ts';
+const id='222222222222222222',calls=[],person={discord_user_id:id,status:'active'},json=(value,status=200)=>Response.json(value,{status});
+const context={actorName:'Gestor',json,db:async path=>{calls.push(path);if(path.startsWith('police_personnel?'))return[person];if(path.startsWith('rpc/'))return{week_seconds:0};if(path.startsWith('police_personnel_notes?'))return Array.from({length:26},(_,n)=>({id:n,content:'Nota'}));return[];}};
+const run=(query='',c=context)=>managePersonnelProfile(new Request('https://test/?discord_user_id='+id+query),'personnel-profile',id,c);
+let r=await run('&sections=summary'),body=await r.json();assert.equal(r.status,200);assert.equal(calls.length,2);assert.deepEqual(body.loaded_sections,['summary']);assert(!calls.some(p=>/notes|history|movements|absence|sanctions/.test(p)));assert.equal(body.person.discord_user_id,id);
+calls.length=0;r=await run('&sections=notes&note_offset=25');body=await r.json();assert.equal(calls.length,2);assert(calls[1].endsWith('offset=25'));assert.equal(body.notes.length,25);assert.equal(body.note_next_offset,50);assert.deepEqual(body.failed_sections,[]);
+calls.length=0;r=await run();assert.equal(calls.length,7);assert.equal(r.status,200);
+calls.length=0;assert.equal((await run('&sections=unknown')).status,400);assert.equal((await run('&sections=')).status,400);assert.equal(calls.length,0);
+r=await run('&sections=summary,notes',{...context,db:async(path,init)=>{if(path.startsWith('police_personnel_notes?'))throw Error('Unavailable');return context.db(path,init);}});body=await r.json();assert.deepEqual(body.failed_sections,['notes']);assert(body.summary);assert(!applicationScopeAllowed('personnel-profile',new URLSearchParams()));
+console.log('Profile loading: initial 2 reads instead of 7, on-demand sections, bounded pagination, isolated failures, backward compatibility and trainee exclusion: PASS');
