@@ -5,6 +5,7 @@ import { applicationReview, saveApplicationReview } from "./application-review.t
 import { PANEL_SITE_URL, PANEL_ORIGIN, isPanelOrigin, panelResponseHeaders } from "./site-config.ts";
 import { scheduleAcceptedPublicList } from "./public-accepted.ts";
 import { preparePlate } from "./plates.ts";
+import { personnelCareer } from "./personnel-career.ts";
 import { changePersonnelStatus } from "./personnel-status.ts";
 import { managePersonnelProfile } from "./personnel-profile.ts";
 import { manageAbsences } from "./absences.ts";
@@ -573,7 +574,8 @@ async function routePanel(req: Request): Promise<Response> {
   if (action === "me" && req.method === "GET") return await currentUser(req);
   if(action==='application-review'){if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return applicationReview(req,db,json);}
   if(action==='application-review-save'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return saveApplicationReview(req,db,json,actor,String(member.nick||member.user?.global_name||member.user?.username||actor));}
-  if(['personnel-departure','personnel-reentry'].includes(action||'')&&req.method==='POST'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada.'},403);const member=await accessMember(actor);return changePersonnelStatus(req,action!,actor,{db,discord,json,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});}
+  if(['personnel-departure','personnel-reentry'].includes(action||'')&&req.method==='POST'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada.'},403);const member=await accessMember(actor);return changePersonnelStatus(req,action!,actor,{db,discord,json,actorIsDirector:(member.roles||[]).some((id:string)=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(id)),actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});}
+  if(action==='personnel-career'){if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return personnelCareer(req,{db,json});}
   if(action==='personnel-profile'||['personnel-note-add','personnel-note-edit','personnel-note-archive'].includes(action||'')){
    const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);
    const member=await accessMember(actor);return managePersonnelProfile(req,action,actor,{db,json,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});

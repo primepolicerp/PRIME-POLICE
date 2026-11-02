@@ -6,7 +6,7 @@ export const DEPARTURE_TYPES:Record<string,string>={pkt:'PKT',ck:'Muerte (CK)',d
 const POLICE='1539970134482092038',UCOP='1539970134519578773',CIC='1539970134519578772';
 const managed=new Set<string>([POLICE,UCOP,CIC,...REAL_RANKS.map(r=>r.id),...Object.values(DEPARTURE_ROLES).map(r=>r.id)]);
 const blocked=(1n<<1n)|(1n<<2n)|(1n<<3n)|(1n<<4n)|(1n<<5n)|(1n<<28n)|(1n<<29n)|(1n<<40n);
-type Context={db:(path:string,init?:RequestInit)=>Promise<any>,discord:(path:string,init?:RequestInit)=>Promise<any>,json:(v:any,status?:number)=>Response,actorName:string};
+type Context={db:(path:string,init?:RequestInit)=>Promise<any>,discord:(path:string,init?:RequestInit)=>Promise<any>,json:(v:any,status?:number)=>Response,actorName:string,actorIsDirector?:boolean};
 export function validatePersonnelMovement(body:any,person:any,action:string){
  const date=String(body.effective_date||''),reason=String(body.reason||'').trim();
  if(!/^[a-f0-9-]{36}$/i.test(body.operation_id||'')||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date||date>new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'})||reason.length<3||reason.length>2000)return 'Completa la fecha y una observación de entre 3 y 2000 caracteres.';
@@ -38,11 +38,19 @@ export async function changePersonnelStatus(req:Request,action:string,actor:stri
   if(!role||role.managed||(BigInt(role.permissions||'0')&blocked)!==0n)return c.json({error:'El rol de baja no existe o tiene permisos administrativos. Revisa la configuración de Discord.'},409);
   desired.add(selected.id);
  }
+ let restoredPreviousRank=false;
  if(!departure){
   if(hasPersonnelRestriction(original))return c.json({error:'No se puede reingresar a una persona con el rol Expulsado o Vetado.'},409);
   const rank=realRank(body.rank_role_id)!,[configured,live]=await Promise.all([c.db('police_rank_roles?select=role_id'),c.discord('/guilds/1539970134469378068/roles')]);
   const role=live.find((r:any)=>r.id===rank.id);
-  if(!configured.some((r:any)=>r.role_id===rank.id)||!role||role.managed||(BigInt(role.permissions||'0')&blocked)!==0n)return c.json({error:'Ese rango está protegido o no es asignable. Elige otro rango; los permisos administrativos se gestionan por separado.'},409);
+  if(!configured.some((r:any)=>r.role_id===rank.id)||!role||role.managed)return c.json({error:'Ese rango no existe en la escala o no es asignable.'},409);
+  if((BigInt(role.permissions||'0')&blocked)!==0n){
+   if(c.actorIsDirector===true&&body.restore_previous_rank===true&&person.rank_role_id===rank.id&&['1539970134544748558','1539970134544748559'].includes(rank.id)){
+    const history=await c.db('police_personnel_movements?select=previous_rank_name&discord_user_id=eq.'+target+'&kind=eq.departure&order=created_at.desc,id.desc&limit=1');
+    restoredPreviousRank=Boolean(history?.[0]?.previous_rank_name&&history[0].previous_rank_name===person.rank_name);
+   }
+   if(!restoredPreviousRank)return c.json({error:'Este rango tiene permisos elevados. Directiva puede restaurarlo marcando «Recuperar el rango anterior», solo si coincide con el rango documentado antes de la baja.'},409);
+  }
   desired.add(POLICE);desired.add(rank.id);if(body.unit==='CIC')desired.add(CIC);if(body.unit==='UCOP'&&shouldAssignUcopBranch([rank.id],rank.id))desired.add(UCOP);
  }
  let committing=false,result:any,warning='';
@@ -65,5 +73,6 @@ export async function changePersonnelStatus(req:Request,action:string,actor:stri
  else warning='Baja guardada. La persona ya no está en el servidor de Discord.';
  if(departure){const notice=await announceDeparture({eventId:body.operation_id,userId:target,name:person.full_name,plate:person.plate,rank:person.rank_name,type:DEPARTURE_TYPES[body.departure_type],role:departureRole==='none'?'Sin rol adicional':DEPARTURE_ROLES[departureRole].name,date:body.effective_date,approvedBy:c.actorName,timestamp:result.movement?.created_at||new Date().toISOString()},c.discord);warning=[warning,notice].filter(Boolean).join(' ');}
  await writeAudit(departure?'📉 Baja de personal':'↩️ Reingreso de personal',[{name:'Agente',value:person.full_name+' #'+person.plate},{name:'Gestor',value:c.actorName},{name:'Tipo',value:departure?DEPARTURE_TYPES[body.departure_type]:'Reingreso'},{name:'Rol de baja',value:departure?(departureRole==='none'?'Sin rol adicional':DEPARTURE_ROLES[departureRole].name):'Retirada de Baja Voluntaria'},{name:'Motivo',value:body.reason},{name:'Fecha',value:body.effective_date}]);
+ if(restoredPreviousRank)await writeAudit('🔐 Rango anterior restaurado por Directiva',[{name:'Agente',value:person.full_name+' #'+person.plate},{name:'Rango',value:person.rank_name},{name:'Autorizado por',value:c.actorName}]);
  return c.json({ok:true,person:result.person,message:departure?'Baja registrada. Se conserva la ficha y su historial.':'Reingreso registrado en la misma ficha.',warning:warning||undefined});
 }

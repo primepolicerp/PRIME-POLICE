@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {stripTypeScriptTypes} from 'node:module';
 import {promotionCard,announcePromotion,isRealPromotion,PROMOTION_CHANNEL} from '../supabase/functions/prime-police-panel/promotion-announcements.ts';
-import {realRankRows,sameRankTrack} from '../supabase/functions/_shared/real-ranks.ts';
+import {realRankRows,sameRankTrack,realRank} from '../supabase/functions/_shared/real-ranks.ts';
 const data={eventId:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',userId:'222222222222222222',name:'Agente Ejemplo',plate:'0116',previousRank:'Raso en Prácticas',newRank:'Raso',approvedById:'111111111111111111',approvedByName:'Directiva de ejemplo',timestamp:'2026-11-01T12:00:00Z'};
 const card=promotionCard(data);assert.equal(card.embeds[0].title,'🎖️ PRIME POLICE · Nuevo ascenso');assert(card.embeds[0].fields.some(f=>f.value.includes('0116')));assert.equal(card.embeds[0].fields.find(f=>f.name==='Aprobado por').value,data.approvedByName);assert.deepEqual(card.allowed_mentions,{parse:[],users:[data.userId]});assert(card.nonce.length<=25);assert.equal(card.enforce_nonce,true);
 let calls=[],failOnce=true;
@@ -20,7 +20,7 @@ function scenario({director=true,existing=true,action='promotion',warning=''}={}
  const profiles=existing?[{discord_user_id:data.userId,full_name:data.name,name_ooc:'OOC',plate:data.plate,rank_name:'Raso en Prácticas',rank_role_id:old,unit:'POLICIA',status:'active'}]:[];
  const req=new Request('https://test',{method:'POST',body:JSON.stringify({discord_user_id:data.userId,rank_role_id:next,action_type:action,reason:'Méritos comprobados',full_name:data.name,name_ooc:'OOC',plate:data.plate,unit:'POLICIA',approved_by_name:'Forged identity'})});
  const requestMembers=new WeakMap([[req,{nick:data.approvedByName}]]);
- const context=vm.createContext({Request,Response,Date,crypto,console,sameRankTrack,isRealPromotion,requestMembers,GUILD_ID:'guild',POLICE_ROLE_ID:police,EXPELLED_ROLE_ID:'expelled',VALID_UNITS:new Set(['POLICIA','UCOP','CIC']),enc:encodeURIComponent,validDiscordId:id=>/^\d{17,20}$/.test(id),json:(body,status=200)=>Response.json(body,{status}),allowed:async()=>({userId:data.approvedById,director}),isAssignableRankRole:()=>true,discordFailure:()=>null,
+ const context=vm.createContext({Request,Response,Date,crypto,console,sameRankTrack,realRank,isRealPromotion,requestMembers,GUILD_ID:'guild',POLICE_ROLE_ID:police,EXPELLED_ROLE_ID:'expelled',VALID_UNITS:new Set(['POLICIA','UCOP','CIC']),enc:encodeURIComponent,validDiscordId:id=>/^\d{17,20}$/.test(id),json:(body,status=200)=>Response.json(body,{status}),allowed:async()=>({userId:data.approvedById,director}),isAssignableRankRole:()=>true,discordFailure:()=>null,
  queueRankAuthorization:async()=>{state.queued=true;return Response.json({pending_authorization:true});},syncPersonnelBranch:async()=>async()=>{},updatePersonnelNickname:async()=>'',postRankAuditLog:async()=>{},
  announcePromotion:async notice=>{assert(state.profileSaved,'Publish only after the file is saved');state.announcements.push(notice);return warning;},
  discord:async(path,init)=>{if(path.endsWith('/roles')&&!init)return ranks.map(r=>({id:r.role_id,permissions:'0'}));if(init?.method==='DELETE')state.roleDeletes.push(path);return path.endsWith(data.approvedById)?{nick:data.approvedByName,user:{username:'Approver'}}:member;},
@@ -31,7 +31,7 @@ function scenario({director=true,existing=true,action='promotion',warning=''}={}
 let s=scenario();let response=await s.context.changeRank(s.req);assert.equal(response.status,200);assert.equal(s.state.announcements.length,1);assert(s.state.historySaved);assert.equal(s.state.announcements[0].approvedByName,data.approvedByName);assert.equal(s.state.announcements[0].eventId,data.eventId);assert(!s.state.roleDeletes.some(path=>path.endsWith(rh)));
 s=scenario({warning:'Announcement unavailable'});response=await s.context.changeRank(s.req);assert.equal(response.status,200);assert.equal((await response.json()).warning,'Announcement unavailable');
 s=scenario({director:false});response=await s.context.changeRank(s.req);assert(s.state.queued);assert.equal(s.state.announcements.length,0);
-s=scenario();response=await s.context.registerPersonnel(s.req);assert.equal(response.status,200);assert.equal(s.state.announcements.length,1);assert.equal(s.state.announcements[0].approvedByName,data.approvedByName);
+s=scenario();response=await s.context.registerPersonnel(s.req);assert.equal(response.status,200);assert.equal(s.state.announcements.length,1);assert(s.state.historySaved);assert.equal(s.state.announcements[0].approvedByName,data.approvedByName);
 s=scenario({existing:false});response=await s.context.registerPersonnel(s.req);assert.equal(response.status,200);assert.equal(s.state.announcements.length,0);
 console.log('Promotion announcements: safe public fields, stable retries, no false save failure, both write routes and no pending/initial notifications: PASS');
 

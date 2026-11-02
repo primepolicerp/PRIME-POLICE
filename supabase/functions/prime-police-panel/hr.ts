@@ -225,11 +225,16 @@ async function registerPersonnel(req: Request) {
     const now = new Date().toISOString();
     const rows = await db("police_personnel?on_conflict=discord_user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=representation" }, body: JSON.stringify({ discord_user_id: id, discord_username: username, full_name: nameIc, name_ooc: nameOoc, steam_username: String(body.steam_username ?? existing.steam_username ?? "").trim().slice(0,100), plate, unit, rank_name: String(rank.role_name), rank_role_id: rankRoleId, source_application_id: existing.source_application_id ?? null, status: existing.status || "active", updated_at: now, last_rank_change_at: existing.rank_role_id === rankRoleId ? (existing.last_rank_change_at || now) : now }) });
     await postRankAuditLog("🗂️ Ficha policial actualizada",0x6499ff,[{name:"Agente",value:nameIc},{name:"Placa",value:plate},{name:"Rama",value:unit},{name:"Rango",value:String(rank.role_name)},{name:"Gestor",value:auth.userId!}]);
+    let historyWarning='';
+    if(existing.rank_role_id!==rankRoleId)try{
+     const actor=requestMembers.get(req),previous=realRank(existing.rank_role_id),actionType=isRealPromotion(previous?.id,rankRoleId)?'promotion':sameRankTrack(previous?.id,rankRoleId)?'demotion':'assignment';
+     await db('police_rank_history',{method:'POST',body:JSON.stringify({discord_user_id:id,discord_username:username,full_name:nameIc,action_type:actionType,previous_role_id:previous?.id||null,previous_rank_name:existing.rank_name||'',new_role_id:rankRoleId,new_rank_name:rank.role_name,reason:String(body.reason||'Rango registrado al guardar la ficha de Personal.').slice(0,2000),changed_by_discord_id:auth.userId,changed_by_name:String(actor?.nick||actor?.user?.global_name||actor?.user?.username||auth.userId)})});
+    }catch(error){console.error('Personnel rank history:',String(error));historyWarning='La ficha está guardada, pero falta documentar este movimiento en la trayectoria.';}
     let announcementWarning='';
     if(profiles?.length&&isRealPromotion(currentRank?.role_id,rankRoleId)){
      const actor=requestMembers.get(req);announcementWarning=await announcePromotion({eventId:crypto.randomUUID(),userId:id,name:nameIc,plate,previousRank:currentRank.role_name,newRank:rank.role_name,approvedById:auth.userId!,approvedByName:String(actor?.nick||actor?.user?.global_name||actor?.user?.username||auth.userId),timestamp:now});
     }
-    return json({ ok: true, personnel: rows?.[0] ?? null, message: "Rango, nombre IC y placa sincronizados en Discord.",warning:announcementWarning||undefined });
+    return json({ ok: true, personnel: rows?.[0] ?? null, message: "Rango, nombre IC y placa sincronizados en Discord.",warning:[announcementWarning,historyWarning].filter(Boolean).join(' ')||undefined });
   } catch (error) {
     console.error("Personnel register error:", String(error));
     try {
