@@ -1,3 +1,4 @@
+import {durableNotice} from './discord-jobs.ts';
 import {discordRequest} from './discord-client.ts';
 import {realRank,sameRankTrack} from '../_shared/real-ranks.ts';
 
@@ -16,6 +17,10 @@ export function promotionCard(data:Promotion){
  }]};
 }
 export async function announcePromotion(data:Promotion,send=discordRequest){
+ if(send===discordRequest)return durableNotice('promotion',data,()=>deliverPromotion(data,send));
+ return deliverPromotion(data,send);
+}
+export async function deliverPromotion(data:Promotion,send=discordRequest){
  try{
   const signal=AbortSignal.timeout(6000);
   const channel=await send('/channels/'+PROMOTION_CHANNEL,{method:'GET',signal});if(channel.guild_id!==GUILD||![0,5].includes(channel.type))throw Error('Invalid promotion channel');

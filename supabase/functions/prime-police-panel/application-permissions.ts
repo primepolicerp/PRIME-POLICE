@@ -14,5 +14,5 @@ export function applicationPermissions(roles:string[] = []) {
 export function applicationScopeAllowed(action:string,params:URLSearchParams) {
  if(action==='records')return params.get('kind')==='applications';
  if(action==='application-review')return !params.has('kind')||params.get('kind')==='applications';
- return ['me','data','decision','application-review-save'].includes(action);
+ return ['me','data','decision','application-review-save','workspace-search'].includes(action);
 }

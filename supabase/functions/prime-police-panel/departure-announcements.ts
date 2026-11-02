@@ -1,3 +1,4 @@
+import {durableNotice} from './discord-jobs.ts';
 import {discordRequest} from './discord-client.ts';
 export const DEPARTURE_CHANNEL='1566747692065890345';
 type Departure={eventId:string;userId:string;name:string;plate:string;rank:string;type:string;role?:string;date:string;approvedBy:string;timestamp:string};
@@ -14,6 +15,10 @@ export function departureCard(data:Departure){
  }]};
 }
 export async function announceDeparture(data:Departure,send=discordRequest){
+ if(send===discordRequest)return durableNotice('departure',data,()=>deliverDeparture(data,send));
+ return deliverDeparture(data,send);
+}
+export async function deliverDeparture(data:Departure,send=discordRequest){
  try{
   const signal=AbortSignal.timeout(6000);
   const channel=await send('/channels/'+DEPARTURE_CHANNEL,{method:'GET',signal});

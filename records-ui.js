@@ -19,19 +19,19 @@ function recordNavigation(kind,result){
 async function loadRecordPage(kind){
  const config=recordConfig[kind],state=recordState(kind),sequence=++state.sequence,session=token;
  const pager=$('recordPager-'+kind);if(pager)pager.querySelectorAll('button').forEach(b=>{b.disabled=true;});
- $(config.container).setAttribute('aria-busy','true');
+ $(config.container).setAttribute('aria-busy','true');$(config.container).inert=true;
  try{
-  if(kind==='personnel')await loadPersonnelDirectory();
   const result=await request('records',{method:'GET',query:{kind,offset:state.offset,limit:25,status:config.status(),search:$(config.search)?.value||'',counts:kind==='personnel'||kind==='sanctions'||config.stats?'true':'false',...(kind==='applications'&&activeStatus==='rejected-ai'?{review:'ai'}:{}),...(kind==='personnel'?{rank:$('personnelRankFilter').value}:{})}});
   if(sequence!==state.sequence||token!==session)return;
+  if(kind==='personnel')rosterPageInfo={counts:result.counts,total:result.total};
   config.assign(result.records||[]);const searchInput=$(config.search),searchValue=searchInput?.value;if(searchInput)searchInput.value='';try{config.render();}finally{if(searchInput)searchInput.value=searchValue;}
   if(config.stats)config.stats.forEach((id,i)=>{$(id).textContent=result.counts[['pending','accepted','rejected'][i]]||0;});
-  if(kind==='personnel'){const c=result.counts;$('personnelTotalStat').textContent=(c.active||0)+(c.inactive||0);$('personnelActiveStat').textContent=c.active||0;$('personnelInactiveStat').textContent=c.inactive||0;$('personnelCount').textContent='· '+result.total+' agentes';}
+  if(kind==='personnel'){const c=result.counts;$('personnelTotalStat').textContent=(c.active||0)+(c.inactive||0);$('personnelActiveStat').textContent=c.active||0;$('personnelInactiveStat').textContent=c.inactive||0;$('personnelCount').textContent='· '+result.total+(result.total===1?' agente':' agentes');}
   if(kind==='sanctions'){$('sanctionTotalCount').textContent=Object.values(result.counts).reduce((a,b)=>a+b,0);$('activeSanctionCount').textContent=result.counts.active||0;$('sanctionTypeCounts').textContent+=' (esta página)';}
   if(kind==='preselections')$('preselectionTotalStat').textContent=result.total;
   recordNavigation(kind,result);
  }catch(error){if(sequence===state.sequence&&token===session)showToast(error.message);}
- finally{if(sequence===state.sequence)$(config.container).removeAttribute('aria-busy');}
+ finally{if(sequence===state.sequence){$(config.container).removeAttribute('aria-busy');$(config.container).inert=false;}}
 }
 async function loadPersonnelDirectory(){
  if(directoryExpires>Date.now())return;
@@ -43,5 +43,5 @@ async function loadPersonnelDirectory(){
 async function loadPersonSanctions(userId){const records=[];let offset=0;do{const result=await request('records',{method:'GET',query:{kind:'sanctions',discord_user_id:userId,limit:100,offset}});records.push(...result.records);offset=result.next_offset;}while(offset!==null);return{records};}
 loadApplications=()=>loadRecordPage('applications');loadTransfers=()=>loadRecordPage('transfers');
 loadRankRequests=()=>loadRecordPage('intakes');loadPreselections=()=>loadRecordPage('preselections');loadSanctions=()=>loadRecordPage('sanctions');
-loadPersonnel=async()=>{try{await loadPersonnelDirectory();if(!$('personnelView').classList.contains('hidden'))await loadRecordPage('personnel');else renderPersonnel();}catch(error){showToast(error.message);}};
+loadPersonnel=async()=>{try{if(!$('personnelView').classList.contains('hidden'))await loadRecordPage('personnel');else{await loadPersonnelDirectory();renderPersonnel();}}catch(error){showToast(error.message);}};
 const transferSearch=document.createElement('input');transferSearch.type='search';transferSearch.id='transferSearch';transferSearch.className='search';transferSearch.placeholder='Buscar nombre, usuario o procedencia…';transferSearch.setAttribute('aria-label','Buscar traslados');$('refreshTransfers').before(transferSearch);transferSearch.addEventListener('input',()=>scheduleRecordSearch('transfers'));

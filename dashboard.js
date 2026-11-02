@@ -7,19 +7,13 @@ function dashboardEmpty(title,copy,icon='clock'){return '<div class="dashboard-e
 async function loadDashboard(){
  const sequence=++dashboardSequence,session=token,box=$('dashboardContent');
  const refresh=box.querySelector('[data-dashboard-refresh]');if(refresh){refresh.disabled=true;refresh.textContent='Actualizando…';}
- const query={from:new Date(Date.now()-7*86400000).toISOString(),to:new Date().toISOString()};
- const pendingTask=loadPendingChanges();
- const results=await Promise.allSettled([
-  request('duty-summary',{method:'GET',query}),request('shifts',{method:'GET',query}),
-  request('records',{method:'GET',query:{kind:'applications',status:'pending',limit:1}}),
-  request('records',{method:'GET',query:{kind:'intakes',status:'pending',limit:1}}),
-  request('records',{method:'GET',query:{kind:'transfers',status:'pending',limit:1}}),
-  request('audit-events',{method:'GET'}),loadAbsenceSummary(true),
- ]);
+ let packed;try{packed=await request('workspace-summary',{method:'GET'});}catch(error){if(sequence===dashboardSequence)box.innerHTML='<div class="panel"><h2>No se pudo actualizar el resumen</h2><p>'+safeText(error.message)+'</p><button class="btn" data-dashboard-refresh>Reintentar</button></div>';return;}
+ const pendingTask=loadPendingChanges(packed.inbox&&packed.legacy?packed:null);
+ const results=[{summary:[]},{shifts:packed.shifts||[]},{total:packed.applications},{total:packed.intakes},{total:packed.transfers},{events:packed.events||[]},packed.availability].map(value=>({status:'fulfilled',value}));
  if(sequence!==dashboardSequence||session!==token)return;
  const value=index=>results[index].status==='fulfilled'?results[index].value:null;
  const people=value(0)?.summary||[],shifts=value(1)?.shifts||[],events=value(5)?.events||[],availability=value(6);
- const total=availability?.active_personnel??(value(0)?people.length:null),working=value(0)?people.filter(p=>p.open_since).length:null;
+ const total=availability?.active_personnel??(value(0)?people.length:null),working=packed.working??null;
  const available=availability?.available,absent=availability?.absent;
  const percentage=total>0&&Number.isFinite(Number(available))?Math.max(0,Math.min(100,Math.round(available/total*100))):0;
  const now=new Date(),updated=now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),date=now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
@@ -30,10 +24,13 @@ async function loadDashboard(){
  '<div class="dashboard-date-row"><span>'+safeText(date)+'</span><span class="dashboard-update '+(failed?'is-partial':'')+'"><i></i>'+(failed?'Actualización parcial':'Actualizado a las '+updated)+'</span></div>'+
  '<div class="dashboard-metrics">'+dashboardMetric('Personal activo',total,'Agentes registrados','people','metric-blue','personnel')+dashboardMetric('En servicio',working,'Bitácoras abiertas','clock','metric-green','shifts')+dashboardMetric('Disponibles',available,'Sin ausencia vigente','check','metric-blue','personnel')+dashboardMetric('En ausencia',absent,'Períodos vigentes','calendar','metric-amber','absences')+'</div>'+
  '<div class="dashboard-main-grid"><div id="dashboardPendingSlot"></div><aside class="panel dashboard-work"><div class="dashboard-section-head"><div><span class="dashboard-kicker">RECLUTAMIENTO</span><h3>Por gestionar</h3></div></div>'+dashboardQueue('Postulaciones',value(2)?.total,'applications','Candidaturas pendientes','document')+dashboardQueue('Nuevos ingresos',value(3)?.total,'rank-requests','Registros por resolver','people')+dashboardQueue('Traslados',value(4)?.total,'transfers','Solicitudes pendientes','arrow')+'</aside></div>'+
+ '<section class="panel workspace-sync-summary"><div><span class="dashboard-kicker">CONTINUIDAD DEL SERVICIO</span><h3>Conexión con Discord</h3><p>'+dashboardNumber(packed.sync?.pending||0)+' avisos en cola · '+dashboardNumber(packed.sync?.failed||0)+' necesitan revisión</p></div><button type="button" class="btn" data-open-sync>Abrir sincronización</button></section>'+
  '<section class="panel dashboard-availability"><div class="dashboard-availability-intro"><span class="dashboard-kicker">DISPONIBILIDAD</span><h3>Estado del personal</h3><p>Las ausencias vigentes se registran por separado.</p></div><div class="dashboard-availability-main">'+(availability?'<div class="dashboard-availability-label"><strong>'+percentage+'% disponible</strong><span>'+dashboardNumber(available)+' de '+dashboardNumber(total)+' agentes</span></div><progress max="100" value="'+percentage+'" aria-label="Porcentaje de personal sin ausencia vigente"></progress><div class="dashboard-legend"><span><i class="legend-available"></i>Disponible: '+dashboardNumber(available)+'</span><span><i class="legend-absent"></i>Ausente: '+dashboardNumber(absent)+'</span><span>Programadas: '+dashboardNumber(availability.scheduled)+'</span></div>':'<p class="muted">No se pudo consultar la disponibilidad. Actualiza el resumen.</p>')+'</div><button class="btn" type="button" data-dashboard-view="absences">Ver ausencias '+dashboardIcon('arrow')+'</button></section>'+
  '<div class="dashboard-bottom-grid"><section class="panel dashboard-service"><div class="dashboard-section-head"><div><span class="dashboard-kicker">CONTROL HORARIO</span><h3>Servicio reciente</h3></div><button class="dashboard-text-link" type="button" data-dashboard-view="shifts">Ver bitácoras '+dashboardIcon('arrow')+'</button></div>'+(serviceRows||dashboardEmpty(value(1)?'Sin servicio registrado':'Servicio no disponible',value(1)?'Las próximas entradas y salidas aparecerán aquí.':'Vuelve a actualizar para consultar las bitácoras.'))+'</section><section class="panel dashboard-audit"><div class="dashboard-section-head"><div><span class="dashboard-kicker">TRAZABILIDAD</span><h3>Actividad administrativa</h3></div><span class="dashboard-small-label">Últimos movimientos</span></div>'+(auditRows||dashboardEmpty(value(5)?'Sin movimientos recientes':'Historial no disponible',value(5)?'Los cambios del equipo quedarán registrados aquí.':'Vuelve a actualizar para consultar el historial.','activity'))+'</section></div>'+
  (failed?'<p class="dashboard-partial-note" role="status">Algunos servicios no respondieron. Los valores pendientes se muestran con —; puedes volver a actualizar el resumen.</p>':'');
  $('dashboardPendingSlot').append(pendingPanel);
+ if(typeof configureWorkspaceRole==='function')configureWorkspaceRole();
+ const syncButton=box.querySelector('[data-open-sync]');if(syncButton)syncButton.onclick=openSyncCenter;
  await pendingTask;
 }
 $('dashboardContent').addEventListener('click',event=>{const target=event.target.closest('[data-dashboard-view],[data-dashboard-refresh]');if(!target)return;if(target.hasAttribute('data-dashboard-refresh')){loadDashboard();return;}const view=target.dataset.dashboardView;

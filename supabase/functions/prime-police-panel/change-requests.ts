@@ -6,6 +6,7 @@ import { writeAudit } from './audit-events.ts';
 import { applicationPermissions } from './application-permissions.ts';
 import { validateDecisionCorrection } from './decision-correction.ts';
 export const CHANGE_ACTIONS:Record<string,string>={
+ 'personnel-role-sync':'Sincronizar Policía y rama',
  'personnel-departure':'Dar de baja al agente','personnel-reentry':'Reingresar al agente',
  'personnel-note-add':'Añadir observación a ficha','personnel-note-edit':'Editar observación de ficha','personnel-note-archive':'Archivar observación de ficha',
  'preselection-admit':'Ingresar preseleccionado a Personal','transfer-admit':'Ingresar traslado aceptado a Personal','personnel-register':'Editar o registrar personal','personnel-delete':'Eliminar ficha de personal',
@@ -44,6 +45,7 @@ async function snapshot(action:string,payload:any,c:Context){
  if(action==='personnel-register'&&payload.record_action==='create'&&profile?.length)throw new ChangeInputError('Este ID de Discord ya tiene una ficha. Busca al agente en Personal y pulsa Editar.');
  if(action==='personnel-register'&&payload.record_action==='update'&&!profile?.length)throw new ChangeInputError('La ficha ya no existe. Actualiza Personal antes de registrar al agente.');
  const state:any={profile:profile?.[0]||null};
+ if(action==='personnel-role-sync'&&(!profile?.length||profile[0].status!=='active'||String(payload.expected_updated_at)!==String(profile[0].updated_at)))throw new ChangeInputError('Actualiza la ficha activa antes de sincronizar los roles.');
  if(['personnel-departure','personnel-reentry'].includes(action)){
   if(!profile?.length)throw new ChangeInputError('La ficha ya no existe.');
   const error=validatePersonnelMovement(payload,profile[0],action);if(error)throw new ChangeInputError(error);
@@ -95,7 +97,7 @@ export async function interceptChanges(req:Request,action:string,c:Context):Prom
   const params=new URL(req.url).searchParams,offset=Number(params.get('offset')||0),status=params.get('status')||'pending';
   if(!Number.isSafeInteger(offset)||offset<0||!['pending','history'].includes(status))return c.json({error:'Página inválida.'},400);
   const filter=status==='pending'?'in.(pending,processing)':'in.(approved,rejected,failed)';
-  const rows=await c.db('police_change_requests?select=*&status='+filter+'&order=requested_at.desc,id.desc&limit=26&offset='+offset);
+  const rows=await c.db('police_change_requests?select=*&status='+filter+(!isDirector?'&requested_by=eq.'+actor:'')+'&order=requested_at.desc,id.desc&limit=26&offset='+offset);
   return c.json({ok:true,can_approve:isDirector,requests:rows.slice(0,25),next_offset:rows.length>25?offset+25:null});
  }
  let payload:any;try{payload=await readBody(req);}catch{return c.json({error:'Revisa los datos del cambio.'},400);}
@@ -120,7 +122,7 @@ export async function interceptChanges(req:Request,action:string,c:Context):Prom
     applied=true;
     await c.db('police_change_requests?id=eq.'+encodeURIComponent(proposalId)+'&status=eq.processing',{method:'PATCH',body:JSON.stringify({status:'approved',result_message:[outcome.message||'Cambio aplicado',outcome.warning].filter(Boolean).join(' ').slice(0,1000)})});
     await writeAudit('✅ Cambio aprobado por Directiva',[{name:'Cambio',value:CHANGE_ACTIONS[proposal.action]},{name:'Propuesto por',value:proposal.requested_by_name},{name:'Autorizado por',value:actorName},{name:'Motivo',value:reason||'Autorizado'}]);
-    return c.json({ok:true,message:outcome.message||'Cambio aprobado y aplicado.',warning:outcome.warning});
+    return c.json({ok:true,message:outcome.message||'Cambio aprobado y aplicado.',warning:outcome.warning,sync:outcome.sync});
    }catch(error){console.error('Review pending change:',String(error));if(applied)return c.json({ok:true,message:'Cambio aplicado.',warning:'Falta cerrar el expediente. No repitas la aprobación.'});
     if(claimed)try{await c.db('police_change_requests?id=eq.'+encodeURIComponent(proposalId)+'&status=eq.processing',{method:'PATCH',body:JSON.stringify({status:'failed',review_reason:String(error).replace(/^Error: /,'').slice(0,500)})});}catch{/* never reopen a possibly executed operation */}
     const upstream=discordFailure(error);if(upstream)return c.json(upstream.body,upstream.status);return c.json({error:claimed?String(error).replace(/^Error: /,''):'No se pudo procesar la solicitud.'},409);

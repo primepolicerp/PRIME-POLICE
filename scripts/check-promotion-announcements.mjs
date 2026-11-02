@@ -13,17 +13,17 @@ calls=[];assert(await announcePromotion(data,async(path,init)=>{calls.push({path
 calls=[];assert(await announcePromotion(data,async(path,init)=>{calls.push({path,init});return{guild_id:'other-guild',type:0};}));assert.equal(calls.length,1);
 const source=readFileSync(new URL('../supabase/functions/prime-police-panel/hr.ts',import.meta.url),'utf8');
 const police='1539970134482092038',old='1539970134482092040',next='1564309793802428567',rh='1539970134519578770';
-function scenario({director=true,existing=true,action='promotion',warning=''}={}){
- const state={profileSaved:false,historySaved:false,announcements:[],roleDeletes:[],queued:false};
+function scenario({director=true,existing=true,action='promotion',warning='',missingPolice=false}={}){
+ const state={profileSaved:false,historySaved:false,announcements:[],roleDeletes:[],roleAdds:[],queued:false};
  const ranks=realRankRows([{role_id:old},{role_id:next},{role_id:rh}]);
- const member={roles:[police,old,rh],nick:'Anterior',user:{username:'User'}};
+ const member={roles:missingPolice?[old,rh]:[police,old,rh],nick:'Anterior',user:{username:'User'}};
  const profiles=existing?[{discord_user_id:data.userId,full_name:data.name,name_ooc:'OOC',plate:data.plate,rank_name:'Raso en Prácticas',rank_role_id:old,unit:'POLICIA',status:'active'}]:[];
  const req=new Request('https://test',{method:'POST',body:JSON.stringify({discord_user_id:data.userId,rank_role_id:next,action_type:action,reason:'Méritos comprobados',full_name:data.name,name_ooc:'OOC',plate:data.plate,unit:'POLICIA',approved_by_name:'Forged identity'})});
  const requestMembers=new WeakMap([[req,{nick:data.approvedByName}]]);
  const context=vm.createContext({Request,Response,Date,crypto,console,sameRankTrack,realRank,isRealPromotion,requestMembers,GUILD_ID:'guild',POLICE_ROLE_ID:police,EXPELLED_ROLE_ID:'expelled',VALID_UNITS:new Set(['POLICIA','UCOP','CIC']),enc:encodeURIComponent,validDiscordId:id=>/^\d{17,20}$/.test(id),json:(body,status=200)=>Response.json(body,{status}),allowed:async()=>({userId:data.approvedById,director}),isAssignableRankRole:()=>true,discordFailure:()=>null,
  queueRankAuthorization:async()=>{state.queued=true;return Response.json({pending_authorization:true});},syncPersonnelBranch:async()=>async()=>{},updatePersonnelNickname:async()=>'',postRankAuditLog:async()=>{},
  announcePromotion:async notice=>{assert(state.profileSaved,'Publish only after the file is saved');state.announcements.push(notice);return warning;},
- discord:async(path,init)=>{if(path.endsWith('/roles')&&!init)return ranks.map(r=>({id:r.role_id,permissions:'0'}));if(init?.method==='DELETE')state.roleDeletes.push(path);return path.endsWith(data.approvedById)?{nick:data.approvedByName,user:{username:'Approver'}}:member;},
+ discord:async(path,init)=>{if(path.endsWith('/roles')&&!init)return ranks.map(r=>({id:r.role_id,permissions:'0'}));if(init?.method==='DELETE')state.roleDeletes.push(path);if(init?.method==='PUT')state.roleAdds.push(path);return path.endsWith(data.approvedById)?{nick:data.approvedByName,user:{username:'Approver'}}:member;},
  db:async(path,init)=>{if(path.startsWith('police_rank_roles'))return ranks;if(path.startsWith('police_rank_history')){state.historySaved=true;return[{id:data.eventId}];}if(path.startsWith('police_personnel')){if(init){state.profileSaved=true;return[{discord_user_id:data.userId}];}return profiles;}throw Error(path);}});
  vm.runInContext(stripTypeScriptTypes(source.slice(source.indexOf('async function registerPersonnel('),source.indexOf('async function rankConfig(')))+stripTypeScriptTypes(source.slice(source.indexOf('async function changeRank('),source.indexOf('export async function handleHr('))),context);
  return{state,req,context};
@@ -35,3 +35,5 @@ s=scenario();response=await s.context.registerPersonnel(s.req);assert.equal(resp
 s=scenario({existing:false});response=await s.context.registerPersonnel(s.req);assert.equal(response.status,200);assert.equal(s.state.announcements.length,0);
 console.log('Promotion announcements: safe public fields, stable retries, no false save failure, both write routes and no pending/initial notifications: PASS');
 
+
+s=scenario({missingPolice:true});response=await s.context.registerPersonnel(s.req);assert.equal(response.status,200);assert(s.state.profileSaved);assert(s.state.roleAdds.some(path=>path.endsWith('/roles/'+police)));console.log('Active personnel registration ensures the mandatory Police role: PASS');

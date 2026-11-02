@@ -32,7 +32,7 @@ async function loadPersonnelFile(person,refresh=false){
  try{
   const data=await request('personnel-profile',{method:'GET',query:{discord_user_id:person.discord_user_id,note_offset:profileNoteOffset,history_offset:profileHistoryOffset,movement_offset:profileMovementOffset}});
   if(sequence!==profileSequence||token!==session)return;
-  profilePerson=data.person;const p=data.person,summary=data.summary,failed=new Set(data.failed_sections||[]);
+  profilePerson=data.person;if(typeof loadProfileAccess==='function')loadProfileAccess(data.person);const p=data.person,summary=data.summary,failed=new Set(data.failed_sections||[]);
   for(const [id,value] of [['profileName',p.full_name],['profileIc',p.full_name],['profileOoc',p.name_ooc||p.discord_username],['profileSteam',p.steam_username],['profilePlate',p.plate],['profileRank',p.rank_name],['profileUnit',unitLabel(p.unit)],['profileUpdated',niceDate(p.updated_at)],['profileJoined',niceDate(p.created_at)]])profileText(id,value);
   const available=p.status!=='active'?'Baja':summary?.on_absence?'Ausencia vigente':'Activo';profileText('profileStatus',available);
   if(summary){const seconds=Number(summary.week_seconds)||0;profileText('profileWeeklyHours',Math.floor(seconds/3600)+'h '+Math.floor(seconds%3600/60)+'m');

@@ -190,7 +190,7 @@ async function registerPersonnel(req: Request) {
   const recordAction=String(body?.record_action||"");
   if(recordAction&&!["create","update"].includes(recordAction))return json({error:"Operación de ficha inválida."},400);
   if (!validDiscordId(id) || !validDiscordId(rankRoleId) || !nameIc || !nameOoc || !plate || !VALID_UNITS.has(unit)) return json({ error: "Completa placa, nombre IC, nombre OOC, Discord y rango para registrar personal UCOP." }, 400);
-  let member: any; let oldRoles: string[] = []; let addedTargetRole = false; let nicknameChanged = false; let restoreBranch: (() => Promise<void>) | null = null;
+  let member: any; let oldRoles: string[] = []; let addedPoliceRole=false; let addedTargetRole = false; let nicknameChanged = false; let restoreBranch: (() => Promise<void>) | null = null;
   try {
     const [guildMember, profiles, configuredRanks] = await Promise.all([
       discord("/guilds/" + GUILD_ID + "/members/" + enc(id)),
@@ -203,7 +203,7 @@ async function registerPersonnel(req: Request) {
     const liveRoles=await discord('/guilds/'+GUILD_ID+'/roles') as any[];
     if(!isAssignableRankRole(liveRoles.find(r=>r.id===rankRoleId)))return json({error:'Ese rol está protegido o no es un rango asignable.'},400);
     const memberRoles: string[] = member.roles ?? [];
-    if (!memberRoles.includes(POLICE_ROLE_ID)) return json({ error: "El agente debe tener el rol base de Policía para registrarlo." }, 409);
+
 
     if ((memberRoles.includes(EXPELLED_ROLE_ID)||memberRoles.includes('1564310246128619560'))) return json({ error: "No se puede registrar a una persona con el rol de expulsado." }, 409);
     oldRoles = (configuredRanks ?? []).filter((item: any) => sameRankTrack(item.role_id,rankRoleId)&&memberRoles.includes(String(item.role_id)) && item.role_id !== rankRoleId).map((item: any) => String(item.role_id));
@@ -217,6 +217,7 @@ async function registerPersonnel(req: Request) {
     if(!auth.director && ((!currentRank&&rankRoleId!==firstRank?.role_id)||(currentRank&&Number(rank.rank_order)>Number(currentRank.rank_order)))) {
       return await queueRankAuthorization(auth.userId!,id,nameIc,currentRank?.role_id||null,rank,"register",body);
     }
+    if(!memberRoles.includes(POLICE_ROLE_ID)){await discord("/guilds/"+GUILD_ID+"/members/"+enc(id)+"/roles/"+POLICE_ROLE_ID,{method:"PUT",body:"{}"});addedPoliceRole=true;}
     if (!memberRoles.includes(rankRoleId)) { await discord("/guilds/" + GUILD_ID + "/members/" + enc(id) + "/roles/" + rankRoleId, { method: "PUT", body: "{}" }); addedTargetRole = true; }
     for (const roleId of oldRoles) await discord("/guilds/" + GUILD_ID + "/members/" + enc(id) + "/roles/" + roleId, { method: "DELETE" });
     restoreBranch = await syncPersonnelBranch(id, unit, memberRoles,rankRoleId);
@@ -234,12 +235,13 @@ async function registerPersonnel(req: Request) {
     if(profiles?.length&&isRealPromotion(currentRank?.role_id,rankRoleId)){
      const actor=requestMembers.get(req);announcementWarning=await announcePromotion({eventId:crypto.randomUUID(),userId:id,name:nameIc,plate,previousRank:currentRank.role_name,newRank:rank.role_name,approvedById:auth.userId!,approvedByName:String(actor?.nick||actor?.user?.global_name||actor?.user?.username||auth.userId),timestamp:now});
     }
-    return json({ ok: true, personnel: rows?.[0] ?? null, message: "Rango, nombre IC y placa sincronizados en Discord.",warning:[announcementWarning,historyWarning].filter(Boolean).join(' ')||undefined });
+    return json({ ok: true, personnel: rows?.[0] ?? null, message: "Rango, nombre IC y placa sincronizados en Discord.",sync:{record:"saved",roles:"confirmed"},warning:[announcementWarning,historyWarning].filter(Boolean).join(' ')||undefined });
   } catch (error) {
     console.error("Personnel register error:", String(error));
     try {
       if (restoreBranch) await restoreBranch();
       if (nicknameChanged) await discord("/guilds/" + GUILD_ID + "/members/" + enc(id), { method: "PATCH", body: JSON.stringify({ nick: member?.nick ?? null }) });
+      if(addedPoliceRole)await discord("/guilds/"+GUILD_ID+"/members/"+enc(id)+"/roles/"+POLICE_ROLE_ID,{method:"DELETE"});
       if (addedTargetRole) await discord("/guilds/" + GUILD_ID + "/members/" + enc(id) + "/roles/" + rankRoleId, { method: "DELETE" });
       for (const roleId of oldRoles) await discord("/guilds/" + GUILD_ID + "/members/" + enc(id) + "/roles/" + roleId, { method: "PUT", body: "{}" });
     } catch (rollbackError) { console.error("Personnel registration rollback failed:", String(rollbackError)); }
@@ -652,7 +654,7 @@ async function changeRank(req: Request) {
       ],
     );
     const announcementWarning=actionType==='promotion'?await announcePromotion({eventId:String(history?.[0]?.id||crypto.randomUUID()),userId:targetId,name:fullName,plate:updated.plate,previousRank:String(previousRank?.role_name||'Sin rango'),newRank:String(targetRank.role_name),approvedById:auth.userId!,approvedByName:actorName,timestamp:now}):'';
-    return json({ ok: true, message: (actionType === "promotion" ? "Ascenso" : actionType === "demotion" ? "Descenso" : "Rango asignado") + " aplicado. Apodo de Discord sincronizado con rango, nombre IC y placa.",warning:announcementWarning||undefined });
+    return json({ ok: true, message: (actionType === "promotion" ? "Ascenso" : actionType === "demotion" ? "Descenso" : "Rango asignado") + " aplicado. Apodo de Discord sincronizado con rango, nombre IC y placa.",sync:{record:"saved",roles:"confirmed",...(actionType==="promotion"?{notification:announcementWarning?"pending":"confirmed"}:{})},warning:announcementWarning||undefined });
   } catch (error) {
     console.error("Rank change failed:", String(error));
     if (didChangeDiscord && target) {

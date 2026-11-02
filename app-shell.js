@@ -17,7 +17,7 @@ const mobileTableObserver=new MutationObserver(()=>{clearTimeout(mobileTableObse
 window.addEventListener('panel-data-changed',()=>{directoryExpires=0;rankReadCache=null;});
 window.addEventListener('panel-session-ended',()=>{
  for(const state of Object.values(recordPages))state.sequence++;
- dutyShifts=[];dutyPeople=[];rosterPage=null;directoryExpires=0;rankReadCache=null;
+ dutyShifts=[];dutyPeople=[];rosterPage=null;rosterPageInfo=null;directoryExpires=0;rankReadCache=null;
  document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());closePersonnelProfile();
  $('sideNav').classList.remove('mobile-open');$('openSessionManager').hidden=true;
 });

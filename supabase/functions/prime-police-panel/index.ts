@@ -5,6 +5,9 @@ import { applicationReview, saveApplicationReview } from "./application-review.t
 import { PANEL_SITE_URL, PANEL_ORIGIN, isPanelOrigin, panelResponseHeaders } from "./site-config.ts";
 import { scheduleAcceptedPublicList } from "./public-accepted.ts";
 import { preparePlate } from "./plates.ts";
+import { queuePrivateNotice } from "./private-notices.ts";
+import { workspaceRoute } from "./workspace.ts";
+import { personnelAccess } from "./personnel-access.ts";
 import { personnelCareer } from "./personnel-career.ts";
 import { changePersonnelStatus } from "./personnel-status.ts";
 import { managePersonnelProfile } from "./personnel-profile.ts";
@@ -70,7 +73,8 @@ const db = async (path: string, init: RequestInit = {}) => {
 
 const discord = discordRequest;
 
-async function sendPrivateDiscordMessage(userId: string, payload: Record<string, unknown>) {
+async function sendPrivateDiscordMessage(userId: string, payload: Record<string, unknown>,source?:any) {
+  if(source){const warning=await queuePrivateNotice({eventId:source.table+':'+source.id+':'+source.reviewed_at,userId,name:source.name,payload,source});if(warning)throw Error(warning);return;}
   const channel = await discord("/users/@me/channels", {
     method: "POST",
     body: JSON.stringify({ recipient_id: userId }),
@@ -373,10 +377,10 @@ async function decideTransfer(req: Request) {
         ? "RRHH UCOP aceptó tu solicitud y te asignó el rol Traslado. Contacta con UCOP para coordinar tu entrevista IC."
         : "RRHH UCOP revisó tu solicitud de traslado y, por el momento, no fue aprobada." + (reason ? "\nMotivo: " + reason : "");
       if (!accepted) description += "\n\n**¿Quieres conocer los motivos de rechazo?** [Entra aquí](https://discord.com/channels/1539970134469378068/1566297302665269479) para consultar las causas habituales.";
-      await sendPrivateDiscordMessage(String(item.discord_user_id), { embeds: [{ title: accepted ? "🚔 Traslado aceptado · PRIME POLICE" : "📋 Resultado de solicitud de traslado", description, color: accepted ? 0x45b879 : 0xd5ad5a }] });
+      await sendPrivateDiscordMessage(String(item.discord_user_id), { embeds: [{ title: accepted ? "🚔 Traslado aceptado · PRIME POLICE" : "📋 Resultado de solicitud de traslado", description, color: accepted ? 0x45b879 : 0xd5ad5a }] },{table:"police_transfer_applications",id:item.id,name:item.full_name,status:updated[0].status,reviewed_at:updated[0].reviewed_at});
       notified = true;
     } catch (e) { console.error("Private transfer result DM failed:", String(e)); }
-    return json({ ok: true, status: updated[0].status, role_assigned: action === "accept", nickname_updated: action === "accept" ? !nicknameWarning : undefined, results_notified: notified, warning: [nicknameWarning, rejectionRoleWarning, notified ? "" : "La decisión se guardó, pero no se pudo enviar el resultado por privado. Comprueba que la persona permita mensajes directos."].filter(Boolean).join(" ") || undefined });
+    return json({ ok: true, status: updated[0].status, role_assigned: action === "accept", sync:{record:"saved",roles:action==="accept"?"confirmed":undefined,notification:notified?"confirmed":"pending"}, nickname_updated: action === "accept" ? !nicknameWarning : undefined, results_notified: notified, warning: [nicknameWarning, rejectionRoleWarning, notified ? "" : "La decisión se guardó, pero no se pudo enviar el resultado por privado. Comprueba que la persona permita mensajes directos."].filter(Boolean).join(" ") || undefined });
   } catch (e) {
     console.error("Transfer decision error:", String(e));
     return json({ error: "No se pudo guardar la decisión." }, 500);
@@ -544,7 +548,7 @@ async function decide(req: Request) {
     try {
       await sendPrivateDiscordMessage(String(app.discord_user_id), {
         embeds: [{ title: accepted ? "🎉 Resultado de postulación · Aceptada" : "📋 Resultado de postulación · PRIME POLICE", description, color: accepted ? 0x45b879 : 0xd5ad5a, footer: { text: "RRHH UCOP · Intento " + attempt + "/3 · Mensaje privado" } }],
-      });
+      },{table:"police_applications",id:app.id,name:app.full_name,status:finalApp.status,reviewed_at:finalApp.reviewed_at});
       resultsNotified = true;
     } catch (error) {
       console.error("Could not DM application result:", String(error));
@@ -556,6 +560,7 @@ async function decide(req: Request) {
     role_assigned: action === "accept" && Boolean(finalApp.role_assigned_at),
     nickname_updated: action === "accept" ? !nicknameWarning : undefined,
     results_notified: resultsNotified,
+    sync:{record:'saved',roles:action==='accept'&&finalApp.role_assigned_at?'confirmed':undefined,notification:resultsNotified?'confirmed':'pending'},
     warning: [nicknameWarning, rejectionRoleWarning, !preselectionSynced
       ? "La candidatura se aceptó, pero no se guardó en la base de preseleccionados. Avísale a un administrador para revisar el registro."
       : "", resultsNotified ? "" : "La decisión se guardó, pero no se pudo enviar por privado. Comprueba que la persona permita mensajes directos."].filter(Boolean).join(" ") || undefined,
@@ -575,6 +580,8 @@ async function routePanel(req: Request): Promise<Response> {
   if(action==='application-review'){if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return applicationReview(req,db,json);}
   if(action==='application-review-save'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return saveApplicationReview(req,db,json,actor,String(member.nick||member.user?.global_name||member.user?.username||actor));}
   if(['personnel-departure','personnel-reentry'].includes(action||'')&&req.method==='POST'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada.'},403);const member=await accessMember(actor);return changePersonnelStatus(req,action!,actor,{db,discord,json,actorIsDirector:(member.roles||[]).some((id:string)=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(id)),actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});}
+  if(['workspace-summary','workspace-search','sync-jobs','sync-retry'].includes(action||'')){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return workspaceRoute(req,action!,actor,{db,json,director:(member.roles||[]).some((id:string)=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(id)),applicationsOnly:applicationPermissions(member.roles||[]).applicationsOnly});}
+  if(['personnel-access','personnel-role-sync'].includes(action||'')){if((action==='personnel-access'&&req.method!=='GET')||(action==='personnel-role-sync'&&req.method!=='POST'))return json({error:'Método no permitido.'},405);const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada.'},403);return personnelAccess(req,actor,{db,discord,json});}
   if(action==='personnel-career'){if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return personnelCareer(req,{db,json});}
   if(action==='personnel-profile'||['personnel-note-add','personnel-note-edit','personnel-note-archive'].includes(action||'')){
    const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);
@@ -609,7 +616,7 @@ async function routePanel(req: Request): Promise<Response> {
 }
 async function dispatchWithLocks(req:Request):Promise<Response>{
  const action=new URL(req.url).searchParams.get("panel")||"";
- const guarded=["personnel-departure","personnel-reentry","personnel-note-add","personnel-note-edit","personnel-note-archive","rank-change","personnel-register","preselection-admit","transfer-admit","rank-request-review","rank-request-edit","rank-authorization-review","decision","transfer-decision","sanction","sanction-delete","nickname-sync","personnel-delete","shift-close","shift-delete","absence-review","absence-register","rank-config-save","rank-config-import-all"];
+ const guarded=["personnel-role-sync","personnel-departure","personnel-reentry","personnel-note-add","personnel-note-edit","personnel-note-archive","rank-change","personnel-register","preselection-admit","transfer-admit","rank-request-review","rank-request-edit","rank-authorization-review","decision","transfer-decision","sanction","sanction-delete","nickname-sync","personnel-delete","shift-close","shift-delete","absence-review","absence-register","rank-config-save","rank-config-import-all"];
  if(req.method!=="POST"||!guarded.includes(action))return routePanel(req);
  try{
   if(!await authenticate(req))return json({error:"La sesión caducó. Entra nuevamente con Discord."},401);
