@@ -52,14 +52,17 @@ function showToast(message) {
   toastTimer = setTimeout(() => $("toast").classList.add("hidden"), 4500);
 }
 function showLogin() {
+  const hadSession=Boolean(token);
   token = "";
-  canAuthorizePromotions=false;canManageShiftsDirect=false;
+  canAuthorizePromotions=false;canManageShiftsDirect=false;canDecideApplicationsDirect=false;restrictedToApplications=false;
+  resetAccountProfile();
   $("sideNav").classList.add("hidden");
   $("accountCard").classList.add("hidden");
   $("logoutButton").classList.add("hidden");
   sessionStorage.removeItem(TOKEN_KEY);
   $("loginView").classList.remove("hidden");
   $("appView").classList.add("hidden");
+  if(hadSession)window.dispatchEvent(new Event("panel-session-ended"));
 }
 function openDashboardWhenReady(){const open=()=>{if(token&&typeof loadDashboard==='function')document.querySelector(restrictedToApplications?'button[data-view="applications"]':'button[data-view="dashboard"]').click();};if(typeof loadDashboard==='function')open();else document.addEventListener('DOMContentLoaded',open,{once:true});}
 function showApp() {
@@ -96,32 +99,36 @@ async function performApiRequest(action,options,method,sessionAtStart){
   return result;
  }
 }
-async function loadAccountProfile() {
-  const fallbackAvatar = "https://cdn.discordapp.com/embed/avatars/0.png";
-  try {
-    const result = await request("me", {method:"GET"});
-    const user = result.user || {};
-    canAuthorizePromotions=Boolean(user.can_authorize_promotions);
-    canManageShiftsDirect=Boolean(user.can_manage_shifts_direct);
-    canDecideApplicationsDirect=Boolean(user.can_decide_applications_direct);
-    restrictedToApplications=Boolean(user.restricted_to_applications);
-    document.querySelectorAll('.workspace-tab').forEach(button=>button.classList.toggle('hidden',restrictedToApplications&&button.dataset.view!=='applications'));
-    $('managementPolicy').textContent=canAuthorizePromotions?'Directiva: puedes aplicar cambios y revisar las propuestas del panel principal.':restrictedToApplications?'Pasante UCOP: tus propuestas de aceptación o rechazo se envían a Directiva. Mientras se revisan, salen de Postulaciones para evitar decisiones duplicadas.':canDecideApplicationsDirect?'UCOP: puedes aceptar y rechazar postulaciones directamente. Los ascensos y demás cambios conservan su aprobación correspondiente.':'Puedes preparar cambios para que Directiva los revise en el panel principal.';
-    $("accountName").textContent = user.display_name || user.username || "Cuenta Discord";
-    $("accountId").textContent = (user.username ? "@" + user.username + " · " : "") + "ID " + (user.id || "—");
-    const accessRoles = Array.isArray(user.access_roles) ? user.access_roles : [];
-    $("accountRoles").textContent = accessRoles.join(" · ") || "Gestión autorizada";
-    $("accountRoles").title = accessRoles.join(" · ") || "Gestión autorizada";
-    const avatar = $("accountAvatar");
-    avatar.onerror = () => { avatar.onerror = null; avatar.src = fallbackAvatar; };
-    avatar.src = user.avatar_url || fallbackAvatar;
-  } catch {
-    $("accountName").textContent = "Cuenta Discord";
-    $("accountId").textContent = "Sesión de gestión activa";
-    $("accountRoles").textContent = "Roles autorizados";
-    $("accountAvatar").src = fallbackAvatar;
-  }
+let accountProfileSequence=0;
+function accountFallbackAvatar(name='PP'){
+ const initials=String(name).replace(/^@/,'').split(/\s+/).slice(0,2).map(part=>Array.from(part)[0]||'').join('').toUpperCase().replace(/[<>&"']/g,'')||'PP';
+ return 'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" rx="48" fill="#263c59"/><text x="48" y="59" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="30" fill="#d8e8ff">'+initials+'</text></svg>');
 }
+function resetAccountProfile(){
+ accountProfileSequence++;$('accountCard').removeAttribute('data-user-id');$('accountName').textContent='Cargando tu cuenta…';$('accountId').textContent='';$('accountRoles').textContent='Comprobando perfil de Discord';$('accountRoles').title='';$('retryAccountProfile').hidden=true;const avatar=$('accountAvatar');avatar.onerror=null;avatar.alt='';avatar.src=accountFallbackAvatar();
+}
+async function loadAccountProfile() {
+ const sequence=++accountProfileSequence,session=token;if(!session)return;
+ $('retryAccountProfile').hidden=true;
+ try {
+  const result=await request('me',{method:'GET'});if(sequence!==accountProfileSequence||session!==token)return;
+  const user=result.user;if(!user?.id||!user.username)throw Error('Discord no devolvió los datos de tu cuenta.');
+  const name=user.display_name||user.username,avatar=$('accountAvatar'),fallback=accountFallbackAvatar(name);
+  $('accountCard').dataset.userId=user.id;$('accountName').textContent=name;
+  $('accountId').textContent='@'+user.username+' · ID '+user.id;$('accountId').title='@'+user.username+' · ID '+user.id;
+  const accessRoles=Array.isArray(user.access_roles)?user.access_roles:[];$('accountRoles').textContent=accessRoles.join(' · ')||'Gestión autorizada';$('accountRoles').title=accessRoles.join(' · ');
+  avatar.alt='Avatar de @'+user.username;avatar.onerror=()=>{avatar.onerror=null;avatar.alt='';avatar.src=fallback;};avatar.src=typeof user.avatar_url==='string'&&user.avatar_url.startsWith('https://cdn.discordapp.com/')?user.avatar_url:fallback;
+  canAuthorizePromotions=Boolean(user.can_authorize_promotions);canManageShiftsDirect=Boolean(user.can_manage_shifts_direct);canDecideApplicationsDirect=Boolean(user.can_decide_applications_direct);restrictedToApplications=Boolean(user.restricted_to_applications);
+  document.querySelectorAll('.workspace-tab').forEach(button=>button.classList.toggle('hidden',restrictedToApplications&&button.dataset.view!=='applications'));
+  $('managementPolicy').textContent=canAuthorizePromotions?'Directiva: puedes aplicar cambios y revisar las propuestas del panel principal.':restrictedToApplications?'Pasante UCOP: tus propuestas de aceptación o rechazo se envían a Directiva. Mientras se revisan, salen de Postulaciones para evitar decisiones duplicadas.':canDecideApplicationsDirect?'UCOP: puedes aceptar y rechazar postulaciones directamente. Los ascensos y demás cambios conservan su aprobación correspondiente.':'Puedes preparar cambios para que Directiva los revise en el panel principal.';
+ } catch(error) {
+  if(sequence!==accountProfileSequence||session!==token)return;
+  if(!$('accountCard').dataset.userId){$('accountName').textContent='Perfil no disponible';$('accountId').textContent='No se pudo consultar tu cuenta';$('accountRoles').textContent='Reintenta la conexión con Discord';$('accountAvatar').src=accountFallbackAvatar();}
+  $('retryAccountProfile').hidden=false;$('retryAccountProfile').title=error.message;
+ }
+}
+$('retryAccountProfile').addEventListener('click',()=>loadAccountProfile());
+window.addEventListener('panel-session-ended',resetAccountProfile);
 function unitLabel(unit){return unit==="POLICIA"||!unit?"Sin rama · Policía":unit;}
 function niceDate(value) {
   if (!value) return "—";
