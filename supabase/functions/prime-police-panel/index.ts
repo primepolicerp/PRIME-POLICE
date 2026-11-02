@@ -1,4 +1,5 @@
 import { parseApplicationIdentity } from "../_shared/application-identity.ts";
+import { administrationRoute } from './administration.ts';
 import { syncRejectionRole, clearRejectionRoles } from "./rejection-roles.ts";
 import { validateDecisionCorrection } from "./decision-correction.ts";
 import { applicationReview, saveApplicationReview } from "./application-review.ts";
@@ -577,6 +578,16 @@ async function routePanel(req: Request): Promise<Response> {
   if (action === "oauth-callback" && req.method === "GET") return await finishDiscordOAuth(req);
   if (action === "login" && req.method === "POST") return await login(req);
   if (action === "me" && req.method === "GET") return await currentUser(req);
+  if(['administrative-overview','administrative-tasks','administrative-task-history','administrative-task-save','personnel-dossier'].includes(action||'')){
+   const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);
+   const member=await accessMember(actor),director=(member.roles||[]).some((id:string)=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(id));
+   if(applicationPermissions(member.roles||[]).applicationsOnly)return json({error:'Este apartado está reservado al personal gestor.'},403);
+   return administrationRoute(req,action!,actor,{db,json,director,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor),resolveAssignee:async(id:string)=>{
+    let candidate;try{candidate=id===actor?member:await accessMember(id,true);}catch(error){if(String(error).includes('404'))return null;throw error;}
+    if(!(candidate.roles||[]).some((role:string)=>MANAGER_ROLE_IDS.has(role))||applicationPermissions(candidate.roles||[]).applicationsOnly)return null;
+    return String(candidate.nick||candidate.user?.global_name||candidate.user?.username||id);
+   }});
+  }
   if(action==='application-review'){if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return applicationReview(req,db,json);}
   if(action==='application-review-save'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return saveApplicationReview(req,db,json,actor,String(member.nick||member.user?.global_name||member.user?.username||actor));}
   if(['personnel-departure','personnel-reentry'].includes(action||'')&&req.method==='POST'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada.'},403);const member=await accessMember(actor);return changePersonnelStatus(req,action!,actor,{db,discord,json,actorIsDirector:(member.roles||[]).some((id:string)=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(id)),actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});}

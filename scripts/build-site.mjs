@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {transform} from 'esbuild';
-const scripts=['app.js','sanction-agent-search.js','application-review-ui.js','personnel-profile.js','personnel-career.js','personnel-status.js','auto-plates.js','shifts.js','shifts-actions.js','pending-changes.js','records-ui.js','absence-ui.js','dashboard.js','app-shell.js','preselection-ingress.js','intake-editor.js','departures.js','professional-workspace.js'];
+const scripts=['app.js','sanction-agent-search.js','application-review-ui.js','personnel-profile.js','personnel-career.js','personnel-status.js','auto-plates.js','shifts.js','shifts-actions.js','pending-changes.js','records-ui.js','absence-ui.js','dashboard.js','app-shell.js','preselection-ingress.js','intake-editor.js','departures.js','professional-workspace.js','administration.js'];
 const output=path.resolve(process.cwd(),'dist');
 if(path.dirname(output)!==process.cwd()||path.basename(output)!=='dist')throw Error('Unexpected public output path');
 await fs.rm(output,{recursive:true,force:true});

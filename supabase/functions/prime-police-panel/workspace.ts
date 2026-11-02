@@ -1,7 +1,13 @@
 import {writeAudit} from './audit-events.ts';
 type Context={db:(path:string,init?:RequestInit)=>Promise<any>,json:(body:any,status?:number)=>Response,director:boolean,applicationsOnly:boolean};
 export async function workspaceRoute(req:Request,action:string,actor:string,c:Context){
- if(action==='workspace-summary'&&req.method==='GET')return c.json({ok:true,...await c.db('rpc/police_workspace_summary',{method:'POST',body:JSON.stringify({p_actor:actor,p_director:c.director})})});
+ if(action==='workspace-summary'&&req.method==='GET'){
+  const [packed,administration]=await Promise.all([
+   c.db('rpc/police_workspace_summary',{method:'POST',body:JSON.stringify({p_actor:actor,p_director:c.director})}),
+   c.db('rpc/police_administrative_overview',{method:'POST',body:JSON.stringify({p_actor:actor,p_director:c.director,p_offset:0,p_kind:''})}).then(({tasks,alert_total})=>({tasks,alert_total})).catch(()=>null),
+  ]);
+  return c.json({ok:true,...packed,administration});
+ }
  if(action==='workspace-search'&&req.method==='GET'){
   const q=(new URL(req.url).searchParams.get('q')||'').replace(/[^\p{L}\p{N}\s]/gu,'').trim().slice(0,80);
   if(q.length<2)return c.json({ok:true,results:[]});

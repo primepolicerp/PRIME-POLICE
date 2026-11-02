@@ -120,6 +120,7 @@ async function loadAccountProfile() {
   avatar.alt='Avatar de @'+user.username;avatar.onerror=()=>{avatar.onerror=null;avatar.alt='';avatar.src=fallback;};avatar.src=typeof user.avatar_url==='string'&&user.avatar_url.startsWith('https://cdn.discordapp.com/')?user.avatar_url:fallback;
   canAuthorizePromotions=Boolean(user.can_authorize_promotions);canManageShiftsDirect=Boolean(user.can_manage_shifts_direct);canDecideApplicationsDirect=Boolean(user.can_decide_applications_direct);restrictedToApplications=Boolean(user.restricted_to_applications);
   document.querySelectorAll('.workspace-tab').forEach(button=>button.classList.toggle('hidden',restrictedToApplications&&button.dataset.view!=='applications'));
+  window.dispatchEvent(new Event('panel-account-ready'));
   $('managementPolicy').textContent=canAuthorizePromotions?'Directiva: puedes aplicar cambios y revisar las propuestas del panel principal.':restrictedToApplications?'Pasante UCOP: tus propuestas de aceptación o rechazo se envían a Directiva. Mientras se revisan, salen de Postulaciones para evitar decisiones duplicadas.':canDecideApplicationsDirect?'UCOP: puedes aceptar y rechazar postulaciones directamente. Los ascensos y demás cambios conservan su aprobación correspondiente.':'Puedes preparar cambios para que Directiva los revise en el panel principal.';
  } catch(error) {
   if(sequence!==accountProfileSequence||session!==token)return;

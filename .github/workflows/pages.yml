@@ -34,6 +34,8 @@ jobs:
           node --check app-shell.js
           node --check absence-ui.js
           node --check dashboard.js
+          node --check administration.js
+          node --check departures.js
       - name: Check Edge Function types and variable scope
         run: npx --yes --package typescript@5.9.3 tsc --noEmit --skipLibCheck --allowImportingTsExtensions --moduleResolution bundler --module esnext --target es2022 --lib es2022,dom,dom.iterable scripts/edge-runtime.d.ts supabase/functions/prime-police-panel/index.ts supabase/functions/prime-police-discord/index.ts supabase/functions/prime-police-notifications/index.ts
       - uses: actions/setup-node@v4
@@ -57,6 +59,7 @@ jobs:
           node --experimental-strip-types scripts/check-personnel-status.mjs
           node --experimental-strip-types scripts/check-personnel-career.mjs
           node --experimental-strip-types scripts/check-administrative-workspace.mjs
+          node --experimental-strip-types scripts/check-administration.mjs
           npm run build
           node scripts/check-public-build.mjs
       - name: Upload site
