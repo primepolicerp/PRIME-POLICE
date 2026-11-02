@@ -29,8 +29,11 @@ const context=vm.createContext({realRank,rankedNickname,GUILD_ID:'guild',enc:enc
 vm.runInContext(source.match(/const BLOCKED_ROLE_PERMISSION_FLAGS = .*;/)[0],context);
 vm.runInContext(stripTypeScriptTypes(source.slice(source.indexOf('function isAssignableRankRole('),source.indexOf('async function allowed('))),context);
 assert.equal(context.isAssignableRankRole({id:cabo,permissions:'0'}),true);
-assert.equal(context.isAssignableRankRole({id:cabo,permissions:'8'}),false,'A rank label must never bypass administrator protection');
+assert.equal(context.isAssignableRankRole({id:cabo,permissions:'8'}),false,'Non-Directiva cannot assign elevated ranks');
 assert.equal(context.isAssignableRankRole({id:'1565810468059357194',permissions:'0'}),false);
+for(const rank of REAL_RANKS){assert.equal(context.isAssignableRankRole({id:rank.id,permissions:'8'},true),true);assert.equal(context.isAssignableRankRole({id:rank.id,permissions:'8'},false),false);assert.equal(context.isAssignableRankRole({id:rank.id,permissions:'8',managed:true},true),false);}
+assert.equal(context.isAssignableRankRole({id:'1539970134519578774',permissions:'8'},true),false,'Administrative access roles are not rank assignments');
+assert.equal(context.isAssignableRankRole({id:'1565810468059357194',permissions:'0'},true),false);
 vm.runInContext(stripTypeScriptTypes(source.slice(source.indexOf('async function updatePersonnelNickname('),source.indexOf('async function syncPersonnelBranch('))),context);
 assert.equal(await context.updatePersonnelNickname('member','Pedro Martínez','0002','test'),'RH · Pedro Martínez #0002');
 assert.equal(calls.length,2);assert.equal(calls[1].init.method,'PATCH');assert.deepEqual(JSON.parse(calls[1].init.body),{nick:'RH · Pedro Martínez #0002'});

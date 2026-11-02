@@ -47,5 +47,5 @@ for(const [id,status]of [['showPersonnelDepartures','inactive'],['showPersonnelA
 
 $('personnelDepartureType').addEventListener('change',()=>{$('personnelDepartureRole').value=suggestedDepartureRole($('personnelDepartureType').value);});
 
-function updateRestoreRankChoice(){const chosen=$('personnelReentryRank').value;const visible=statusPerson?.status==='inactive'&&chosen===statusPerson?.rank_role_id&&['1539970134544748558','1539970134544748559'].includes(chosen);$('personnelRestoreRankField').hidden=!visible;if(!visible)$('personnelRestoreRank').checked=false;}
+function updateRestoreRankChoice(){$('personnelRestoreRankField').hidden=true;$('personnelRestoreRank').checked=false;}
 $('personnelReentryRank').addEventListener('change',updateRestoreRankChoice);

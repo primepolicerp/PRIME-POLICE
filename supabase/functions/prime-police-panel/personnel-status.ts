@@ -56,11 +56,8 @@ export async function changePersonnelStatus(req:Request,action:string,actor:stri
   const role=live.find((r:any)=>r.id===rank.id);
   if(!configured.some((r:any)=>r.role_id===rank.id)||!role||role.managed)return c.json({error:'Ese rango no existe en la escala o no es asignable.'},409);
   if((BigInt(role.permissions||'0')&blocked)!==0n){
-   if(c.actorIsDirector===true&&body.restore_previous_rank===true&&person.rank_role_id===rank.id&&['1539970134544748558','1539970134544748559'].includes(rank.id)){
-    const history=await c.db('police_personnel_movements?select=previous_rank_name&discord_user_id=eq.'+target+'&kind=eq.departure&order=created_at.desc,id.desc&limit=1');
-    restoredPreviousRank=Boolean(history?.[0]?.previous_rank_name&&history[0].previous_rank_name===person.rank_name);
-   }
-   if(!restoredPreviousRank)return c.json({error:'Este rango tiene permisos elevados. Directiva puede restaurarlo marcando «Recuperar el rango anterior», solo si coincide con el rango documentado antes de la baja.'},409);
+   if(c.actorIsDirector!==true)return c.json({error:'Este rango tiene permisos elevados. Solo Directiva puede asignarlo al confirmar el reingreso.'},409);
+   restoredPreviousRank=true;
   }
   desired.add(POLICE);desired.add(rank.id);if(body.unit==='CIC')desired.add(CIC);if(body.unit==='UCOP'&&shouldAssignUcopBranch([rank.id],rank.id))desired.add(UCOP);
  }
@@ -101,6 +98,6 @@ export async function changePersonnelStatus(req:Request,action:string,actor:stri
  if(automaticRoles.length)warning=[warning,'Discord conserva '+automaticRoles.length+' rol(es) automático(s) de integración; no se pueden retirar manualmente.'].filter(Boolean).join(' ');
  if(departure){const notice=await announceDeparture({eventId:body.operation_id,userId:target,name:person.full_name,plate:person.plate,rank:person.rank_name,type:DEPARTURE_TYPES[body.departure_type],role:departureRole==='none'?'Sin rol adicional':DEPARTURE_ROLES[departureRole].name,date:body.effective_date,approvedBy:c.actorName,timestamp:result.movement?.created_at||new Date().toISOString()},c.discord);notificationState=notice?'pending':'confirmed';warning=[warning,notice].filter(Boolean).join(' ');}
  await writeAudit(departure?'📉 Baja de personal':'↩️ Reingreso de personal',[{name:'Agente',value:person.full_name+' #'+person.plate},{name:'Gestor',value:c.actorName},{name:'Tipo',value:departure?DEPARTURE_TYPES[body.departure_type]:'Reingreso'},{name:'Rol de baja',value:departure?(departureRole==='none'?'Sin rol adicional':DEPARTURE_ROLES[departureRole].name):'Retirada de Baja Voluntaria'},{name:'Motivo',value:body.reason},{name:'Fecha',value:body.effective_date}]);
- if(restoredPreviousRank)await writeAudit('🔐 Rango anterior restaurado por Directiva',[{name:'Agente',value:person.full_name+' #'+person.plate},{name:'Rango',value:person.rank_name},{name:'Autorizado por',value:c.actorName}]);
+ if(restoredPreviousRank)await writeAudit('🔐 Rango elevado asignado por Directiva',[{name:'Agente',value:person.full_name+' #'+person.plate},{name:'Rango',value:realRank(body.rank_role_id)!.name},{name:'Autorizado por',value:c.actorName}]);
  return c.json({ok:true,person:result.person,sync:{record:'saved',roles:member?'confirmed':'not_in_server',...(notificationState?{notification:notificationState}:{})},message:departure?'Baja registrada. Se conserva la ficha y su historial.':'Reingreso registrado en la misma ficha.',warning:warning||undefined});
 }

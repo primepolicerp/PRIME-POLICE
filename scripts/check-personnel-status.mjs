@@ -36,7 +36,7 @@ function scenario(options={}){
 let t=scenario();assert.equal((await t.run()).status,200);assert.equal(t.state.person.status,'inactive');assert.deepEqual([...t.state.roles].sort(),[DEPARTURE_ROLES.expelled.id].sort());assert.equal(t.state.events.length,1);assert.equal(t.state.announcements.length,1);const n=t.state.calls;await t.run();assert.equal(t.state.calls,n);assert.equal(t.state.announcements.length,1);assert.equal(t.state.events.length,1);
 for(const options of [{discordFail:true},{dbFail:true}]){t=scenario(options);assert.equal((await t.run()).status,502);assert.equal(t.state.person.status,'active');assert.deepEqual([...t.state.roles].sort(),[police,rank,ucop,staff].sort());assert.equal(t.state.events.length,0);assert.equal(t.state.announcements.length,0);}
 t=scenario({replyLost:true});assert.equal((await t.run()).status,200);assert.equal(t.state.person.status,'inactive');assert.equal(t.state.events.length,1);assert.deepEqual([...t.state.roles].sort(),[DEPARTURE_ROLES.expelled.id].sort());
-t=scenario({reentry:true,protected:true});assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);
+t=scenario({reentry:true,protected:true,director:false});assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);
 t=scenario({reentry:true,pasante:true});assert.equal((await t.run()).status,200);assert(t.state.roles.has(police));assert(t.state.roles.has(pasante));assert(t.state.roles.has(staff));assert(!t.state.roles.has(ucop));assert(!t.state.roles.has(rank));assert.equal(t.state.announcements.length,0);
 t=scenario();t.body.expected_updated_at='2025-01-01T00:00:00Z';assert.equal((await t.run()).status,409);assert.equal(t.state.calls,0);
 t=scenario();t.body.departure_type='inventado';assert.equal((await t.run()).status,409);assert.equal(t.state.calls,0);
@@ -52,10 +52,9 @@ t=scenario({reentry:true});t.state.person.departure_role='banned';assert.equal((
 t=scenario();t.state.roles.add(DEPARTURE_ROLES.banned.id);t.body.departure_role='voluntary';assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);
 console.log('Departure markers: defaults, explicit veto, exact marker replacement, voluntary reentry cleanup, rollback and veto/expulsion protection: PASS');
 
-t=scenario({reentry:true,chief:true,restore:true,proof:true});assert.equal((await t.run()).status,200);assert(t.state.roles.has('1539970134544748559'));
-for(const options of [{director:false,proof:true},{proof:false},{restore:false,proof:true}]){t=scenario({reentry:true,chief:true,restore:true,...options});assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);}
-t=scenario({reentry:true,chief:true,restore:true,proof:true});t.state.person.rank_role_id=rank;assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);
-console.log('Protected previous UCOP rank: explicit consent, trusted Directiva approval and matching documented departure required; no new protected assignments: PASS');
+for(const options of [{chief:true},{chief:true,restore:false,proof:false},{protected:true}]){t=scenario({reentry:true,...options});assert.equal((await t.run()).status,200);assert(t.state.roles.has(t.body.rank_role_id));}
+for(const options of [{chief:true},{protected:true}]){t=scenario({reentry:true,director:false,...options});assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);}
+console.log('Elevated official ranks: Directiva may assign on reentry without obsolete restoration restrictions; non-Directiva cannot: PASS');
 
 t=scenario();for(let i=0;i<80;i++)t.state.roles.add('extra-'+i);assert.equal((await t.run()).status,200);assert.deepEqual([...t.state.roles],[DEPARTURE_ROLES.expelled.id]);assert.equal(t.state.writes.filter(w=>w.body&&JSON.parse(w.body).roles).length,1);
 t=scenario({highRole:true});assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);assert.equal(t.state.events.length,0);
