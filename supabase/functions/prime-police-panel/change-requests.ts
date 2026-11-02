@@ -1,3 +1,4 @@
+import { validatePersonnelMovement } from './personnel-status.ts';
 import { discordFailure } from "./discord-client.ts";
 import { accessMember } from './access-member.ts';
 import { withOperationLock } from './operation-lock.ts';
@@ -5,6 +6,7 @@ import { writeAudit } from './audit-events.ts';
 import { applicationPermissions } from './application-permissions.ts';
 import { validateDecisionCorrection } from './decision-correction.ts';
 export const CHANGE_ACTIONS:Record<string,string>={
+ 'personnel-departure':'Dar de baja al agente','personnel-reentry':'Reingresar al agente',
  'personnel-note-add':'Añadir observación a ficha','personnel-note-edit':'Editar observación de ficha','personnel-note-archive':'Archivar observación de ficha',
  'preselection-admit':'Ingresar preseleccionado a Personal','transfer-admit':'Ingresar traslado aceptado a Personal','personnel-register':'Editar o registrar personal','personnel-delete':'Eliminar ficha de personal',
  'rank-change':'Ascenso o descenso','rank-config-save':'Modificar escala de rangos','rank-config-import-all':'Sincronizar escala con Discord',
@@ -42,6 +44,11 @@ async function snapshot(action:string,payload:any,c:Context){
  if(action==='personnel-register'&&payload.record_action==='create'&&profile?.length)throw new ChangeInputError('Este ID de Discord ya tiene una ficha. Busca al agente en Personal y pulsa Editar.');
  if(action==='personnel-register'&&payload.record_action==='update'&&!profile?.length)throw new ChangeInputError('La ficha ya no existe. Actualiza Personal antes de registrar al agente.');
  const state:any={profile:profile?.[0]||null};
+ if(['personnel-departure','personnel-reentry'].includes(action)){
+  if(!profile?.length)throw new ChangeInputError('La ficha ya no existe.');
+  const error=validatePersonnelMovement(payload,profile[0],action);if(error)throw new ChangeInputError(error);
+  return{resource:'personnel:'+target,state};
+ }
  if(action.startsWith('personnel-note-')){
   if(!profile?.length)throw new ChangeInputError('La ficha del agente ya no existe.');
   const noteId=String(payload.note_id||''),content=String(payload.content||'').trim();

@@ -5,6 +5,7 @@ import { applicationReview, saveApplicationReview } from "./application-review.t
 import { PANEL_SITE_URL, PANEL_ORIGIN, isPanelOrigin, panelResponseHeaders } from "./site-config.ts";
 import { scheduleAcceptedPublicList } from "./public-accepted.ts";
 import { preparePlate } from "./plates.ts";
+import { changePersonnelStatus } from "./personnel-status.ts";
 import { managePersonnelProfile } from "./personnel-profile.ts";
 import { manageAbsences } from "./absences.ts";
 import { listPagedRecords } from "./paged-records.ts";
@@ -572,6 +573,7 @@ async function routePanel(req: Request): Promise<Response> {
   if (action === "me" && req.method === "GET") return await currentUser(req);
   if(action==='application-review'){if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return applicationReview(req,db,json);}
   if(action==='application-review-save'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return saveApplicationReview(req,db,json,actor,String(member.nick||member.user?.global_name||member.user?.username||actor));}
+  if(['personnel-departure','personnel-reentry'].includes(action||'')&&req.method==='POST'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada.'},403);const member=await accessMember(actor);return changePersonnelStatus(req,action!,actor,{db,discord,json,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});}
   if(action==='personnel-profile'||['personnel-note-add','personnel-note-edit','personnel-note-archive'].includes(action||'')){
    const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);
    const member=await accessMember(actor);return managePersonnelProfile(req,action,actor,{db,json,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});
@@ -605,7 +607,7 @@ async function routePanel(req: Request): Promise<Response> {
 }
 async function dispatchWithLocks(req:Request):Promise<Response>{
  const action=new URL(req.url).searchParams.get("panel")||"";
- const guarded=["personnel-note-add","personnel-note-edit","personnel-note-archive","rank-change","personnel-register","preselection-admit","transfer-admit","rank-request-review","rank-request-edit","rank-authorization-review","decision","transfer-decision","sanction","sanction-delete","nickname-sync","personnel-delete","shift-close","shift-delete","absence-review","absence-register","rank-config-save","rank-config-import-all"];
+ const guarded=["personnel-departure","personnel-reentry","personnel-note-add","personnel-note-edit","personnel-note-archive","rank-change","personnel-register","preselection-admit","transfer-admit","rank-request-review","rank-request-edit","rank-authorization-review","decision","transfer-decision","sanction","sanction-delete","nickname-sync","personnel-delete","shift-close","shift-delete","absence-review","absence-register","rank-config-save","rank-config-import-all"];
  if(req.method!=="POST"||!guarded.includes(action))return routePanel(req);
  try{
   if(!await authenticate(req))return json({error:"La sesión caducó. Entra nuevamente con Discord."},401);

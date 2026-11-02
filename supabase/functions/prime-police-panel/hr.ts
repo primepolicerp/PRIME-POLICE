@@ -208,6 +208,7 @@ async function registerPersonnel(req: Request) {
     if (memberRoles.includes(EXPELLED_ROLE_ID)) return json({ error: "No se puede registrar a una persona con el rol de expulsado." }, 409);
     oldRoles = (configuredRanks ?? []).filter((item: any) => sameRankTrack(item.role_id,rankRoleId)&&memberRoles.includes(String(item.role_id)) && item.role_id !== rankRoleId).map((item: any) => String(item.role_id));
     const existing = profiles?.[0] ?? {};
+    if(existing.status==='inactive')return json({error:'Este agente está de baja. Utiliza Reingresar para asignar rango y división sin perder su historial.'},409);
     if(recordAction==="create"&&profiles?.length)return json({error:"Este ID de Discord ya tiene una ficha. Busca al agente en Personal y pulsa Editar; registrar de nuevo no crea otra persona."},409);
     if(recordAction==="update"&&!profiles?.length)return json({error:"La ficha ya no existe. Actualiza Personal antes de registrar al agente."},409);
     if (existing.unit && !VALID_UNITS.has(existing.unit)) return json({ error: "Este perfil pertenece a otra unidad y no puede administrarse desde UCOP." }, 409);
@@ -590,6 +591,7 @@ async function changeRank(req: Request) {
     member = guildMember;
     target = member;
     priorProfile = profiles?.[0] ?? null;
+    if(priorProfile?.status==='inactive')return json({error:'El agente está de baja. Utiliza Reingresar desde Personal.'},409);
     if (!priorProfile) return json({ error: "El oficial no está registrado como personal UCOP." }, 404);
     const memberRoles: string[] = member.roles ?? [];
     if (!memberRoles.includes(POLICE_ROLE_ID)) return json({ error: "El oficial debe conservar el rol de Policía para cambiar de rango." }, 409);

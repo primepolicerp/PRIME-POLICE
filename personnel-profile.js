@@ -18,7 +18,7 @@ async function loadPersonnelFile(person,refresh=false){
  if(profileSaving&&!refresh)return;
  const sequence=++profileSequence,session=token;
  if(!refresh){profileFocus=document.activeElement;profileNoteOffset=0;profileHistoryOffset=0;profileNoteNext=null;profileHistoryNext=null;$('profileNoteFeedback').textContent='';$('profileNotesPager').hidden=true;$('profileHistoryPager').hidden=true;}
- profilePerson={...person};const modal=$('personnelProfileModal');modal.classList.remove('hidden');document.body.style.overflow='hidden';
+ profilePerson={...person};if(!refresh)profileMovementOffset=0;updatePersonnelStatusButton(person,true);const modal=$('personnelProfileModal');modal.classList.remove('hidden');document.body.style.overflow='hidden';
  if(!refresh){$('profileClose').focus();$('profileHistoryDetails').open=false;restoreProfileDraft();}
  $('profileAvatar').textContent=(person.full_name||'PP').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
  profileText('profileName',person.full_name||'Ficha policial');profileText('profileDiscord',(person.discord_username?'@'+person.discord_username+' · ':'')+'ID '+person.discord_user_id);
@@ -30,15 +30,16 @@ async function loadPersonnelFile(person,refresh=false){
  $('profileNotesCount').textContent='';for(const id of ['profileNotesPrevious','profileNotesNext','profileHistoryPrevious','profileHistoryNext'])$(id).disabled=true;
  for(const id of ['profileNotes','profileHistory','profileAbsences','profileSanctions'])profileEmpty($(id),'Cargando…');
  try{
-  const data=await request('personnel-profile',{method:'GET',query:{discord_user_id:person.discord_user_id,note_offset:profileNoteOffset,history_offset:profileHistoryOffset}});
+  const data=await request('personnel-profile',{method:'GET',query:{discord_user_id:person.discord_user_id,note_offset:profileNoteOffset,history_offset:profileHistoryOffset,movement_offset:profileMovementOffset}});
   if(sequence!==profileSequence||token!==session)return;
   profilePerson=data.person;const p=data.person,summary=data.summary,failed=new Set(data.failed_sections||[]);
   for(const [id,value] of [['profileName',p.full_name],['profileIc',p.full_name],['profileOoc',p.name_ooc||p.discord_username],['profileSteam',p.steam_username],['profilePlate',p.plate],['profileRank',p.rank_name],['profileUnit',unitLabel(p.unit)],['profileUpdated',niceDate(p.updated_at)],['profileJoined',niceDate(p.created_at)]])profileText(id,value);
-  const available=p.status!=='active'?'Inactivo':summary?.on_absence?'Ausencia vigente':'Activo';profileText('profileStatus',available);
+  const available=p.status!=='active'?'Baja':summary?.on_absence?'Ausencia vigente':'Activo';profileText('profileStatus',available);
   if(summary){const seconds=Number(summary.week_seconds)||0;profileText('profileWeeklyHours',Math.floor(seconds/3600)+'h '+Math.floor(seconds%3600/60)+'m');
    for(const [id,value] of [['profileWarnings',summary.warnings],['profileStrikes',summary.strikes],['profileWeeklyShifts',summary.shifts_week],['profileAbsenceCount',summary.absence_count],['profileDaysInRank',summary.days_in_rank===null?'Sin fecha':summary.days_in_rank+' días'],['profileLastService',summary.last_service?niceDate(summary.last_service):'Sin turnos registrados']])profileText(id,value);
    profileText('profileDuty',summary.on_duty?'● En servicio':'● Fuera de servicio');$('profileDuty').classList.toggle('is-on-duty',Boolean(summary.on_duty));
   }else profileText('profileDuty','Servicio no disponible');
+  updatePersonnelStatusButton(p,false);renderPersonnelMovements(data.movements||[],data.movement_next_offset,failed.has('movements'));
   renderProfileNotes(data.notes||[],failed.has('notes'));renderProfileHistory(data.history||[],failed.has('history'));
   renderProfileSanctions(data.sanctions||[],failed.has('sanctions'));renderProfileAbsences(data.absences||[],failed.has('absences'));
   profileNoteNext=data.note_next_offset;profileHistoryNext=data.history_next_offset;
