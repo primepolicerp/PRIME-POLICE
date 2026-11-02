@@ -33,8 +33,8 @@ export function rankedNickname(name:string,plate:string,roles:string[]){
  const suffix=cleanPlate?' #'+cleanPlate:'';
  const points=(s:string)=>Array.from(s);
  let label=rank?(rank.track==='ucop'?rank.short:rank.name):'';
- if(rank&&points(label+' · '+cleanName+suffix).length>32)label=rank.short;
- const prefix=label?label+' · ':'';
+ if(rank&&points(label+' | '+cleanName+suffix).length>32)label=rank.short;
+ const prefix=label?label+' | ':'';
  const room=32-points(prefix+suffix).length;
  if(room<1)throw Error('La placa es demasiado larga para incluir rango, nombre y placa en el apodo.');
  return prefix+points(cleanName).slice(0,room).join('').trimEnd()+suffix;
