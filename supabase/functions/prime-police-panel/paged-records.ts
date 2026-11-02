@@ -1,6 +1,7 @@
 import {createReviewCache,reviewSubmissionAnswers} from './application-review.ts';
 import {attachRejectionHistory} from './rejection-history.ts';
 import {attachPersonnelMembership} from './personnel-membership.ts';
+import {personnelRegisterList} from './personnel-register-list.ts';
 const kinds:Record<string,{table:string,search:string[],date:string,statuses:string[]}>={
  absences:{table:'police_absence_requests',search:['full_name','discord_username','discord_user_id','plate'],date:'created_at',statuses:['pending','approved','rejected','cancelled']},
  applications:{table:'police_applications',search:['full_name','discord_username','discord_user_id','answers->>character_info'],date:'created_at',statuses:['pending','accepted','rejected']},
@@ -10,15 +11,16 @@ const kinds:Record<string,{table:string,search:string[],date:string,statuses:str
  sanctions:{table:'police_sanctions',search:['target_name','discord_username','discord_user_id','plate','reason','issuer_name'],date:'created_at',statuses:['active','failed','pending']},
  preselections:{table:'police_preselections',search:['full_name','discord_username','discord_user_id'],date:'accepted_at',statuses:['active','converted','withdrawn']},
 };
-async function query(path:string){
+async function query(path:string,init:RequestInit={}){
  const secret=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
- const r=await fetch(Deno.env.get('SUPABASE_URL')+'/rest/v1/'+path,{headers:{apikey:secret,Authorization:'Bearer '+secret,Prefer:'count=exact'},signal:AbortSignal.timeout(12000)});
+ const r=await fetch(Deno.env.get('SUPABASE_URL')+'/rest/v1/'+path,{...init,headers:{apikey:secret,Authorization:'Bearer '+secret,Prefer:'count=exact','Content-Type':'application/json'},signal:AbortSignal.timeout(12000)});
  if(!r.ok)throw Error('Could not read paginated records');
  return{rows:await r.json(),count:Number(r.headers.get('content-range')?.split('/')[1]||0)};
 }
 export async function listPagedRecords(req:Request,json:(v:unknown,status?:number)=>Response){
  if(req.method!=='GET')return json({error:'Método no permitido.'},405);
  const p=new URL(req.url).searchParams,kind=p.get('kind')||'',config=kinds[kind];if(!config)return json({error:'Lista inválida.'},400);
+ if(kind==='personnel'&&p.get('directory')!=='true')return personnelRegisterList(req,async body=>(await query('rpc/police_personnel_register',{method:'POST',body:JSON.stringify(body)})).rows,json);
  const offset=Number(p.get('offset')||0),limit=Number(p.get('limit')||25);
  const review=p.get('review')||'';if(review&&(kind!=='applications'||review!=='ai'))return json({error:'Filtro de revisión inválido.'},400);
  if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>100)return json({error:'Página inválida.'},400);

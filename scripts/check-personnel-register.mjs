@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {personnelRegisterList} from '../supabase/functions/prime-police-panel/personnel-register-list.ts';
+const calls=[],json=(body,status=200)=>Response.json(body,{status}),read=async body=>{calls.push(body);return {ok:true,records:[],total:0,counts:{},next_offset:null};};
+const run=(query='',method='GET')=>personnelRegisterList(new Request('https://test/?'+query,{method}),read,json);
+assert.equal((await run('status=absence&unit=UCOP&rank=Oficial%20UCOP&plate_from=0115&plate_to=0125&sort=rank&direction=desc&offset=25&counts=true')).status,200);
+assert.deepEqual(calls[0],{p_status:'absence',p_unit:'UCOP',p_rank:'Oficial UCOP',p_search:'',p_sort:'rank',p_desc:true,p_offset:25,p_limit:25,p_plate_from:115,p_plate_to:125,p_target:null,p_counts:true});
+for(const query of ['status=bad','unit=bad','sort=sql','direction=bad','offset=-1','offset=1.5','offset=1000001','limit=101','plate_from=12x','plate_to=-1','plate_from=123&plate_to=122','plate_from=1234567890123','discord_user_id=x','review=ai'])assert.equal((await run(query)).status,400,query);
+assert.equal(calls.length,1);assert.equal((await run('','POST')).status,405);assert.equal(calls.length,1);
+await run('discord_user_id=222222222222222222&search=Ana%20%25');assert.equal(calls.at(-1).p_target,'222222222222222222');assert.equal(calls.at(-1).p_search,'Ana');
+console.log('Personnel register: combined validated filters, numeric plate bounds, hierarchy order, pagination, target lookup and read-only route: PASS');

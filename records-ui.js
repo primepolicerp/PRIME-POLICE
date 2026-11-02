@@ -21,12 +21,14 @@ async function loadRecordPage(kind){
  const pager=$('recordPager-'+kind);if(pager)pager.querySelectorAll('button').forEach(b=>{b.disabled=true;});
  $(config.container).setAttribute('aria-busy','true');$(config.container).inert=true;
  try{
-  const result=await request('records',{method:'GET',query:{kind,offset:state.offset,limit:25,status:config.status(),search:$(config.search)?.value||'',counts:kind==='personnel'||kind==='sanctions'||config.stats?'true':'false',...(kind==='applications'&&activeStatus==='rejected-ai'?{review:'ai'}:{}),...(kind==='personnel'?{rank:$('personnelRankFilter').value}:{})}});
+  const registerFilters=kind==='personnel'?personnelRegisterQuery():{};if(registerFilters===null){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=7;cell.textContent='Revisa los filtros de placas.';row.append(cell);$(config.container).replaceChildren(row);if(pager)pager.hidden=true;return;}if(pager)pager.hidden=false;
+  const result=await request('records',{method:'GET',query:{kind,offset:state.offset,limit:25,status:config.status(),search:$(config.search)?.value||'',counts:kind==='personnel'||kind==='sanctions'||config.stats?'true':'false',...(kind==='applications'&&activeStatus==='rejected-ai'?{review:'ai'}:{}),...(kind==='personnel'?{rank:$('personnelRankFilter').value,...registerFilters}:{})}});
   if(sequence!==state.sequence||token!==session)return;
+  if(kind==='personnel'&&result.total>0&&state.offset>=result.total){state.offset=Math.floor((result.total-1)/25)*25;return await loadRecordPage(kind);}if(kind==='personnel'&&result.total===0)state.offset=0;
   if(kind==='personnel')rosterPageInfo={counts:result.counts,total:result.total};
   config.assign(result.records||[]);const searchInput=$(config.search),searchValue=searchInput?.value;if(searchInput)searchInput.value='';try{config.render();}finally{if(searchInput)searchInput.value=searchValue;}
   if(config.stats)config.stats.forEach((id,i)=>{$(id).textContent=result.counts[['pending','accepted','rejected'][i]]||0;});
-  if(kind==='personnel'){const c=result.counts;$('personnelTotalStat').textContent=(c.active||0)+(c.inactive||0);$('personnelActiveStat').textContent=c.active||0;$('personnelInactiveStat').textContent=c.inactive||0;$('personnelCount').textContent='· '+result.total+(result.total===1?' agente':' agentes');}
+  if(kind==='personnel'){const c=result.counts;$('personnelTotalStat').textContent=(c.active||0)+(c.inactive||0);$('personnelActiveStat').textContent=c.active||0;$('personnelInactiveStat').textContent=c.inactive||0;$('personnelAbsenceStat').textContent=c.absence??'—';$('personnelCount').textContent=result.total+(result.total===1?' agente':' agentes');}
   if(kind==='sanctions'){$('sanctionTotalCount').textContent=Object.values(result.counts).reduce((a,b)=>a+b,0);$('activeSanctionCount').textContent=result.counts.active||0;$('sanctionTypeCounts').textContent+=' (esta página)';}
   if(kind==='preselections')$('preselectionTotalStat').textContent=result.total;
   recordNavigation(kind,result);
