@@ -1,5 +1,6 @@
 import {REAL_RANKS,realRank,rankedNickname,shouldAssignUcopBranch} from '../_shared/real-ranks.ts';
 import {writeAudit} from './audit-events.ts';
+import {announceDeparture} from './departure-announcements.ts';
 export const DEPARTURE_TYPES:Record<string,string>={pkt:'PKT',ck:'Muerte (CK)',despido:'Despido',corrupcion:'Corrupción',renuncia:'Renuncia',jubilacion:'Jubilación',transferencia:'Transferencia',inactividad:'Inactividad',otro:'Otro'};
 const POLICE='1539970134482092038',UCOP='1539970134519578773',CIC='1539970134519578772';
 const managed=new Set<string>([POLICE,UCOP,CIC,...REAL_RANKS.map(r=>r.id)]);
@@ -52,6 +53,7 @@ export async function changePersonnelStatus(req:Request,action:string,actor:stri
  }
  if(member)try{await c.discord(memberPath,{method:'PATCH',body:JSON.stringify({nick:rankedNickname(person.full_name,person.plate,[...desired])})});}catch{warning='Movimiento guardado; no se pudo actualizar el apodo de Discord.';}
  else warning='Baja guardada. La persona ya no está en el servidor de Discord.';
+ if(departure){const notice=await announceDeparture({eventId:body.operation_id,userId:target,name:person.full_name,plate:person.plate,rank:person.rank_name,type:DEPARTURE_TYPES[body.departure_type],date:body.effective_date,approvedBy:c.actorName,timestamp:result.movement?.created_at||new Date().toISOString()},c.discord);warning=[warning,notice].filter(Boolean).join(' ');}
  await writeAudit(departure?'📉 Baja de personal':'↩️ Reingreso de personal',[{name:'Agente',value:person.full_name+' #'+person.plate},{name:'Gestor',value:c.actorName},{name:'Tipo',value:departure?DEPARTURE_TYPES[body.departure_type]:'Reingreso'},{name:'Motivo',value:body.reason},{name:'Fecha',value:body.effective_date}]);
  return c.json({ok:true,person:result.person,message:departure?'Baja registrada. Se conserva la ficha y su historial.':'Reingreso registrado en la misma ficha.',warning:warning||undefined});
 }
