@@ -16,7 +16,7 @@ assert(Array.from(rankedNickname('😀'.repeat(40),'0116',[comisionado])).length
 assert.equal(rankedNickname('Nuevo Agente','0005',[]),'Nuevo Agente #0005');
 assert.equal(new Set(REAL_RANKS.map(r=>r.id)).size,REAL_RANKS.length);
 assert.equal(REAL_RANKS.length,19);
-assert.equal(rankedNickname('Pedro Martínez','0002',[rh,'1539970134544748559']),'Jefe | Pedro Martínez #0002');
+assert.equal(rankedNickname('Pedro Martínez','0002',[rh,'1539970134544748559']),'Jefe UCOP | Pedro Martínez #0002');
 const trainee='1564308664557506691',officer='1539970134519578769';
 assert.equal(rankedNickname('Ana Ruiz','0116',[officer]),'Oficial UCOP | Ana Ruiz #0116');
 assert.equal(rankedNickname('Ana Ruiz','0116',[trainee,cabo]),'Pasante UCOP | Ana Ruiz #0116');
@@ -45,3 +45,6 @@ assert.equal(calls.length,1);assert(calls[0].path.endsWith('/roles/ucop'));asser
 await restore();assert.equal(calls[1].init.method,'PUT','A failed save restores the old branch role');
 calls.length=0;await context.syncPersonnelBranch('member','UCOP',[trainee],officer);assert.equal(calls[0].init.method,'PUT');
 console.log('Real-rank allowlist, clean labels, UCOP precedence, independent tracks, leading zeroes and nickname length: PASS');
+
+assert.equal(rankedNickname('Ana Ruiz','0006',['1539970134544748558']),'Sub-Jefe UCOP | Ana Ruiz #0006');
+assert(rankedNickname('Un nombre policial considerablemente largo','0006',['1539970134544748558']).startsWith('Sub-Jefe UCOP | '));

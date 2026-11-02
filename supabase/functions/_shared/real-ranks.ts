@@ -17,8 +17,8 @@ export const REAL_RANKS=[
  {id:'1564308664557506691',name:'Pasante UCOP',short:'Pasante UCOP',track:'ucop',order:101},
  {id:'1539970134519578769',name:'Oficial UCOP',short:'Oficial UCOP',track:'ucop',order:102},
  {id:'1539970134519578770',name:'RH UCOP',short:'RH',track:'ucop',order:103},
- {id:'1539970134544748558',name:'Sub-Jefe UCOP',short:'Sub-Jefe',track:'ucop',order:104},
- {id:'1539970134544748559',name:'Jefe UCOP',short:'Jefe',track:'ucop',order:105},
+ {id:'1539970134544748558',name:'Sub-Jefe UCOP',short:'Sub-Jefe UCOP',track:'ucop',order:104},
+ {id:'1539970134544748559',name:'Jefe UCOP',short:'Jefe UCOP',track:'ucop',order:105},
 ] as const;
 export const realRank=(id:unknown)=>REAL_RANKS.find(rank=>rank.id===String(id));
 export function realRankRows(rows:any[]){return (rows||[]).filter(row=>realRank(row.role_id)).map(row=>({...row,role_name:realRank(row.role_id)!.name,rank_order:realRank(row.role_id)!.order,rank_track:realRank(row.role_id)!.track}));}
