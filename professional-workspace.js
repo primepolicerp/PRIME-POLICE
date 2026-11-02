@@ -56,6 +56,6 @@ document.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&e
 window.addEventListener('panel-session-ended',()=>{globalSearchSequence++;accessSequence++;syncSequence++;$('globalSearchInput').value='';$('globalSearchResults').replaceChildren();$('syncJobList').replaceChildren();$('operationOutcome').hidden=true;});
 const workspaceRequest=request;request=async(action,options={})=>{const write=options.method==='POST'&&!['login','logout','logout-others','application-review-save'].includes(action);try{const result=await workspaceRequest(action,options);if(write)showOperationOutcome(result);return result;}catch(error){if(write){const badge=document.createElement('span');badge.className='operation-chip attention';badge.textContent='Comprueba el resultado antes de repetir la operación';$('operationOutcome').replaceChildren(badge);$('operationOutcome').hidden=false;}throw error;}};
 const workspaceAccountProfile=loadAccountProfile;loadAccountProfile=async()=>{await workspaceAccountProfile();$('openGlobalSearch').hidden=!token;$('openSyncCenter').hidden=restrictedToApplications||!token;configureWorkspaceRole();};
-if(token)loadAccountProfile();
+window.addEventListener('panel-account-ready',()=>{$('openGlobalSearch').hidden=!token;$('openSyncCenter').hidden=restrictedToApplications||!token;configureWorkspaceRole();});
 
 document.querySelectorAll('.workspace-tab').forEach(button=>button.addEventListener('click',()=>window.scrollTo({top:0,behavior:'instant'})));
