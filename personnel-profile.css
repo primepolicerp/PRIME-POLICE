@@ -27,3 +27,5 @@
 #personnelReentryFields[hidden],#personnelDepartureField[hidden],#profileDepartureInfo[hidden]{display:none}#profileDepartureInfo{border-color:#74404a;background:#2b1c22}.profile-section>summary{cursor:pointer;padding:5px 0;color:#d5e0f1;font-weight:650}#personnelStatusDialog{max-width:560px;width:calc(100% - 24px)}#personnelStatusName{display:block;overflow-wrap:anywhere}#personnelStatusFeedback{color:#edb1b1;white-space:pre-wrap}#personnelStatusPolicy{line-height:1.6}
 
 @media(max-width:700px){.personnel-heading-actions{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:8px;min-width:0;max-width:100%}.personnel-heading-actions .badge{flex-basis:100%;width:max-content}.personnel-heading-actions .btn{flex:0 1 auto;white-space:nowrap}}
+
+#personnelDepartureRoleField[hidden]{display:none}

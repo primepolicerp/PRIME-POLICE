@@ -16,7 +16,7 @@ export const CHANGE_ACTIONS:Record<string,string>={
 const directors=new Set(['1539970134565982313','1539970134544748562','1539970134519578774']);
 const uuid=(s:string)=>/^[0-9a-f-]{36}$/i.test(s);
 const id=(s:string)=>/^\d{17,20}$/.test(s);
-const canonical=(v:any):any=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
+const canonical=(v:any):any=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).filter(k=>!(k==='departure_role'&&v[k]===null)).sort().map(k=>[k,canonical(v[k])])):v;
 async function fingerprint(v:any){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(canonical(v)))))).map(n=>n.toString(16).padStart(2,'0')).join('');}
 type Context={db:(path:string,init?:RequestInit)=>Promise<any>,authorizedUser:(req:Request)=>Promise<string|null>,discord:(path:string)=>Promise<any>,dispatch:(req:Request)=>Promise<Response>,json:(body:any,status?:number)=>Response};
 class ChangeInputError extends Error{}

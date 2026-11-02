@@ -99,7 +99,7 @@ async function processRankRequest(i:any,userId:string,username:string,a:any){
  if(!characterName||!plate||!approvedBy||!steamUsername){await editInteractionReply(i,"Completa nombre IC, usuario de Steam, placa y nombre de quien aprobó la entrevista.");return;}
  const member=await discord("/guilds/"+GUILD_ID+"/members/"+encodeURIComponent(userId)) as any;
  const roles:string[]=member?.roles||[];
- if((!roles.includes(PRESELECTION_ROLE_ID)&&!roles.includes(POLICE_ROLE_ID))||roles.includes(EXPELLED_ROLE_ID)){await editInteractionReply(i,"Solo las personas con rol Preselección o Policía pueden solicitar el ingreso tras su entrevista IC.");return;}
+ if((!roles.includes(PRESELECTION_ROLE_ID)&&!roles.includes(POLICE_ROLE_ID))||(roles.includes(EXPELLED_ROLE_ID)||roles.includes('1564310246128619560'))){await editInteractionReply(i,"Solo las personas con rol Preselección o Policía pueden solicitar el ingreso tras su entrevista IC.");return;}
  const rankName=POLICE_ONLY_RANK_LABEL;
  const pending=await db("police_rank_requests?select=id&discord_user_id=eq."+encodeURIComponent(userId)+"&status=eq.pending&limit=1");
  if(pending?.length){await editInteractionReply(i,"Ya tienes una solicitud de ingreso pendiente de revisión por UCOP.");return;}
@@ -161,7 +161,7 @@ async function handle(i:any){
   if(["prime_duty_start","prime_duty_end"].includes(i.data?.custom_id)){
    EdgeRuntime.waitUntil((async()=>{await new Promise(resolve=>setTimeout(resolve,25));try{
     const member=await discord("/guilds/"+GUILD_ID+"/members/"+encodeURIComponent(userId)) as any;
-    if(!(member.roles||[]).includes(POLICE_ROLE_ID)||(member.roles||[]).includes(EXPELLED_ROLE_ID)){await editInteractionReply(i,"Debes tener el rol Policía para registrar servicio.");return;}
+    if(!(member.roles||[]).includes(POLICE_ROLE_ID)||((member.roles||[]).includes(EXPELLED_ROLE_ID)||(member.roles||[]).includes('1564310246128619560'))){await editInteractionReply(i,"Debes tener el rol Policía para registrar servicio.");return;}
     if(i.data.custom_id==="prime_duty_start"){
      const profiles=await db("police_personnel?select=full_name,plate,unit&discord_user_id=eq."+encodeURIComponent(userId)+"&status=eq.active&limit=1");
      const p=profiles?.[0];if(!p||!["POLICIA","UCOP","CIC"].includes(p.unit)){await editInteractionReply(i,"RR. HH. debe completar tu ficha policial antes de registrar servicio.");return;}

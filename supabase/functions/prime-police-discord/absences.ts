@@ -7,7 +7,7 @@ export async function handleAbsenceInteraction(i:any,c:Context):Promise<Response
  const custom=i.data?.custom_id;if(!['prime_absence','prime_absence_mine','prime_absence_submit'].includes(custom))return null;
  if(i.guild_id!==GUILD_ID)return c.ephemeral('Usa este formulario dentro del servidor de PRIME POLICE.');
  const user=i.member?.user||i.user,userId=String(user?.id||''),roles=i.member?.roles||[];
- if(!roles.includes(POLICE_ROLE)||roles.includes(EXPELLED_ROLE))return c.ephemeral('Debes tener el rol Policía para solicitar o consultar ausencias.');
+ if(!roles.includes(POLICE_ROLE)||(roles.includes(EXPELLED_ROLE)||roles.includes('1564310246128619560')))return c.ephemeral('Debes tener el rol Policía para solicitar o consultar ausencias.');
  if(i.type===3&&custom==='prime_absence')return c.response(9,{custom_id:'prime_absence_submit',title:'Solicitud de ausencia · Policía',components:[
   {type:18,label:'Primer día de ausencia',description:'Formato DD/MM/AAAA. Las fechas siguen el horario del servidor.',component:{type:4,custom_id:'start_date',style:1,required:true,max_length:10,placeholder:'Ej. 30/10/2026'}},
   {type:18,label:'Último día de ausencia',description:'Este día también se incluye. Volverás a estar disponible al día siguiente.',component:{type:4,custom_id:'end_date',style:1,required:true,max_length:10,placeholder:'Ej. 02/11/2026'}},
@@ -18,7 +18,7 @@ export async function handleAbsenceInteraction(i:any,c:Context):Promise<Response
   if(custom==='prime_absence_submit'&&(!start||!end||end<start||String(input.reason||'').trim().length<3))return c.ephemeral('Revisa las fechas (DD/MM/AAAA): el último día no puede ser anterior al primero. Añade un motivo de al menos 3 caracteres.');
   EdgeRuntime.waitUntil((async()=>{await new Promise(resolve=>setTimeout(resolve,25));try{
    const member=await c.discord('/guilds/'+GUILD_ID+'/members/'+encodeURIComponent(userId));
-   if(!(member.roles||[]).includes(POLICE_ROLE)||(member.roles||[]).includes(EXPELLED_ROLE)){await c.reply(i,'Tu cuenta ya no tiene el rol Policía autorizado.');return;}
+   if(!(member.roles||[]).includes(POLICE_ROLE)||((member.roles||[]).includes(EXPELLED_ROLE)||(member.roles||[]).includes('1564310246128619560'))){await c.reply(i,'Tu cuenta ya no tiene el rol Policía autorizado.');return;}
    if(custom==='prime_absence_mine'){
     const rows=await c.db('police_absence_requests?select=start_date,end_date,status,review_reason&discord_user_id=eq.'+userId+'&order=created_at.desc&limit=10');
     const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());

@@ -205,7 +205,7 @@ async function registerPersonnel(req: Request) {
     const memberRoles: string[] = member.roles ?? [];
     if (!memberRoles.includes(POLICE_ROLE_ID)) return json({ error: "El agente debe tener el rol base de Policía para registrarlo." }, 409);
 
-    if (memberRoles.includes(EXPELLED_ROLE_ID)) return json({ error: "No se puede registrar a una persona con el rol de expulsado." }, 409);
+    if ((memberRoles.includes(EXPELLED_ROLE_ID)||memberRoles.includes('1564310246128619560'))) return json({ error: "No se puede registrar a una persona con el rol de expulsado." }, 409);
     oldRoles = (configuredRanks ?? []).filter((item: any) => sameRankTrack(item.role_id,rankRoleId)&&memberRoles.includes(String(item.role_id)) && item.role_id !== rankRoleId).map((item: any) => String(item.role_id));
     const existing = profiles?.[0] ?? {};
     if(existing.status==='inactive')return json({error:'Este agente está de baja. Utiliza Reingresar para asignar rango y división sin perder su historial.'},409);
@@ -398,7 +398,7 @@ async function reviewRankRequest(req: Request) {
       if (profile?.unit && !VALID_UNITS.has(profile.unit)) return json({ error: "El miembro pertenece a otra unidad." }, 409);
       const member = await discord("/guilds/" + GUILD_ID + "/members/" + enc(targetId)) as any;
       const memberRoles: string[] = member.roles ?? [];
-      if ((!memberRoles.includes(PRESELECTION_ROLE_ID) && !memberRoles.includes(POLICE_ROLE_ID)) || memberRoles.includes(EXPELLED_ROLE_ID)) return json({ error: "La persona debe estar preseleccionada para aprobar el ingreso." }, 409);
+      if ((!memberRoles.includes(PRESELECTION_ROLE_ID) && !memberRoles.includes(POLICE_ROLE_ID)) || (memberRoles.includes(EXPELLED_ROLE_ID)||memberRoles.includes('1564310246128619560'))) return json({ error: "La persona debe estar preseleccionada para aprobar el ingreso." }, 409);
       const addedPoliceRole = !memberRoles.includes(POLICE_ROLE_ID);
       let nicknameChanged = false;
       try {
@@ -487,7 +487,7 @@ async function admitPreselection(req:Request,fromTransfer=false){
   const profiles=await db('police_personnel?select=discord_user_id&discord_user_id=eq.'+target+'&limit=1');if(profiles?.length)return json({error:'Ya tiene una ficha. Revísala desde Personal.'},409);
   const plates=await db('police_personnel?select=discord_user_id&plate=eq.'+enc(plate)+'&status=eq.active&limit=1');if(plates?.length)return json({error:'La placa ya pertenece a otro agente activo.'},409);
   const member=await discord('/guilds/'+GUILD_ID+'/members/'+target) as any,roles:string[]=member.roles||[];
-  if(roles.includes(EXPELLED_ROLE_ID)||(!roles.includes(fromTransfer?TRANSFER_ROLE_ID:PRESELECTION_ROLE_ID)&&!roles.includes(POLICE_ROLE_ID)))return json({error:'La persona debe tener el rol de acceso correspondiente o Policía y no estar expulsada.'},409);
+  if((roles.includes(EXPELLED_ROLE_ID)||roles.includes('1564310246128619560'))||(!roles.includes(fromTransfer?TRANSFER_ROLE_ID:PRESELECTION_ROLE_ID)&&!roles.includes(POLICE_ROLE_ID)))return json({error:'La persona debe tener el rol de acceso correspondiente o Policía y no estar expulsada.'},409);
   const unit=String(body.unit??(roles.includes(BRANCH_ROLES.UCOP)?'UCOP':roles.includes(CIC_ROLE_ID)?'CIC':'POLICIA'));
   const configuredRanks=await db('police_rank_roles?select=role_id,role_name,rank_order&order=rank_order.asc');
   const rank=rankRoleId?(configuredRanks||[]).find((r:any)=>r.role_id===rankRoleId):null;
@@ -595,7 +595,7 @@ async function changeRank(req: Request) {
     if (!priorProfile) return json({ error: "El oficial no está registrado como personal UCOP." }, 404);
     const memberRoles: string[] = member.roles ?? [];
     if (!memberRoles.includes(POLICE_ROLE_ID)) return json({ error: "El oficial debe conservar el rol de Policía para cambiar de rango." }, 409);
-    if (memberRoles.includes(EXPELLED_ROLE_ID)) return json({ error: "La persona tiene el rol de expulsado." }, 409);
+    if ((memberRoles.includes(EXPELLED_ROLE_ID)||memberRoles.includes('1564310246128619560'))) return json({ error: "La persona tiene el rol de expulsado." }, 409);
     const currentRanks = (ranks ?? []).filter((r: any) => sameRankTrack(r.role_id,targetRoleId)&&memberRoles.includes(r.role_id)).sort((a: any, b: any) => Number(b.rank_order) - Number(a.rank_order));
     const currentRank = currentRanks[0] ?? null;
     if (currentRank?.role_id === targetRoleId) return json({ error: "Ese rango ya está asignado." }, 409);
