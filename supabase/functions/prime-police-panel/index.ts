@@ -22,6 +22,8 @@ import { withOperationLock } from "./operation-lock.ts";
 import { accessMember } from "./access-member.ts";
 import { applicationPermissions, applicationScopeAllowed, UCOP_APPLICATION_ROLES, UCOP_TRAINEE_ROLE } from './application-permissions.ts';
 import { handleHr } from "./hr.ts";
+import {applyRecruitmentVeto} from './recruitment-veto.ts';
+import {isRecruitmentVetoed} from '../_shared/recruitment-restriction.ts';
 
 const GUILD_ID = "1539970134469378068";
 const LEGACY_APPLICATION_CHANNEL_ID = "1539970136683847857";
@@ -292,7 +294,7 @@ async function listApplications(req: Request) {
   if (!userId) return json({ error: "Sesión caducada o sin permisos de gestión." }, 403);
   try {
     const applications = await db(
-      "police_available_applications?select=id,discord_user_id,discord_username,full_name,age,previous_experience,motivation,availability,status,decision_reason,reviewed_by_discord_id,reviewed_by_name,created_at,reviewed_at,role_assigned_at,discord_message_id,attempt_number,answers&order=created_at.desc&limit=100",
+      "police_available_applications?select=id,discord_user_id,discord_username,full_name,age,previous_experience,motivation,availability,status,decision_reason,reviewed_by_discord_id,reviewed_by_name,created_at,reviewed_at,role_assigned_at,discord_message_id,attempt_number,answers,vetoed_at,vetoed_by_discord_id,vetoed_by_name&order=created_at.desc&limit=100",
     );
     return json({ ok: true, applications: applications ?? [] });
   } catch (e) {
@@ -342,6 +344,8 @@ async function decideTransfer(req: Request) {
     const rows = await db("police_transfer_applications?select=*&id=eq." + encodeURIComponent(id) + "&limit=1");
     const item = rows?.[0];
     if (!item) return json({ error: "No se encontró esa solicitud de traslado." }, 404);
+    if(body.veto===true){const member=await accessMember(reviewerId);return applyRecruitmentVeto('transfers',body,item,{db,discord,json,audit:writeAudit,actor:reviewerId,actorName:String(member.nick||member.user?.global_name||member.user?.username||reviewerId)});}
+    if(action==='accept'&&await isRecruitmentVetoed(String(item.discord_user_id),discord))return json({error:'Esta persona tiene el rol Vetado. Directiva debe revisar el veto antes de aceptarla.'},409);
     const correcting=action==='accept'&&item.status==='rejected';
     if (item.status !== "pending"&&!correcting) return json({ error: "Esta solicitud ya fue revisada." }, 409);
     const correctionError=await validateDecisionCorrection(body,item,'police_transfer_applications',db);if(correctionError)return json({error:correctionError},409);
@@ -413,6 +417,8 @@ async function decide(req: Request) {
     );
     app = rows?.[0];
     if (!app) return json({ error: "No se encontró esa candidatura." }, 404);
+    if(body.veto===true){const member=await accessMember(reviewerId);return applyRecruitmentVeto('applications',body,app,{db,discord,json,audit:writeAudit,actor:reviewerId,actorName:String(member.nick||member.user?.global_name||member.user?.username||reviewerId)});}
+    if(action==='accept'&&await isRecruitmentVetoed(String(app.discord_user_id),discord))return json({error:'Esta persona tiene el rol Vetado. Directiva debe revisar el veto antes de aceptarla.'},409);
     app = {...app, full_name: parseApplicationIdentity(app.full_name, app.answers || {}).name};
 
     const retryRole = action === "accept" && app.status === "accepted" && !app.role_assigned_at;

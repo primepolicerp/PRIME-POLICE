@@ -16,6 +16,7 @@ function changePlan(item){
  if(item.action==='personnel-reentry')return{title:'Reingresar al agente',effect:'Se activará la misma ficha y se asignarán el rango y la división propuestos en Discord.',approve:'Confirmar reingreso',tone:'positive'};
  const payload=item.payload||{},decision=payload.action||payload.decision;
  const kinds={decision:['postulación','la postulación','Preselección'],'transfer-decision':['traslado','la solicitud de traslado','Traslado'],'rank-request-review':['nuevo ingreso','el nuevo ingreso','Policía']};
+ if(kinds[item.action]&&payload.veto===true)return{title:'Vetar '+kinds[item.action][0],effect:'Se rechazará la solicitud, se asignará el rol Vetado y se bloquearán nuevas postulaciones, traslados e ingresos mientras conserve ese rol.',approve:'Confirmar veto',tone:'danger'};
  if(kinds[item.action]&&['accept','reject'].includes(decision)){
   const [label,subject,role]=kinds[item.action],reject=decision==='reject',correction=!reject&&payload.correct_rejection===true;
   return {title:(reject?'Rechazar ':correction?'Corregir rechazo y aceptar ':'Aceptar ')+label,effect:reject?'Se rechazará '+subject+'. El bot intentará comunicar el resultado por privado.':'Se aceptará '+subject+' y se asignará el rol '+role+'.',approve:reject?'Confirmar rechazo':'Confirmar aceptación',tone:reject?'danger':'positive'};

@@ -256,6 +256,7 @@ function renderApplications() {
       actions.append(done);
     }
     if(app.status==='rejected')actions.append(decisionButton('Corregir y aceptar','accept','accept correction-accept',app));
+    appendRecruitmentVeto(actions,app,'applications');
     const spacer = document.createElement("span");
     spacer.className = "spacer";
     const updated = document.createElement("span");
@@ -312,6 +313,7 @@ function renderTransfers() {
       if(item.admitted_at){const entered=document.createElement('span');entered.className='badge accepted';entered.textContent='Ingresado en Personal · '+niceDate(item.admitted_at);actions.append(entered);}
       else appendAdmissionAction(actions,item,'transfer');
     }
+    appendRecruitmentVeto(actions,item,'transfers');
     const spacer=document.createElement("span");spacer.className="spacer";const reviewer=document.createElement("span");reviewer.className="muted";reviewer.textContent=decisionCredit(item);actions.append(spacer,reviewer);card.append(head,previousRejectionsPanel(item),automaticReviewNotice(item),grid,actions);list.append(card);
   });
 }
@@ -346,7 +348,7 @@ async function loadPreselections(){
 function renderRankRequests() {
   const list=$("rankRequestList");list.replaceChildren();
   const query=$("rankRequestSearch").value.trim().toLocaleLowerCase("es");
-  const visible=rankRequests.filter(item=>item.status===activeRankRequestStatus&&[item.character_name,item.steam_username,item.plate,item.requested_rank_name,item.approved_by_name,item.discord_username,item.discord_user_id].join(" ").toLocaleLowerCase("es").includes(query));
+  const visible=rankRequests.filter(item=>item.status===activeRankRequestStatus&&[item.character_name,item.plate,item.requested_rank_name,item.approved_by_name,item.discord_username,item.discord_user_id].join(" ").toLocaleLowerCase("es").includes(query));
   $("rankRequestPendingCount").textContent=rankRequests.filter(x=>x.status==="pending").length;
   $("rankRequestAcceptedCount").textContent=rankRequests.filter(x=>x.status==="accepted").length;
   $("rankRequestRejectedCount").textContent=rankRequests.filter(x=>x.status==="rejected").length;
@@ -363,7 +365,7 @@ function renderRankRequests() {
     const policeOnly=true;const badge=document.createElement("span");badge.className="badge "+(item.status==="pending"?"pending":item.status==="accepted"?"accepted":"rejected");badge.textContent=item.status==="pending"?"Pendiente":item.status==="accepted"?(policeOnly?"Aprobada · Rol Policía":"Aprobada · Policía y rango"):"Rechazada";
     head.append(identity,badge);
     const grid=document.createElement("div");grid.className="details";
-    grid.append(detail("Usuario de Steam",item.steam_username||"No indicado"),detail("Aprobado por",item.approved_by_name),detail("Fecha de solicitud",niceDate(item.created_at)));
+    grid.append(detail("Aprobado por",item.approved_by_name),detail("Fecha de solicitud",niceDate(item.created_at)));
     if(item.reviewed_by_name)grid.append(detail("Revisado por UCOP",item.reviewed_by_name),detail("Fecha de revisión",niceDate(item.reviewed_at)));
     if(item.review_reason)grid.append(detail("Observación",item.review_reason));
     const actions=document.createElement("div");actions.className="candidate-actions";
@@ -378,6 +380,7 @@ function renderRankRequests() {
       const sync=document.createElement("button"),status=document.createElement("span");sync.type="button";sync.className="btn";sync.textContent="Sincronizar nombre y placa";status.className="muted";status.setAttribute("role","status");
       sync.addEventListener("click",async()=>{sync.disabled=true;status.textContent="Actualizando apodo en Discord…";try{const r=await request("nickname-sync",{method:"POST",body:{discord_user_id:item.discord_user_id}});status.textContent=r.message;}catch(e){status.textContent=e.message;}finally{sync.disabled=false;}});actions.append(sync,status);
     }
+    appendRecruitmentVeto(actions,item,'intakes');
     card.append(head,grid,actions);list.append(card);
   });
 }
@@ -459,7 +462,7 @@ function renderPersonnel(){
   renderPersonnelTableRows(visible,rows);
   const select=$("rankMember"),current=select.value;select.replaceChildren(new Option("Selecciona un oficial",""));personnel.forEach(p=>select.add(new Option((p.plate?"Placa "+p.plate+" · ":"")+(p.full_name||p.discord_username||"Agente")+" · "+(p.rank_name||"Sin rango"),p.discord_user_id)));if(personnel.some(p=>p.discord_user_id===current))select.value=current;renderSanctionPersonnelSelector();renderEligiblePromotions();
 }
-function openPersonnelForm(person=null){$("personnelFeedback").classList.add("hidden");editingPersonnelId=person?String(person.discord_user_id):null;const form=$("personnelForm");form.reset();$("personUnit").value=person?.unit||"POLICIA";if(person){$("personPlate").dataset.plateOperation="";$("personPlate").dataset.autoPlate="false";$("personPlate").value=person.plate||"";$("personName").value=person.full_name||"";$("personOoc").value=person.name_ooc||person.discord_username||"";$("personSteam").value=person.steam_username||"";$("personDiscordId").value=person.discord_user_id||"";if(person.rank_role_id&&!Array.from($("personRank").options).some(o=>o.value===person.rank_role_id))$("personRank").add(new Option(person.rank_name||"Rango actual",person.rank_role_id));$("personRank").value=person.rank_role_id||"";$("personDiscordId").readOnly=true;}else{$("personDiscordId").readOnly=false;personnelPlateOperation=crypto.randomUUID();suggestNextPlate($("personPlate"),personnelPlateOperation);}$("personFormTitle").textContent=person?"Editar ficha de agente":"Registrar agente";$("personnelButton").textContent=person?"Guardar cambios":"Registrar agente";$("personRegisterPanel").classList.remove("hidden");$("personRegisterPanel").scrollIntoView({behavior:"smooth",block:"start"});}
+function openPersonnelForm(person=null){$("personnelFeedback").classList.add("hidden");editingPersonnelId=person?String(person.discord_user_id):null;const form=$("personnelForm");form.reset();$("personUnit").value=person?.unit||"POLICIA";if(person){$("personPlate").dataset.plateOperation="";$("personPlate").dataset.autoPlate="false";$("personPlate").value=person.plate||"";$("personName").value=person.full_name||"";$("personOoc").value=person.name_ooc||person.discord_username||"";$("personDiscordId").value=person.discord_user_id||"";if(person.rank_role_id&&!Array.from($("personRank").options).some(o=>o.value===person.rank_role_id))$("personRank").add(new Option(person.rank_name||"Rango actual",person.rank_role_id));$("personRank").value=person.rank_role_id||"";$("personDiscordId").readOnly=true;}else{$("personDiscordId").readOnly=false;personnelPlateOperation=crypto.randomUUID();suggestNextPlate($("personPlate"),personnelPlateOperation);}$("personFormTitle").textContent=person?"Editar ficha de agente":"Registrar agente";$("personnelButton").textContent=person?"Guardar cambios":"Registrar agente";$("personRegisterPanel").classList.remove("hidden");$("personRegisterPanel").scrollIntoView({behavior:"smooth",block:"start"});}
 function closePersonnelForm(){editingPersonnelId=null;$("personPlate").dataset.plateOperation="";$("personnelForm").reset();$("personDiscordId").readOnly=false;$("personFormTitle").textContent="Registrar agente";$("personnelButton").textContent="Registrar agente";$("personRegisterPanel").classList.add("hidden");}
 function renderSanctionPersonnelSelector(){if(typeof refreshSanctionAgentSelection==='function')refreshSanctionAgentSelection();}
 function openPersonnelProfile(person){return loadPersonnelFile(person);}
@@ -502,7 +505,7 @@ function showPersonnelFeedback(message,type='info'){
 $('personnelForm').addEventListener('invalid',event=>{const field=event.target,label=field.labels?.[0]?.textContent||'el campo obligatorio';showPersonnelFeedback(field.id==='personDiscordId'&&field.value?'El ID de Discord debe contener entre 17 y 20 cifras. Copia el ID del usuario, no su nombre.':'Completa '+label+' antes de guardar.','error');},true);
 $('personnelForm').addEventListener('submit',async event=>{
  event.preventDefault();const button=$('personnelButton'),wasEditing=Boolean(editingPersonnelId);
- const body={discord_user_id:$('personDiscordId').value.trim(),full_name:$('personName').value.trim(),name_ooc:$('personOoc').value.trim(),steam_username:$('personSteam').value.trim(),plate:$('personPlate').value.trim(),unit:$('personUnit').value,rank_role_id:$('personRank').value,record_action:wasEditing?'update':'create',...(!wasEditing?{plate_operation_id:personnelPlateOperation,auto_plate:$('personPlate').dataset.autoPlate==='true'}:{})};
+ const body={discord_user_id:$('personDiscordId').value.trim(),full_name:$('personName').value.trim(),name_ooc:$('personOoc').value.trim(),plate:$('personPlate').value.trim(),unit:$('personUnit').value,rank_role_id:$('personRank').value,record_action:wasEditing?'update':'create',...(!wasEditing?{plate_operation_id:personnelPlateOperation,auto_plate:$('personPlate').dataset.autoPlate==='true'}:{})};
  if(!body.full_name||!body.name_ooc||!body.plate||!body.rank_role_id){showPersonnelFeedback('Completa nombre IC, nombre OOC, placa y rango.','error');return;}
  if(!/^\d{17,20}$/.test(body.discord_user_id)){showPersonnelFeedback('Copia el ID numérico del usuario de Discord (17 a 20 cifras).','error');return;}
  button.disabled=true;button.textContent=wasEditing?'Guardando…':'Registrando…';showPersonnelFeedback('Procesando la ficha de '+body.full_name+'…');

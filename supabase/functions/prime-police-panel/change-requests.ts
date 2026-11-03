@@ -17,7 +17,7 @@ export const CHANGE_ACTIONS:Record<string,string>={
 const directors=new Set(['1539970134565982313','1539970134544748562','1539970134519578774']);
 const uuid=(s:string)=>/^[0-9a-f-]{36}$/i.test(s);
 const id=(s:string)=>/^\d{17,20}$/.test(s);
-const canonical=(v:any):any=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).filter(k=>!(k==='departure_role'&&v[k]===null)).sort().map(k=>[k,canonical(v[k])])):v;
+const canonical=(v:any):any=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).filter(k=>!(['departure_role','vetoed_at','vetoed_by_discord_id','vetoed_by_name'].includes(k)&&v[k]===null)).sort().map(k=>[k,canonical(v[k])])):v;
 async function fingerprint(v:any){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(canonical(v)))))).map(n=>n.toString(16).padStart(2,'0')).join('');}
 type Context={db:(path:string,init?:RequestInit)=>Promise<any>,authorizedUser:(req:Request)=>Promise<string|null>,discord:(path:string)=>Promise<any>,dispatch:(req:Request)=>Promise<Response>,json:(body:any,status?:number)=>Response};
 class ChangeInputError extends Error{}
@@ -68,7 +68,7 @@ async function snapshot(action:string,payload:any,c:Context){
   const records=await c.db('police_transfer_applications?select=*&id=eq.'+encodeURIComponent(transferId)+'&limit=1'),transfer=records?.[0];
   if(!transfer||transfer.discord_user_id!==target||transfer.status!=='accepted'||transfer.admitted_at)throw new ChangeInputError('El traslado ya no está pendiente de ingresar a Personal.');
   if(payload.expected_reviewed_at&&String(payload.expected_reviewed_at)!==String(transfer.reviewed_at))throw new ChangeInputError('El traslado cambió. Actualiza la lista.');
-  if(!String(payload.full_name||'').trim()||!String(payload.plate||'').trim()||!String(payload.steam_username||'').trim()||!String(payload.approved_by_name||'').trim()||payload.interview_confirmed!==true)throw new ChangeInputError('Completa los datos del ingreso y confirma la entrevista IC.');
+  if(!String(payload.full_name||'').trim()||!String(payload.plate||'').trim()||!String(payload.approved_by_name||'').trim()||payload.interview_confirmed!==true)throw new ChangeInputError('Completa los datos del ingreso y confirma la entrevista IC.');
   state.transfer=transfer;
  }
  if(action==='preselection-admit'){
@@ -129,6 +129,7 @@ export async function interceptChanges(req:Request,action:string,c:Context):Prom
    }
   });
  }
+ if(payload.veto===true&&(['decision','transfer-decision','rank-request-review'].includes(action))&&(String(payload.reason||'').trim().length<3||String(payload.reason||'').length>500))return c.json({error:'Indica un motivo de veto de 3 a 500 caracteres.'},400);
  if(action==='absence-register'||action==='absence-review')return null;
  if(action==='decision'){
   try{
@@ -144,7 +145,7 @@ export async function interceptChanges(req:Request,action:string,c:Context):Prom
     const record=before.state.record;
     const correctionError=await validateDecisionCorrection(payload,record,'police_applications',c.db);
     if(correctionError)return c.json({error:correctionError},409);
-    if(record.status!=='pending'&&!(payload.action==='accept'&&(record.status==='rejected'&&payload.correct_rejection===true||record.status==='accepted'&&!record.role_assigned_at)))return c.json({error:'La postulación ya fue resuelta. Actualiza la lista.'},409);
+    if(record.status!=='pending'&&!(payload.veto===true&&payload.action==='reject'&&record.status==='rejected')&&!(payload.action==='accept'&&(record.status==='rejected'&&payload.correct_rejection===true||record.status==='accepted'&&!record.role_assigned_at)))return c.json({error:'La postulación ya fue resuelta. Actualiza la lista.'},409);
     return queueChange(before);
    });
   }catch(error){return queueError(error);}

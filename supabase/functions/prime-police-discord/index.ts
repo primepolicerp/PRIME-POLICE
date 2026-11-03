@@ -1,4 +1,5 @@
 import { parseApplicationIdentity } from "../_shared/application-identity.ts";
+import {isRecruitmentVetoed,RECRUITMENT_VETO_ROLE,RECRUITMENT_VETO_MESSAGE} from '../_shared/recruitment-restriction.ts';
 import { identityModal, handleApplicationSteps } from "./application-steps.ts";
 import { handleAbsenceInteraction, absencePanel, ABSENCE_CHANNEL_ID } from "./absences.ts";
 const GUILD_ID = "1539970134469378068";
@@ -44,6 +45,7 @@ async function publishOrUpdatePanel(channelId:string,customId:string,payload:any
  return await discord("/channels/"+channelId+"/messages",{method:"POST",body:JSON.stringify(payload)});
 }
 async function processApplicationSubmit(i:any,userId:string,username:string,a:any){
+ if(await isRecruitmentVetoed(userId,discord)){await editInteractionReply(i,RECRUITMENT_VETO_MESSAGE);return {ok:false,vetoed:true};}
  const personal=a.character_info||a.character_name||"";const identity=parseApplicationIdentity(personal,{character_info:personal,age_ic:a.age_ic,age_ooc:a.age_ooc});const characterName=identity.name.slice(0,100);
  const answer={character_info:personal,age_ic:identity.ageIc,age_ooc:identity.ageOoc,motivation:a.motivation,detention_rights:a.detention_rights,scene_resolution:a.scene_resolution,roleplay_response:a.roleplay_response};
  const submitted=await db("rpc/submit_police_application",{method:"POST",body:JSON.stringify({p_discord_user_id:userId,p_discord_username:username,p_full_name:characterName,p_previous_experience:a.motivation,p_motivation:a.motivation,p_answers:answer})});
@@ -59,6 +61,7 @@ async function processApplicationSubmit(i:any,userId:string,username:string,a:an
  return submitted;
 }
 async function processTransferSubmit(i:any,userId:string,username:string,a:any){
+ if(await isRecruitmentVetoed(userId,discord)){await editInteractionReply(i,RECRUITMENT_VETO_MESSAGE);return {ok:false,vetoed:true};}
  const fullName=String(a.full_name||"").trim().slice(0,100);
  const ageIcText=String(a.age_ic||"").trim();
  const ageOocText=String(a.age_ooc||"").trim();
@@ -93,10 +96,10 @@ async function processTransferSubmit(i:any,userId:string,username:string,a:any){
 }
 async function processRankRequest(i:any,userId:string,username:string,a:any){
  const characterName=String(a.character_name||"").trim().slice(0,100);
- const steamUsername=String(a.steam_username||"").trim().slice(0,100);
+ const steamUsername="";
  const plate=String(a.plate||"").trim().slice(0,30);
  const approvedBy=String(a.approved_by||"").replace(/@/g,"").trim().slice(0,100);
- if(!characterName||!plate||!approvedBy||!steamUsername){await editInteractionReply(i,"Completa nombre IC, usuario de Steam, placa y nombre de quien aprobó la entrevista.");return;}
+ if(!characterName||!plate||!approvedBy){await editInteractionReply(i,"Completa nombre IC, placa y nombre de quien aprobó la entrevista.");return;}
  const member=await discord("/guilds/"+GUILD_ID+"/members/"+encodeURIComponent(userId)) as any;
  const roles:string[]=member?.roles||[];
  if((!roles.includes(PRESELECTION_ROLE_ID)&&!roles.includes(POLICE_ROLE_ID))||(roles.includes(EXPELLED_ROLE_ID)||roles.includes('1564310246128619560'))){await editInteractionReply(i,"Solo las personas con rol Preselección o Policía pueden solicitar el ingreso tras su entrevista IC.");return;}
@@ -112,7 +115,6 @@ const modalInput=(id:string,placeholder:string,required=true,style=2,maxLength=s
 function rankRequestModal(){return response(9,{custom_id:"prime_rank_request_submit",title:"Nuevo ingreso · UCOP",components:[
  {type:10,content:"Completa tus datos después de aprobar la entrevista IC."},
  {type:18,label:"Nombre IC",component:modalInput("character_name","Nombre de tu personaje.",true,1)},
- {type:18,label:"Usuario de Steam",component:modalInput("steam_username","Tu usuario o identificador de Steam.",true,1)},
  {type:18,label:"Número de placa",component:modalInput("plate","Número de placa policial.",true,1,30)},
  {type:18,label:"Aprobado por (sin @)",description:"Indica el nombre de quien aprobó tu entrevista IC.",component:modalInput("approved_by","Escribe el nombre, sin mencionar a nadie.",true,1)}
 ]})}
@@ -128,6 +130,7 @@ function values(interaction:any){const out:any={};const visit=(node:any)=>{if(!n
 async function handle(i:any){
  if(i.type===1)return response(1,{});
  const user=i.member?.user||i.user;const userId=String(user?.id||"");const username=String(user?.global_name||user?.username||"Usuario Discord");
+ if((i.member?.roles||[]).includes(RECRUITMENT_VETO_ROLE)&&(/^(prime_apply|prime_application|prime_transfer|prime_rank_request)/.test(String(i.data?.custom_id||''))||['postulacion','traslado'].includes(i.data?.name)))return ephemeral(RECRUITMENT_VETO_MESSAGE);
  const applicationStep=await handleApplicationSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processApplicationSubmit});if(applicationStep)return applicationStep;
  const absence=await handleAbsenceInteraction(i,{db,discord,response,ephemeral,values,reply:editInteractionReply});if(absence)return absence;
  if(i.type===2){

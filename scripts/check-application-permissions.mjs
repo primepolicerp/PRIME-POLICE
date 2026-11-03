@@ -73,3 +73,10 @@ console.log('Application permissions: UCOP direct accept/reject, trainee approva
 
 for(const action of ['personnel-departure','personnel-reentry']){const t=setup([UCOP_APPLICATION_ROLES[0]]);t.state.record.status=action==='personnel-departure'?'active':'inactive';const body={discord_user_id:target,operation_id:crypto.randomUUID(),expected_updated_at:'2026-11-01T00:00:00Z',effective_date:new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'}),departure_type:'despido',rank_role_id:'1564309793802428567',unit:'POLICIA',reason:'Motivo comprobado'};assert((await (await t.run(action,body)).json()).pending_approval);assert.equal(t.state.executed,0);t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);assert.equal(t.state.executed,1);}
 console.log('Personnel departures and reentries preserve UCOP proposals and Directiva approval: PASS');
+
+for(const status of ['pending','rejected']){const t=setup([UCOP_TRAINEE_ROLE]);t.state.record.status=status;const r=await t.run('decision',{id,action:'reject',veto:true,reason:'Motivo de veto verificado'});assert((await r.json()).pending_approval);assert.equal(t.state.executed,0);t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);assert.equal(t.state.executed,1);}
+{const t=setup([UCOP_APPLICATION_ROLES[0]]);assert.equal((await t.run('decision',{id,action:'reject',veto:true,reason:'Motivo de veto verificado'})).status,200);assert.equal(t.state.queue.length,0);}
+console.log('Recruitment veto proposals: trainee waits for Directiva on pending/rejected records, authorized UCOP direct execution: PASS');
+
+{const t=setup([UCOP_TRAINEE_ROLE]);await t.run('decision',{id,action:'reject',reason:'Motivo anterior'});Object.assign(t.state.record,{vetoed_at:null,vetoed_by_discord_id:null,vetoed_by_name:null});t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);}
+console.log('Existing queued decisions survive newly added null veto audit columns: PASS');

@@ -1,4 +1,5 @@
 import { authenticatePanelSession } from "./panel-sessions.ts";
+import {applyRecruitmentVeto} from './recruitment-veto.ts';
 import { discordRequest, discordFailure } from "./discord-client.ts";
 import { writeAudit } from "./audit-events.ts";
 import { accessMember } from "./access-member.ts";
@@ -372,8 +373,8 @@ async function editRankRequest(req:Request){
  let body:any;try{body=await req.json();}catch{return json({error:"Datos inválidos."},400);}
  const id=String(body?.id||"");if(!/^[0-9a-f-]{36}$/i.test(id))return json({error:"Solicitud inválida."},400);
  const patch:Record<string,string>={};
- for(const [key,max,required]of [["character_name",100,true],["plate",30,true],["steam_username",100,false],["approved_by_name",100,true]] as const){
-  const value=String(body?.[key]??"").trim();if((required&&!value)||value.length>max)return json({error:"Revisa nombre IC, placa, Steam y quién aprobó la entrevista."},400);patch[key]=key==="approved_by_name"?value.replace(/@/g,"").trim():value;
+ for(const [key,max,required]of [["character_name",100,true],["plate",30,true],["approved_by_name",100,true]] as const){
+  const value=String(body?.[key]??"").trim();if((required&&!value)||value.length>max)return json({error:"Revisa nombre IC, placa y quién aprobó la entrevista."},400);patch[key]=key==="approved_by_name"?value.replace(/@/g,"").trim():value;
  }
  if(!patch.approved_by_name)return json({error:"Indica quién aprobó la entrevista IC."},400);
  try{
@@ -398,6 +399,7 @@ async function reviewRankRequest(req: Request) {
     const rows = await db("police_rank_requests?select=*&id=eq." + enc(id) + "&limit=1");
     const rankRequest = rows?.[0];
     if (!rankRequest) return json({ error: "No se encontró la solicitud de rango." }, 404);
+    if(body.veto===true){const member=await accessMember(auth.userId!);return applyRecruitmentVeto('intakes',body,rankRequest,{db,discord,json,audit:writeAudit,actor:auth.userId!,actorName:String(member.nick||member.user?.global_name||member.user?.username||auth.userId)});}
     if (rankRequest.status !== "pending") return json({ error: "Esta solicitud ya fue revisada." }, 409);
     const reviewer = await discord("/guilds/" + GUILD_ID + "/members/" + enc(auth.userId)) as any;
     const reviewerName = String(reviewer.nick || reviewer.user?.global_name || reviewer.user?.username || auth.userId);
@@ -457,7 +459,7 @@ async function reviewRankRequest(req: Request) {
       [
         {name:'CUENTA DE DISCORD',value:'<@'+rankRequest.discord_user_id+'> · '+String(rankRequest.discord_username||''),inline:false},
         {name:'Nombre IC',value:String(rankRequest.character_name||'No indicado')},
-        {name:'Usuario de Steam',value:String(rankRequest.steam_username||'No indicado en la solicitud')},
+
         {name:'Placa',value:String(rankRequest.plate||'Sin placa')},
         ...(decision==='accept'?[{name:'Rol de ingreso',value:'<@&'+POLICE_ROLE_ID+'>'}]:[]),
         {name:'Entrevista IC aprobada por',value:String(rankRequest.approved_by_name||'No indicado')},
@@ -488,7 +490,7 @@ async function admitPreselection(req:Request,fromTransfer=false){
  const originName=fromTransfer?'Traslados':'Preseleccionados';
  const rankRoleId=String(body.rank_role_id||'').trim();
  if((rankRoleId&&!validDiscordId(rankRoleId))||(body.unit!==undefined&&!VALID_UNITS.has(String(body.unit))))return json({error:'Selecciona una división y un rango válidos.'},400);
- if(!validDiscordId(target)||!/^[a-f0-9-]{36}$/i.test(operation)||!name||name.length>100||!plate||plate.length>30||!steam||steam.length>100||!approvedBy||approvedBy.length>100||body.interview_confirmed!==true)return json({error:'Completa nombre IC, placa, Steam y quién aprobó la entrevista IC. Confirma que la entrevista está aprobada.'},400);
+ if(!validDiscordId(target)||!/^[a-f0-9-]{36}$/i.test(operation)||!name||name.length>100||!plate||plate.length>30||steam.length>100||!approvedBy||approvedBy.length>100||body.interview_confirmed!==true)return json({error:'Completa nombre IC, placa y quién aprobó la entrevista IC. Confirma que la entrevista está aprobada.'},400);
  try{
   const prior=await db('police_rank_requests?select=discord_user_id,status,review_reason&id=eq.'+enc(operation)+'&limit=1');
   if(prior?.length){if(prior[0].discord_user_id===target&&prior[0].status==='accepted'&&prior[0].review_reason==='Ingreso administrativo desde '+originName+'.')return json({ok:true,message:'Este ingreso ya está registrado. Consulta la ficha en Personal.'});return json({error:'La referencia del ingreso ya se utilizó. Actualiza la lista.'},409);}
@@ -522,7 +524,7 @@ async function admitPreselection(req:Request,fromTransfer=false){
   catch(error){console.error('Administrative admission confirmation failed:',String(error));return json({error:'No se pudo confirmar el ingreso en la base. Discord podría haberse actualizado. Revisa Personal y la lista de origen antes de repetir; conserva este formulario si necesitas reintentar.'},503);}
   if(!result.ok){try{await rollback();}catch{warnings.push('Revisa los roles y el apodo en Discord.');}return json({error:[result.error,...warnings].join(' ')},409);}
   if(roles.includes(fromTransfer?TRANSFER_ROLE_ID:PRESELECTION_ROLE_ID))try{await discord('/guilds/'+GUILD_ID+'/members/'+target+'/roles/'+(fromTransfer?TRANSFER_ROLE_ID:PRESELECTION_ROLE_ID),{method:'DELETE'});}catch{warnings.push('La ficha ya está creada, pero no se pudo retirar el rol de acceso en Discord.');}
-  if(!result.existing)try{await discord('/channels/'+RANK_AUDIT_CHANNEL_ID+'/messages',{method:'POST',body:JSON.stringify({embeds:[{title:'🛡️ PRIME POLICE · Ingreso administrativo',color:0x4d98c9,fields:[{name:'Cuenta de Discord',value:'<@'+target+'>'},{name:'Nombre IC',value:name},{name:'Placa',value:plate},{name:'Usuario de Steam',value:steam},{name:'División',value:unit==='POLICIA'?'Sin rama · Policía':unit},{name:'Rango',value:rank?.role_name||'Pendiente de asignación'},{name:'Entrevista IC aprobada por',value:approvedBy},{name:'Registrado por',value:actorName}],footer:{text:'PRIME POLICE · Desde '+originName}}],allowed_mentions:{parse:[]}})});}catch{warnings.push('No se pudo publicar el aviso de Discord; el ingreso y la auditoría de la web están guardados.');}
+  if(!result.existing)try{await discord('/channels/'+RANK_AUDIT_CHANNEL_ID+'/messages',{method:'POST',body:JSON.stringify({embeds:[{title:'🛡️ PRIME POLICE · Ingreso administrativo',color:0x4d98c9,fields:[{name:'Cuenta de Discord',value:'<@'+target+'>'},{name:'Nombre IC',value:name},{name:'Placa',value:plate},{name:'División',value:unit==='POLICIA'?'Sin rama · Policía':unit},{name:'Rango',value:rank?.role_name||'Pendiente de asignación'},{name:'Entrevista IC aprobada por',value:approvedBy},{name:'Registrado por',value:actorName}],footer:{text:'PRIME POLICE · Desde '+originName}}],allowed_mentions:{parse:[]}})});}catch{warnings.push('No se pudo publicar el aviso de Discord; el ingreso y la auditoría de la web están guardados.');}
   return json({ok:true,personnel:result.personnel,message:'Agente incorporado a Personal con Policía, división '+(unit==='POLICIA'?'Sin rama':unit)+' y '+(rank?.role_name||'rango pendiente')+'.',warning:warnings.join(' ')||undefined});
  }catch(error){console.error('Preselection admission:',String(error));const upstream=discordFailure(error);return upstream?json(upstream.body,upstream.status):json({error:'No se pudo completar el ingreso. Revisa el registro antes de reintentar.'},502);}
 }

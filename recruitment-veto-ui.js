@@ -1,0 +1,10 @@
+function appendRecruitmentVeto(container,item,kind){
+ if(!['pending','rejected'].includes(item.status))return;
+ if(item.vetoed_at){const note=document.createElement('span');note.className='badge rejected';note.textContent='Veto registrado · '+(item.vetoed_by_name||item.vetoed_by_discord_id||'Gestión')+' · '+niceDate(item.vetoed_at);container.append(note);return;}
+ const button=document.createElement('button');button.type='button';button.className='btn reject';button.textContent=kind==='applications'&&!canDecideApplicationsDirect?'Proponer veto':'Vetar';button.title='Asignar el rol Vetado y bloquear nuevas solicitudes';button.onclick=async()=>{
+  const reason=prompt('Motivo del veto (obligatorio):','');if(reason===null)return;if(reason.trim().length<3||reason.trim().length>500){showToast('Escribe un motivo de 3 a 500 caracteres.');return;}
+  const direct=kind==='applications'?canDecideApplicationsDirect:canAuthorizePromotions;if(!confirm((direct?'¿Vetar a ':'¿Proponer a Directiva el veto de ')+(item.full_name||item.character_name||item.discord_username)+'? Se asignará el rol Vetado y no podrá enviar postulaciones, traslados ni ingresos mientras lo conserve.'))return;
+  const old=button.textContent;button.disabled=true;button.textContent='Procesando…';const action=kind==='applications'?'decision':kind==='transfers'?'transfer-decision':'rank-request-review';
+  try{const result=await request(action,{method:'POST',body:{id:item.id,...(kind==='intakes'?{decision:'reject'}:{action:'reject'}),veto:true,reason:reason.trim(),expected_status:item.status,expected_reviewed_at:item.reviewed_at||null}});showToast([result.message,result.warning].filter(Boolean).join(' '));await (kind==='applications'?loadApplications():kind==='transfers'?loadTransfers():loadRankRequests());}catch(error){showToast(error.message);button.disabled=false;button.textContent=old;}
+ };container.append(button);
+}
