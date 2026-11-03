@@ -130,6 +130,7 @@ export async function interceptChanges(req:Request,action:string,c:Context):Prom
   });
  }
  if(payload.veto===true&&(['decision','transfer-decision','rank-request-review'].includes(action))&&(String(payload.reason||'').trim().length<3||String(payload.reason||'').length>500))return c.json({error:'Indica un motivo de veto de 3 a 500 caracteres.'},400);
+ if(payload.veto===true&&payload.private_message!==undefined&&(typeof payload.private_message!=='string'||payload.private_message.trim().length>1500))return c.json({error:'El escrito privado admite hasta 1500 caracteres.'},400);
  if(action==='absence-register'||action==='absence-review')return null;
  if(action==='decision'){
   try{
