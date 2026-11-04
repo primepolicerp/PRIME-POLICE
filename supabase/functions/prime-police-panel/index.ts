@@ -584,7 +584,7 @@ async function routePanel(req: Request): Promise<Response> {
   if (action === "oauth-callback" && req.method === "GET") return await finishDiscordOAuth(req);
   if (action === "login" && req.method === "POST") return await login(req);
   if (action === "me" && req.method === "GET") return await currentUser(req);
-  if(['administrative-overview','administrative-tasks','administrative-task-history','administrative-task-save','personnel-dossier'].includes(action||'')){
+  if(['administrative-overview','administrative-alert-ignore','administrative-tasks','administrative-task-history','administrative-task-save','personnel-dossier'].includes(action||'')){
    const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);
    const member=await accessMember(actor),director=(member.roles||[]).some((id:string)=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(id));
    if(applicationPermissions(member.roles||[]).applicationsOnly)return json({error:'Este apartado está reservado al personal gestor.'},403);

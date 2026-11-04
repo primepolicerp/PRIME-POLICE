@@ -41,23 +41,27 @@ function renderAdministrativeTasks(tasks){
  }
 }
 function renderAdministrativeAlerts(alerts){
- const box=$('administrativeAlertList');box.replaceChildren();if(!alerts.length){profileEmpty(box,'No hay alertas activas con este filtro.');return;}
+ const box=$('administrativeAlertList');box.replaceChildren();if(!alerts.length){profileEmpty(box,$('administrativeAlertState').value==='ignored'?'No hay alertas ignoradas con este filtro.':'No hay alertas activas con este filtro.');return;}
  for(const alert of alerts){const card=administrativeText('article','', 'admin-alert-card '+alert.severity),head=administrativeText('div','', 'admin-card-head');head.append(administrativeText('h3',alert.title),administrativeText('span',administrativeAlertLabels[alert.kind]||'Aviso','admin-state'));card.append(head,administrativeText('p',alert.detail));const open=administrativeText('button','Revisar','btn');open.type='button';open.onclick=()=>{
   if(alert.target_id&&alert.destination==='personnel'){administrativeProfile(alert.target_id);return;}
   if(alert.destination==='sync'){openSyncCenter();return;}
   if(alert.destination==='tasks'){$('administrativeTaskScope').value='team';$('administrativeTaskStatus').value='open';$('administrativeTaskSearch').value=alert.title;taskOffset=0;selectAdministrationTab('tasks');loadAdministration();return;}
   const view=alert.destination==='shifts'?'shifts':'dashboard';if(view==='shifts'){shiftTab='open';shiftOffset=0;$('shiftSearch').value=alert.title;}
   document.querySelector('[data-view="'+view+'"]').click();
- };card.append(open);box.append(card);}
+ };const actions=administrativeText('div','','personnel-actions'),ignore=administrativeText('button',alert.ignored?'Restaurar alerta':'Ignorar alerta','btn ghost');ignore.type='button';ignore.disabled=!alert.fingerprint;ignore.onclick=async()=>{
+  const session=token;ignore.disabled=true;open.disabled=true;
+  try{const result=await request('administrative-alert-ignore',{method:'POST',body:{key:alert.key,fingerprint:alert.fingerprint,ignored:!alert.ignored}});if(session!==token)return;showToast(result.message);alertOffset=0;await loadAdministration();}
+  catch(error){if(session===token){showToast(error.message);ignore.disabled=false;open.disabled=false;}}
+ };actions.append(open,ignore);card.append(actions);box.append(card);}
 }
 async function loadAdministration(){
  const sequence=++administrationSequence,session=token,tab=administrationTab,box=$(tab==='tasks'?'administrativeTaskList':'administrativeAlertList');
  $('administrationFeedback').textContent='Actualizando tareas y alertas…';box.setAttribute('aria-busy','true');box.inert=true;$('refreshAdministration').disabled=true;
  try{
-  const overview=request('administrative-overview',{method:'GET',query:{offset:alertOffset,kind:$('administrativeAlertKind').value}});
+  const overview=request('administrative-overview',{method:'GET',query:{offset:alertOffset,kind:$('administrativeAlertKind').value,state:$('administrativeAlertState').value}});
   const tasks=tab==='tasks'?request('administrative-tasks',{method:'GET',query:{offset:taskOffset,scope:$('administrativeTaskScope').value,status:$('administrativeTaskStatus').value,search:$('administrativeTaskSearch').value}}):Promise.resolve(null);
   const [summary,result]=await Promise.all([overview,tasks]);if(sequence!==administrationSequence||session!==token)return;
-  updateAdministrationSummary(summary);$('administrationFeedback').textContent='Actualizado: '+niceDate(summary.generated_at||new Date().toISOString());
+  updateAdministrationSummary(summary);$('administrativeAlertState').options[1].textContent='Ignoradas'+(Number(summary.ignored_total)?' ('+summary.ignored_total+')':'');$('administrationFeedback').textContent='Actualizado: '+niceDate(summary.generated_at||new Date().toISOString());
   if(result){renderAdministrativeTasks(result.tasks||[]);administrativePager('administrativeTaskPager',result.total,taskOffset,result.next_offset??null,offset=>{taskOffset=offset;loadAdministration();});}
   renderAdministrativeAlerts(summary.alerts||[]);administrativePager('administrativeAlertPager',summary.total,alertOffset,summary.next_offset??null,offset=>{alertOffset=offset;loadAdministration();});
  }catch(error){if(sequence===administrationSequence&&session===token){$('administrationFeedback').textContent=error.message+' Pulsa Actualizar para reintentar.';box.replaceChildren();}}
@@ -100,8 +104,8 @@ async function loadPersonnelDossier(){
 }
 document.querySelectorAll('.workspace-tab').forEach(button=>button.addEventListener('click',()=>{const visible=button.dataset.view==='administration';$('administrationView').classList.toggle('hidden',!visible);if(visible){selectAdministrationTab(administrationTab);loadAdministration();}else{administrationSequence++;clearTimeout(administrationSearchTimer);}}));
 $('openAdministrativeAlerts').onclick=()=>openAdministration('alerts');$('administrationTasksTab').onclick=()=>{selectAdministrationTab('tasks');loadAdministration();};$('administrationAlertsTab').onclick=()=>{selectAdministrationTab('alerts');loadAdministration();};$('refreshAdministration').onclick=loadAdministration;$('createAdministrativeTask').onclick=()=>openAdministrativeTask();
-for(const id of ['administrativeTaskScope','administrativeTaskStatus'])$(id).onchange=()=>{taskOffset=0;loadAdministration();};$('administrativeAlertKind').onchange=()=>{alertOffset=0;loadAdministration();};$('administrativeTaskSearch').oninput=()=>{administrationSequence++;clearTimeout(administrationSearchTimer);administrationSearchTimer=setTimeout(()=>{taskOffset=0;loadAdministration();},350);};
+for(const id of ['administrativeTaskScope','administrativeTaskStatus'])$(id).onchange=()=>{taskOffset=0;loadAdministration();};for(const id of ['administrativeAlertKind','administrativeAlertState'])$(id).onchange=()=>{alertOffset=0;loadAdministration();};$('administrativeTaskSearch').oninput=()=>{administrationSequence++;clearTimeout(administrationSearchTimer);administrationSearchTimer=setTimeout(()=>{taskOffset=0;loadAdministration();},350);};
 for(const id of ['administrativeTaskClose','administrativeTaskCancel'])$(id).onclick=()=>{if(!taskBusy)$('administrativeTaskDialog').close();};$('administrativeTaskDialog').addEventListener('cancel',event=>{if(taskBusy)event.preventDefault();});$('administrativeTaskDialog').addEventListener('close',()=>{taskHistorySequence++;if(!taskBusy)taskEditing=null;});$('administrativeTaskHistory').addEventListener('toggle',()=>{if($('administrativeTaskHistory').open)loadAdministrativeTaskHistory();});
 $('profileDossierButton').onclick=()=>{if(profilePerson&&!profileSaving)openPersonnelDossier(profilePerson);};$('personnelDossierClose').onclick=()=>{$('personnelDossierDialog').close();};$('personnelDossierKind').onchange=()=>{dossierOffset=0;loadPersonnelDossier();};$('personnelDossierRefresh').onclick=loadPersonnelDossier;$('personnelDossierDialog').addEventListener('close',()=>{dossierSequence++;dossierPerson=null;$('personnelDossierEvents').replaceChildren();});
 window.addEventListener('panel-account-ready',()=>{updateAdministrationSummary(administrationSummary);$('administrativeTaskScope').value=canAuthorizePromotions?'team':'mine';});
-window.addEventListener('panel-session-ended',()=>{administrationSequence++;dossierSequence++;taskHistorySequence++;clearTimeout(administrationSearchTimer);taskBusy=false;taskEditing=null;dossierPerson=null;taskOffset=0;alertOffset=0;administrationTab='tasks';updateAdministrationSummary(null);$('administrativeTaskDialog').close();$('personnelDossierDialog').close();for(const id of ['administrativeTaskList','administrativeAlertList','administrativeTaskVersions','personnelDossierEvents'])$(id).replaceChildren();$('administrationView').classList.add('hidden');});
+window.addEventListener('panel-session-ended',()=>{administrationSequence++;dossierSequence++;taskHistorySequence++;clearTimeout(administrationSearchTimer);taskBusy=false;taskEditing=null;dossierPerson=null;taskOffset=0;alertOffset=0;administrationTab='tasks';$('administrativeAlertState').value='active';$('administrativeAlertKind').value='';updateAdministrationSummary(null);$('administrativeTaskDialog').close();$('personnelDossierDialog').close();for(const id of ['administrativeTaskList','administrativeAlertList','administrativeTaskVersions','personnelDossierEvents'])$(id).replaceChildren();$('administrationView').classList.add('hidden');});

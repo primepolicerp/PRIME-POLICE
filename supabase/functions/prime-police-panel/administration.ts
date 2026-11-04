@@ -9,7 +9,14 @@ export async function administrationRoute(req:Request,action:string,actor:string
  const rpc=(name:string,body:any)=>c.db('rpc/'+name,{method:'POST',body:JSON.stringify(body)});
  if(action==='administrative-overview'&&req.method==='GET'){
   const kind=p.get('kind')||'';if(!alertKinds.includes(kind))return c.json({error:'Tipo de alerta inválido.'},400);
-  return c.json({ok:true,...await rpc('police_administrative_overview',{p_actor:actor,p_director:c.director,p_offset:offset,p_kind:kind})});
+  const state=p.get('state')||'active';if(!['active','ignored'].includes(state))return c.json({error:'Estado de alerta inválido.'},400);
+  return c.json({ok:true,...await rpc('police_administrative_alert_list',{p_actor:actor,p_director:c.director,p_offset:offset,p_kind:kind,p_ignored:state==='ignored'})});
+ }
+ if(action==='administrative-alert-ignore'&&req.method==='POST'){
+  let body:any;try{body=await req.json();}catch{return c.json({error:'Alerta inválida.'},400);}
+  if(typeof body.key!=='string'||! /^(absence|profile|discord|task|approval|shift):[a-z0-9-]{1,80}$/i.test(body.key)||typeof body.fingerprint!=='string'||! /^[a-f0-9]{32}$/.test(body.fingerprint)||typeof body.ignored!=='boolean')return c.json({error:'Actualiza la lista y selecciona una alerta válida.'},400);
+  const result=await rpc('set_police_administrative_alert_ignored',{p_actor:actor,p_actor_name:c.actorName,p_director:c.director,p_key:body.key,p_fingerprint:body.fingerprint,p_ignore:body.ignored});
+  return result?.ok?c.json({...result,message:body.ignored?'Alerta ignorada en tu cuenta. Puedes restaurarla desde Ignoradas.':'Alerta restaurada.'}):c.json({error:result?.error||'No se pudo actualizar la alerta.'},409);
  }
  if(action==='administrative-tasks'&&req.method==='GET'){
   const scope=p.get('scope')||'mine',status=p.get('status')??'open',search=(p.get('search')||'').replace(/[%_\\]/g,'').trim().slice(0,100);
