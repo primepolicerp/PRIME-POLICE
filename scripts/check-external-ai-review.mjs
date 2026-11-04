@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {externalAiReview,normalizeExternalResult} from '../supabase/functions/prime-police-panel/external-ai-review.ts';
 import {applicationScopeAllowed} from '../supabase/functions/prime-police-panel/application-permissions.ts';
+import {reviewWithTruthScan,TruthScanReviewError} from '../supabase/functions/prime-police-panel/truthscan-review.ts';
 const id='11111111-1111-4111-8111-111111111111',actor='222222222222222222',text='Durante una intervención policial debo preservar la seguridad y comunicar por radio mi ubicación. '.repeat(7);
 let cached=null,status='reserved',calls=[],writes=[],providerStatus=200,providerResult={results:[{score:.87,version:'multilingual',low_confidence:false,segments:[{start:0,end:40,score:.9}]}]};
 const ctx={key:'private-test-key',actor,applicationsOnly:false,json:(v,status=200)=>Response.json(v,{status}),db:async(path,init={})=>{
@@ -28,3 +29,21 @@ await externalAiReview(req('POST','transfers'),ctx);assert.equal(cached.answers[
 assert(applicationScopeAllowed('external-ai-review',new URLSearchParams('kind=applications')));assert(!applicationScopeAllowed('external-ai-review',new URLSearchParams('kind=transfers')));
 const normalized=normalizeExternalResult({score:.8,segments:[{start:-1,end:3,score:.8},{start:0,end:99999,score:.9},{start:0,end:3,score:.9}]},{key:'test',label:'Test',text:'Texto breve'});assert.equal(normalized.segments.length,1);assert(normalized.low_confidence);
 console.log('External AI: Spanish text-only batches, private key, zero retention, validated scores/spans, saved results, quota/busy handling, provider failures and trainee scope: PASS');
+
+const job='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';let truthCalls=[],truthPending=false,truthBalance=25000,submittedId;
+const truthFetch=async(url,init)=>{
+ truthCalls.push({url,init});assert.equal(init.redirect,'error');
+ if(url.endsWith('/check-user-credits'))return Response.json({credits:truthBalance});
+ if(url.endsWith('/detect'))return Response.json({id:job,status:'pending'});
+ if(url.endsWith('/query'))return Response.json({id:job,status:truthPending?'pending':'done',result:91.18});
+ throw Error('Unexpected destination');
+};
+const truthAnswer={key:'combined',label:'Conjunto',text,source_keys:['motivation']};
+let truthResult=await reviewWithTruthScan(truthAnswer,'truth-private',truthFetch,async id=>{submittedId=id;});assert.equal(submittedId,job);assert.equal(truthResult.score,.9118);assert.equal(truthResult.segments.length,0);assert.equal(truthCalls.length,3);assert.equal(JSON.parse(truthCalls[1].init.body).text,text);assert.equal(truthCalls[0].init.headers.apikey,'truth-private');
+truthCalls=[];await reviewWithTruthScan(truthAnswer,'truth-private',truthFetch,async()=>{throw Error('Must not create another job');},job);assert.equal(truthCalls.length,1);assert(truthCalls[0].url.endsWith('/query'));
+truthCalls=[];truthBalance=0;await assert.rejects(()=>reviewWithTruthScan(truthAnswer,'truth-private',truthFetch),/No hay suficientes/);assert.equal(truthCalls.length,1);truthBalance=25000;
+truthPending=true;await assert.rejects(()=>reviewWithTruthScan(truthAnswer,'truth-private',truthFetch,async()=>{},job,async()=>{}),e=>e instanceof TruthScanReviewError&&e.jobId===job);truthPending=false;
+cached=null;truthCalls=[];writes=[];
+result=await externalAiReview(req('POST'),{...ctx,provider:'TruthScan',key:'truth-private',fetcher:truthFetch});data=await result.json();assert.equal(result.status,200);assert.equal(data.provider,'TruthScan');assert.equal(data.combined,true);assert.equal(data.result.answers[0].key,'combined');assert.deepEqual(data.result.answers[0].source_keys,['motivation','detention_rights']);const truthBody=JSON.parse(truthCalls.find(c=>c.url.endsWith('/detect')).init.body);assert(truthBody.text.includes('Respuesta breve'));assert(!truthBody.text.includes('PRIVATE_NAME'));assert(!truthBody.text.includes(actor));assert(!JSON.stringify(data).includes('truth-private'));
+const truthHash=writes[0].p_hash;cached=null;writes=[];await externalAiReview(req('GET'),{...ctx,provider:'Sapling'});await externalAiReview(req('POST'),{...ctx,provider:'Sapling'});assert.notEqual(writes[0].p_hash,truthHash,'Changing providers must invalidate cached results');
+console.log('TruthScan: real-score normalization, text-only aggregate, credit precheck, no fabricated spans, saved job identity, retry without duplicate submissions and provider-isolated cache: PASS');

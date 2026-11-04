@@ -68,31 +68,32 @@ function applicationReviewPanel(app){
 }
 function externalAiReviewPanel(item,kind){
  const box=document.createElement('details');box.className='detail external-ai-panel';
- const title=document.createElement('summary');title.textContent='Detector externo de IA · Sapling';
+ const title=document.createElement('summary');title.textContent='Detector externo de IA';
  const body=document.createElement('div');body.className='external-ai-body';box.append(title,body);let loaded=false,busy=false;
  const load=async(analyze=false)=>{
-  if(busy)return;busy=true;body.textContent=analyze?'Analizando respuestas con Sapling…':'Consultando análisis externo…';
+  if(busy)return;busy=true;body.textContent=analyze?'Analizando respuestas…':'Consultando análisis externo…';
   try{
-   const data=await request('external-ai-review',{method:analyze?'POST':'GET',query:{kind,id:item.id},...(analyze?{body:{}}:{})});body.replaceChildren();
+   const data=await request('external-ai-review',{method:analyze?'POST':'GET',query:{kind,id:item.id},...(analyze?{body:{}}:{})});body.replaceChildren();title.textContent='Detector externo de IA · '+data.provider;
    const description=document.createElement('p');description.className='muted';description.textContent='Analiza las respuestas con un servicio externo especializado en español. La puntuación es una estimación, no un porcentaje de texto copiado ni una prueba de autoría.';body.append(description);
    if(data.result){
-    const meta=document.createElement('small');meta.className='review-sample';meta.textContent='Sapling · '+niceDate(data.result.analyzed_at)+' · Resultado guardado';body.append(meta);
+    const meta=document.createElement('small');meta.className='review-sample';meta.textContent=data.result.provider+' · '+niceDate(data.result.analyzed_at)+' · Resultado guardado';body.append(meta);
     for(const result of data.result.answers||[]){
      const row=document.createElement('article');row.className='review-finding';const heading=document.createElement('strong');heading.textContent=result.label;
      const score=document.createElement('span');score.className='external-ai-score';score.textContent='Estimación del detector: '+Math.round(result.score*100)+'%';
      const note=document.createElement('p');note.textContent=result.low_confidence?'Baja confianza: el texto es breve o presenta un formato menos fiable.':result.score>=.8?'El detector señala posible generación con IA. Requiere revisión humana.':result.score>=.5?'El detector encuentra algunas señales de generación con IA.':'El detector encuentra pocas señales. Esto no acredita autoría humana.';row.append(heading,score,note);
-     const text=String(item.answers?.[result.key]||(result.key==='transfer_reason'?item.reason:'')||'').trim().slice(0,4000),characters=Array.from(text);
+     const text=result.key==='combined'?(result.source_keys||[]).map(key=>String(item.answers?.[key]||(key==='transfer_reason'?item.reason:'')||'').trim().slice(0,4000)).filter(Boolean).join('\n\n').slice(0,36000):String(item.answers?.[result.key]||(result.key==='transfer_reason'?item.reason:'')||'').trim().slice(0,4000),characters=Array.from(text);
      const disclosure=document.createElement('details'),summary=document.createElement('summary'),answer=document.createElement('blockquote');disclosure.className='review-answer';summary.textContent=result.segments?.length?'Ver respuesta y fragmentos señalados':'Ver respuesta analizada';
      const segments=[...(result.segments||[])].sort((a,b)=>a.start-b.start);let cursor=0;
-     for(const segment of segments){if(segment.start<cursor||segment.start<0||segment.end>characters.length||segment.end<=segment.start)continue;answer.append(document.createTextNode(characters.slice(cursor,segment.start).join('')));const mark=document.createElement('mark');mark.textContent=characters.slice(segment.start,segment.end).join('');mark.title='Fragmento señalado por Sapling · '+Math.round(segment.score*100)+'%';answer.append(mark);cursor=segment.end;}
+     for(const segment of segments){if(segment.start<cursor||segment.start<0||segment.end>characters.length||segment.end<=segment.start)continue;answer.append(document.createTextNode(characters.slice(cursor,segment.start).join('')));const mark=document.createElement('mark');mark.textContent=characters.slice(segment.start,segment.end).join('');mark.title='Fragmento señalado por '+data.provider+' · '+Math.round(segment.score*100)+'%';answer.append(mark);cursor=segment.end;}
      answer.append(document.createTextNode(characters.slice(cursor).join('')));disclosure.append(summary,answer);row.append(disclosure);body.append(row);
     }
    }
+   if(data.truncated){const limit=document.createElement('p');limit.className='muted';limit.textContent='Por longitud, se analizarán los primeros 36.000 caracteres del conjunto de respuestas.';body.append(limit);}
    if(data.skipped?.length){const skipped=document.createElement('p');skipped.className='muted';skipped.textContent='Sin analizar por texto breve (menos de '+data.minimum_characters+' caracteres): '+data.skipped.map(x=>x.label).join(', ')+'.';body.append(skipped);}
-   if(!data.configured){const pending=document.createElement('p');pending.className='muted';pending.textContent='Pendiente de conectar la clave privada de Sapling en el servidor.';body.append(pending);}
+   if(!data.configured){const pending=document.createElement('p');pending.className='muted';pending.textContent='Pendiente de conectar la clave privada del detector en el servidor.';body.append(pending);}
    else if(!data.result&&data.eligible){
-    const privacy=document.createElement('p');privacy.className='muted';privacy.textContent='Se enviarán solo las respuestas, sin incluir los campos de nombre, edad o cuenta Discord. Se solicitará a Sapling no conservar el texto. No hay decisiones automáticas.';
-    const button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Analizar respuestas con Sapling';button.onclick=()=>load(true);body.append(privacy,button);
+    const privacy=document.createElement('p');privacy.className='muted';privacy.textContent='Se enviarán solo las respuestas a '+data.provider+', sin incluir los campos de nombre, edad o cuenta Discord. '+(data.provider==='TruthScan'?'El plan gratuito del proveedor puede conservar el texto y el resultado. La puntuación corresponde al conjunto de respuestas.':'Se solicitará al proveedor no conservar el texto.')+' No hay decisiones automáticas.';
+    const button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Analizar respuestas con '+data.provider;button.onclick=()=>load(true);body.append(privacy,button);
     if(data.processing){const progress=document.createElement('p');progress.className='muted';progress.textContent='Hay un análisis en curso. Espera un momento y vuelve a consultar.';body.append(progress);}
    }
    loaded=true;
