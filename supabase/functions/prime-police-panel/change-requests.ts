@@ -76,7 +76,7 @@ async function snapshot(action:string,payload:any,c:Context){
   const candidates=await c.db('police_preselections?select=*&discord_user_id=eq.'+encodeURIComponent(target)+'&limit=1');const candidate=candidates?.[0];
   if(!candidate||candidate.status!=='active')throw new ChangeInputError('La persona ya no está pendiente en Preseleccionados.');
   if(payload.expected_updated_at&&String(payload.expected_updated_at)!==String(candidate.updated_at))throw new ChangeInputError('La preselección cambió. Actualiza la lista.');
-  if(!String(payload.full_name||'').trim()||!String(payload.plate||'').trim()||!String(payload.steam_username||'').trim()||!String(payload.approved_by_name||'').trim()||payload.interview_confirmed!==true)throw new ChangeInputError('Completa los datos del ingreso y confirma la entrevista IC.');
+  if(!String(payload.full_name||'').trim()||!String(payload.plate||'').trim()||!String(payload.approved_by_name||'').trim()||payload.interview_confirmed!==true)throw new ChangeInputError('Completa los datos del ingreso y confirma la entrevista IC.');
   state.preselection=candidate;
  }
  if(action!=='personnel-delete'){

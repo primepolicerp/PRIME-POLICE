@@ -9,7 +9,7 @@ export async function preparePlate(req:Request,action:string,db:Db,authorized:(r
  if(!operation&&body.auto_plate!==true)return req; // Older clients keep their explicit plate.
  if(!await authorized(req))return failure('No tienes permiso para asignar placas.',403);
  if(!/^[a-f0-9-]{36}$/i.test(operation)||!/^\d{17,20}$/.test(String(body.discord_user_id||'')))return failure('Referencia de ingreso o usuario inválida.',400);
- if(!String(body.full_name||'').trim()||(action!=='personnel-register'&&(body.interview_confirmed!==true||!String(body.steam_username||'').trim()||!String(body.approved_by_name||'').trim())))return failure('Completa los datos del ingreso antes de asignar la placa.',400);
+ if(!String(body.full_name||'').trim()||(action!=='personnel-register'&&(body.interview_confirmed!==true||!String(body.approved_by_name||'').trim())))return failure('Completa nombre IC, quién aprobó la entrevista y confirma la entrevista IC antes de asignar la placa.',400);
  const result=await db('rpc/reserve_police_plate',{method:'POST',body:JSON.stringify({p_operation:operation,p_user:String(body.discord_user_id),p_manual:body.auto_plate===true?null:String(body.plate||'').trim()})});
  if(!result?.ok)return failure(result?.error||'No se pudo asignar la siguiente placa.',409);
  return new Request(req,{body:JSON.stringify({...body,plate:result.plate})});

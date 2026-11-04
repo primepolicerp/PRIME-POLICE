@@ -19,11 +19,13 @@ assert(!applicationScopeAllowed('records',new URLSearchParams({kind:'personnel'}
 
 const source=stripTypeScriptTypes(readFileSync(new URL('../supabase/functions/prime-police-panel/change-requests.ts',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('export ',''));
 const actor='111111111111111111',target='222222222222222222',id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-function setup(roles){
+function setup(roles,profileExists=true){
  const state={roles,queue:[],executed:0,record:{id,discord_user_id:target,full_name:'Ejemplo',status:'pending',created_at:'2026-11-01T00:00:00Z'}};
  const json=(body,status=200)=>Response.json(body,{status});
  const db=async(path,init)=>{
-  if(path.startsWith('police_personnel?'))return[{...state.record,updated_at:'2026-11-01T00:00:00Z'}];
+  if(path.startsWith('police_personnel?'))return profileExists?[{...state.record,updated_at:'2026-11-01T00:00:00Z'}]:[];
+  if(path.startsWith('police_preselections?'))return[{discord_user_id:target,status:'active',updated_at:'2026-11-01T00:00:00Z'}];
+  if(path.startsWith('police_transfer_applications?'))return[state.record];
   if(path.startsWith('police_applications'))return[state.record];
   if(path.startsWith('police_change_requests')){
    const p=new URL('https://test/?'+(path.split('?')[1]||'')).searchParams;
@@ -80,3 +82,6 @@ console.log('Recruitment veto proposals: trainee waits for Directiva on pending/
 
 {const t=setup([UCOP_TRAINEE_ROLE]);await t.run('decision',{id,action:'reject',reason:'Motivo anterior'});Object.assign(t.state.record,{vetoed_at:null,vetoed_by_discord_id:null,vetoed_by_name:null});t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);}
 console.log('Existing queued decisions survive newly added null veto audit columns: PASS');
+
+for(const action of ['preselection-admit','transfer-admit']){const t=setup([UCOP_APPLICATION_ROLES[0]],false);t.state.record.status='accepted';const r=await t.run(action,{discord_user_id:target,transfer_id:id,operation_id:crypto.randomUUID(),full_name:'Agente de prueba',plate:'0175',approved_by_name:'Entrevistador',interview_confirmed:true,unit:'POLICIA'});assert.equal(r.status,200);assert((await r.json()).pending_approval);assert.equal(t.state.executed,0);t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);assert.equal(t.state.executed,1);}
+console.log('Admissions without Steam: UCOP preselection/transfer proposals and Directiva approval remain valid: PASS');
