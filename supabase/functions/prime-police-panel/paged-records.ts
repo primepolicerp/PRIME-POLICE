@@ -38,7 +38,7 @@ export async function listPagedRecords(req:Request,json:(v:unknown,status?:numbe
  if(['applications','transfers'].includes(kind))result.rows=await attachRejectionHistory(result.rows,config.table,query);
  if(['applications','transfers'].includes(kind)&&result.rows.length){
   try{
-   const sample=await query(config.table+'?select=id,discord_user_id,'+(kind==='applications'?'answers':'reason')+'&order=created_at.desc,id.desc&limit=200');
+   const sample=await query(config.table+'?select=id,discord_user_id,'+(kind==='applications'?'answers':'reason,answers')+'&order=created_at.desc,id.desc&limit=200');
    const cache=createReviewCache(); // Only this request; no applicant text persists in a shared cache.
    result.rows=result.rows.map((row:any)=>({...row,automatic_review:reviewSubmissionAnswers(kind,row,sample.rows,cache)}));
   }catch{result.rows=result.rows.map((row:any)=>({...row,automatic_review:{unavailable:true}}));}

@@ -1,6 +1,8 @@
 import { parseApplicationIdentity } from "../_shared/application-identity.ts";
 import {isRecruitmentVetoed,RECRUITMENT_VETO_ROLE,RECRUITMENT_VETO_MESSAGE} from '../_shared/recruitment-restriction.ts';
 import { identityModal, handleApplicationSteps } from "./application-steps.ts";
+import {transferIdentityModal,handleTransferSteps} from "./transfer-steps.ts";
+import {TRANSFER_QUESTIONS,validTransferAnswers} from "../_shared/transfer-questions.ts";
 import { handleAbsenceInteraction, absencePanel, ABSENCE_CHANNEL_ID } from "./absences.ts";
 const GUILD_ID = "1539970134469378068";
 const PRESELECTION_ROLE_ID = "1564685481457877012";
@@ -62,6 +64,8 @@ async function processApplicationSubmit(i:any,userId:string,username:string,a:an
 }
 async function processTransferSubmit(i:any,userId:string,username:string,a:any){
  if(await isRecruitmentVetoed(userId,discord)){await editInteractionReply(i,RECRUITMENT_VETO_MESSAGE);return {ok:false,vetoed:true};}
+ const questionnaire=a.questionnaire_version===1;
+ if(questionnaire&&!validTransferAnswers(a)){await editInteractionReply(i,"Completa todas las preguntas del traslado. El formulario no se guardó.");return;}
  const fullName=String(a.full_name||"").trim().slice(0,100);
  const ageIcText=String(a.age_ic||"").trim();
  const ageOocText=String(a.age_ooc||"").trim();
@@ -69,30 +73,31 @@ async function processTransferSubmit(i:any,userId:string,username:string,a:any){
  if(!/^\d{1,3}$/.test(ageIcText)||!/^\d{1,3}$/.test(ageOocText)){await editInteractionReply(i,"Las edades IC y OOC deben tener solo números, de 1 a 120. El formulario no se guardó.");return;}
  const ageIc=Number(ageIcText),ageOoc=Number(ageOocText);
  if(ageIc<1||ageIc>120||ageOoc<1||ageOoc>120){await editInteractionReply(i,"Las edades IC y OOC deben ser números entre 1 y 120. El formulario no se guardó.");return;}
- const sourceCurrent=String(a.source_current_data||"").trim().slice(0,4000);
+ const sourceCurrent=String(questionnaire?a.previous_police:(a.source_current_data||"")).trim().slice(0,4000);
  const sourceParts=sourceCurrent.split(/\s*(?:\||\r?\n|;|,)\s*/).map((part:string)=>part.trim()).filter(Boolean);
  const labeled=(pattern:RegExp)=>sourceCurrent.match(pattern)?.[1]?.trim()||"";
- const city=labeled(/ciudad\s*[:=\-]?\s*([^|\n;,]+)/i)||sourceParts[0]||"No especificada";
- const faction=labeled(/facc(?:i|í)on\s*[:=\-]?\s*([^|\n;,]+)/i)||sourceParts[1]||"No especificada";
- const rank=labeled(/rango(?:\s+actual)?\s*[:=\-]?\s*([^|\n;,]+)/i)||sourceParts[2]||"No especificado";
+ const city=questionnaire?sourceCurrent.slice(0,200):labeled(/ciudad\s*[:=\-]?\s*([^|\n;,]+)/i)||sourceParts[0]||"No especificada";
+ const faction=questionnaire?"Indicada en experiencia policial previa":labeled(/facc(?:i|í)on\s*[:=\-]?\s*([^|\n;,]+)/i)||sourceParts[1]||"No especificada";
+ const rank=questionnaire?String(a.previous_responsibilities).slice(0,200):labeled(/rango(?:\s+actual)?\s*[:=\-]?\s*([^|\n;,]+)/i)||sourceParts[2]||"No especificado";
  const unit=labeled(/(?:unidad|divisi[oó]n)\s*[:=\-]?\s*([^|\n;,]+)/i)||sourceParts[3]||"";
  const requested=String(a.transfer_reason||"").trim().slice(0,4000);
  const desired=(requested.match(/rango\s*solicitado\s*[:=\-]?\s*([^|\n;,]+)/i)?.[1]||"").trim().slice(0,200);
  const explicitReason=requested.match(/motivo\s*[:=\-]?\s*([\s\S]+)/i)?.[1]||"";
- const reason=(explicitReason||requested.replace(/rango\s*solicitado\s*[:=\-]?\s*[^|\n;,]+\s*(?:\|\s*)?/i,"")).trim();
+ const reason=questionnaire?requested:(explicitReason||requested.replace(/rango\s*solicitado\s*[:=\-]?\s*[^|\n;,]+\s*(?:\|\s*)?/i,"")).trim();
  if(!sourceCurrent||!reason){await editInteractionReply(i,"Completa procedencia/rango actual y el motivo. Puedes escribirlos libremente; el formulario no se guardó.");return;}
  const pending=await db("police_transfer_applications?select=id&discord_user_id=eq."+encodeURIComponent(userId)+"&status=eq.pending&limit=1");
  if(pending?.length){await editInteractionReply(i,"Ya tienes una solicitud de traslado pendiente de revisión por UCOP.");return;}
  const previous=await db("police_transfer_applications?select=attempt_number&discord_user_id=eq."+encodeURIComponent(userId)+"&order=created_at.asc");
  if(previous?.length>=3){await editInteractionReply(i,"Ya utilizaste tus 3 intentos para solicitar un traslado a PRIME POLICE.");return;}
  try {
-  const rows=await db("police_transfer_applications",{method:"POST",body:JSON.stringify({discord_user_id:userId,discord_username:username,full_name:fullName,age_ic:ageIc,age_ooc:ageOoc,source_city:city,source_faction:faction,current_rank:rank,current_unit:unit,requested_rank:desired,reason,attempt_number:previous.length+1})});
+  const rows=await db("police_transfer_applications",{method:"POST",body:JSON.stringify({discord_user_id:userId,discord_username:username,full_name:fullName,age_ic:ageIc,age_ooc:ageOoc,source_city:city,source_faction:faction,current_rank:rank,current_unit:unit,requested_rank:desired,reason,attempt_number:previous.length+1,...(questionnaire?{id:a.submission_id,answers:{questionnaire_version:1,...Object.fromEntries(TRANSFER_QUESTIONS.map(q=>[q.key,String(a[q.key]).trim()]))}}:{})})});
   if(!rows?.[0]?.id)throw Error("Transfer request was not stored");
  } catch(error){
   if(String(error).includes("409")){await editInteractionReply(i,"Ya tienes una solicitud de traslado pendiente de revisión por UCOP.");return;}
   throw error;
  }
  await editInteractionReply(i,"📋 **RRHH UCOP · Escrito recibido en privado**\nTu solicitud quedó registrada en la web. Este es tu intento "+(previous.length+1)+" de 3. UCOP revisará tu información y te enviará el resultado de forma privada.");
+ return {ok:true};
 }
 async function processRankRequest(i:any,userId:string,username:string,a:any){
  const characterName=String(a.character_name||"").trim().slice(0,100);
@@ -119,19 +124,15 @@ function rankRequestModal(){return response(9,{custom_id:"prime_rank_request_sub
  {type:18,label:"Aprobado por (sin @)",description:"Indica el nombre de quien aprobó tu entrevista IC.",component:modalInput("approved_by","Escribe el nombre, sin mencionar a nadie.",true,1)}
 ]})}
 function modal(){return identityModal(modalInput,response);}
-function transferModal(){return response(9,{custom_id:"prime_transfer_submit",title:"Traslado · PRIME POLICE",components:[
- {type:18,label:"Nombre IC",description:"Indica nombre y apellido de tu personaje.",component:modalInput("full_name","Nombre y apellido IC",true,1)},
- {type:18,label:"Edad IC · solo números",description:"Escribe únicamente números (1–120).",component:modalInput("age_ic","Ej. 25",true,1,3)},
- {type:18,label:"Edad OOC · solo números",description:"Escribe únicamente números (1–120).",component:modalInput("age_ooc","Ej. 18",true,1,3)},
- {type:18,label:"Procedencia y rango actual",description:"Escribe libremente. Si quieres, separa ciudad, facción, rango y unidad con |.",component:modalInput("source_current_data","Ciudad | Facción | Rango | Unidad",true)},
- {type:18,label:"Motivo del traslado",description:"Escribe libremente. El rango solicitado es opcional.",component:modalInput("transfer_reason","Motivo y, si quieres, rango solicitado",true)}
-]})}
+function transferModal(){return transferIdentityModal(modalInput,response);}
+
 function values(interaction:any){const out:any={};const visit=(node:any)=>{if(!node||typeof node!=="object")return;if(typeof node.custom_id==="string"&&node.value!==undefined)out[node.custom_id]=String(node.value||"").trim();if(Array.isArray(node.components))for(const child of node.components)visit(child);if(node.component)visit(node.component)};for(const component of interaction.data?.components||[])visit(component);return out}
 async function handle(i:any){
  if(i.type===1)return response(1,{});
  const user=i.member?.user||i.user;const userId=String(user?.id||"");const username=String(user?.global_name||user?.username||"Usuario Discord");
  if((i.member?.roles||[]).includes(RECRUITMENT_VETO_ROLE)&&(/^(prime_apply|prime_application|prime_transfer|prime_rank_request)/.test(String(i.data?.custom_id||''))||['postulacion','traslado'].includes(i.data?.name)))return ephemeral(RECRUITMENT_VETO_MESSAGE);
  const applicationStep=await handleApplicationSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processApplicationSubmit});if(applicationStep)return applicationStep;
+ const transferStep=await handleTransferSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processTransferSubmit});if(transferStep)return transferStep;
  const absence=await handleAbsenceInteraction(i,{db,discord,response,ephemeral,values,reply:editInteractionReply});if(absence)return absence;
  if(i.type===2){
   const name=i.data?.name;

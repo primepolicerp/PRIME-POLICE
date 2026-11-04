@@ -1,3 +1,4 @@
+import {TRANSFER_QUESTIONS} from '../_shared/transfer-questions.ts';
 const questions:Record<string,string>={motivation:'Motivación',detention_rights:'Responsabilidad y órdenes',scene_resolution:'Mala praxis',roleplay_response:'Situaciones policiales'};
 const normalize=(value:unknown)=>String(value||'').normalize('NFKC').toLocaleLowerCase('es').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 export const createReviewCache=()=>({normalized:new Map<string,string>(),signatures:new Map<string,{words:number,grams:Set<string>}>()});
@@ -29,8 +30,8 @@ export function reviewApplicationAnswers(current:any,others:any[],fields:Record<
 }
 export function reviewSubmissionAnswers(kind:string,current:any,others:any[],cache=createReviewCache()){
  if(kind==='applications')return reviewApplicationAnswers(current,others.filter(row=>String(row.id)!==String(current.id)),questions,cache);
- const convert=(row:any)=>({...row,answers:{reason:row.reason}});
- return reviewApplicationAnswers(convert(current),others.filter(row=>String(row.id)!==String(current.id)).map(convert),{reason:'Motivo del traslado'},cache);
+ const convert=(row:any)=>({...row,answers:{...row.answers,transfer_reason:row.answers?.transfer_reason||row.reason}});
+ return reviewApplicationAnswers(convert(current),others.filter(row=>String(row.id)!==String(current.id)).map(convert),Object.fromEntries(TRANSFER_QUESTIONS.map(q=>[q.key,q.title])),cache);
 }
 export async function applicationReview(req:Request,db:any,json:any){
  if(req.method!=='GET')return json({error:'Método no permitido.'},405);

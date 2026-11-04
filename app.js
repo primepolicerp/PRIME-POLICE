@@ -303,7 +303,12 @@ function renderTransfers() {
     const identity=document.createElement("div"),name=document.createElement("h3"),discordName=document.createElement("div"),status=document.createElement("span");
     name.textContent=item.full_name||"Solicitud de traslado";discordName.className="muted";discordName.textContent=(item.discord_username||"Discord")+" · ID "+item.discord_user_id;identity.append(name,discordName);status.className="badge "+(item.status==="pending"?"pending":item.status==="accepted"?"accepted":"rejected");status.textContent=item.status==="pending"?"Pendiente":item.status==="accepted"?"Aceptada · Traslado":"Rechazada";head.append(identity,status);
     const grid=document.createElement("div");grid.className="details";
-    grid.append(detail("Fecha de solicitud",niceDate(item.created_at)),detail("Intento",String(item.attempt_number||1)+" / 3"),detail("Edad IC",item.age_ic),detail("Edad OOC",item.age_ooc),detail("Ciudad de procedencia",item.source_city),detail("Facción policial",item.source_faction),detail("Rango actual",item.current_rank),detail("Unidad actual",item.current_unit),detail("Rango solicitado",item.requested_rank),detail("Motivo del traslado",item.reason),detail("Motivo de decisión",item.decision_reason));
+    grid.append(detail("Fecha de solicitud",niceDate(item.created_at)),detail("Intento",String(item.attempt_number||1)+" / 3"),detail("Edad IC",item.age_ic),detail("Edad OOC",item.age_ooc));
+    if(item.answers?.questionnaire_version===1){
+      const questions=[['previous_police','1. Experiencia policial previa'],['roleplay_experience','3. Experiencia en Roleplay'],['transfer_reason','4. Motivo del traslado'],['police_knowledge','5. Conocimientos policiales'],['previous_responsibilities','6. Rango y responsabilidades anteriores'],['disciplinary_history','7. Historial disciplinario'],['adaptation','8. Adaptación a la nueva institución'],['availability','9. Disponibilidad y compromiso'],['contribution','10. Aportación a la institución']];
+      for(const [key,label] of questions)grid.append(detail(label,item.answers[key]));
+    }else grid.append(detail("Ciudad de procedencia",item.source_city),detail("Facción policial",item.source_faction),detail("Rango actual",item.current_rank),detail("Unidad actual",item.current_unit),detail("Rango solicitado",item.requested_rank),detail("Motivo del traslado",item.reason));
+    grid.append(detail("Motivo de decisión",item.decision_reason));
     const actions=document.createElement("div");actions.className="candidate-actions";
     if(item.status==="pending"){
       const accept=document.createElement("button");accept.className="btn accept";accept.textContent="Aceptar y asignar rol Traslado";accept.onclick=()=>reviewTransfer(item,"accept",accept);

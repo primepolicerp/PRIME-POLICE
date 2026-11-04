@@ -80,8 +80,8 @@ for(const status of ['pending','rejected']){const t=setup([UCOP_TRAINEE_ROLE]);t
 {const t=setup([UCOP_APPLICATION_ROLES[0]]);assert.equal((await t.run('decision',{id,action:'reject',veto:true,reason:'Motivo de veto verificado'})).status,200);assert.equal(t.state.queue.length,0);}
 console.log('Recruitment veto proposals: trainee waits for Directiva on pending/rejected records, authorized UCOP direct execution: PASS');
 
-{const t=setup([UCOP_TRAINEE_ROLE]);await t.run('decision',{id,action:'reject',reason:'Motivo anterior'});Object.assign(t.state.record,{vetoed_at:null,vetoed_by_discord_id:null,vetoed_by_name:null});t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);}
-console.log('Existing queued decisions survive newly added null veto audit columns: PASS');
+{const t=setup([UCOP_TRAINEE_ROLE]);await t.run('decision',{id,action:'reject',reason:'Motivo anterior'});Object.assign(t.state.record,{vetoed_at:null,vetoed_by_discord_id:null,vetoed_by_name:null,answers:null});t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);}
+console.log('Existing queued decisions survive newly added null veto audit and transfer-answer columns: PASS');
 
 for(const action of ['preselection-admit','transfer-admit']){const t=setup([UCOP_APPLICATION_ROLES[0]],false);t.state.record.status='accepted';const r=await t.run(action,{discord_user_id:target,transfer_id:id,operation_id:crypto.randomUUID(),full_name:'Agente de prueba',plate:'0175',approved_by_name:'Entrevistador',interview_confirmed:true,unit:'POLICIA'});assert.equal(r.status,200);assert((await r.json()).pending_approval);assert.equal(t.state.executed,0);t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);assert.equal(t.state.executed,1);}
 console.log('Admissions without Steam: UCOP preselection/transfer proposals and Directiva approval remain valid: PASS');
