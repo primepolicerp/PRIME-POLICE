@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {deliverShiftReminder} from '../supabase/functions/prime-police-panel/shift-reminders.ts';
+import {deliverClaimedNotice} from '../supabase/functions/prime-police-panel/discord-jobs.ts';
+const data={shiftId:'11111111-1111-4111-8111-111111111111',userId:'698630509143654541'};
+let shift,calls=[],reads=0,closeAfterDm=false;
+const reset=()=>{shift={id:data.shiftId,discord_user_id:data.userId,started_at:new Date(Date.now()-7201000).toISOString(),ended_at:null};calls=[];reads=0;closeAfterDm=false;};
+const db=async path=>{assert(path.startsWith('police_duty_shifts?'));reads++;return shift?[shift]:[];};
+const send=async(path,init)=>{calls.push({path,body:JSON.parse(init.body)});if(path==='/users/@me/channels'){if(closeAfterDm)shift.ended_at=new Date().toISOString();return{id:'dm'};}return{id:'message'};};
+reset();assert.equal(await deliverShiftReminder(data,send,db),'');assert.equal(reads,2);assert.equal(calls.length,2);const card=calls[1].body;assert.equal(calls[0].body.recipient_id,data.userId);assert(card.embeds[0].description.includes('2 horas'));assert.deepEqual(card.allowed_mentions,{parse:[]});assert(card.enforce_nonce);assert.equal(card.nonce.length,25);
+calls=[];await deliverShiftReminder(data,send,db);assert.equal(calls[1].body.nonce,card.nonce);
+for(const change of [{ended_at:new Date().toISOString()},{started_at:new Date(Date.now()-7199000).toISOString()},{discord_user_id:'111111111111111111'},{started_at:'bad'}]){reset();Object.assign(shift,change);assert.equal(await deliverShiftReminder(data,send,db),'__superseded__');assert.equal(calls.length,0);}
+reset();shift=null;assert.equal(await deliverShiftReminder(data,send,db),'__superseded__');assert.equal(calls.length,0);
+reset();closeAfterDm=true;assert.equal(await deliverShiftReminder(data,send,db),'__superseded__');assert.equal(calls.length,1);
+reset();assert(await deliverShiftReminder({...data,userId:'bad'},send,db));assert.equal(reads,0);assert.equal(calls.length,0);
+reset();assert(await deliverShiftReminder(data,async()=>{throw Error('DM disabled');},db));
+let patch;const save=async(path,init)=>{patch=JSON.parse(init.body);};
+await deliverClaimedNotice({id:'job',lease:'lease',kind:'shift_reminder',payload:data,attempts:1},async()=> 'DM disabled',save);assert.equal(patch.status,'pending');assert(patch.next_attempt_at);
+await deliverClaimedNotice({id:'job',lease:'lease',kind:'shift_reminder',payload:data,attempts:5},async()=> 'DM disabled',save);assert.equal(patch.status,'failed');
+await deliverClaimedNotice({id:'job',lease:'lease',kind:'shift_reminder',payload:data,attempts:1},async()=> '__superseded__',save);assert.equal(patch.status,'superseded');
+console.log('Shift reminders: two-hour threshold, open/owner validation, close-before-send, stable nonce, private delivery and bounded retries: PASS');

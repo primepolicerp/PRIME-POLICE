@@ -6,7 +6,7 @@ export async function jobsDb(path:string,init:RequestInit={}){
 export async function deliverClaimedNotice(job:any,deliver:(kind:string,payload:any)=>Promise<string>,db=jobsDb){
  let error='';try{error=await deliver(job.kind,job.payload);}catch{error='No se pudo contactar con Discord.';}
  const superseded=error==='__superseded__',sent=!error,status=superseded?'superseded':sent?'sent':job.attempts>=5?'failed':'pending';
- await db('police_discord_jobs?id=eq.'+job.id+'&lease=eq.'+job.lease+'&status=eq.processing',{method:'PATCH',body:JSON.stringify({status,lease:null,locked_until:null,last_error:superseded?'Existe una decisión posterior; no se envía el resultado antiguo.':error||null,...(sent?{sent_at:new Date().toISOString()}:{next_attempt_at:new Date(Date.now()+Math.min(3600,60*2**job.attempts)*1000).toISOString()})})});
+ await db('police_discord_jobs?id=eq.'+job.id+'&lease=eq.'+job.lease+'&status=eq.processing',{method:'PATCH',body:JSON.stringify({status,lease:null,locked_until:null,last_error:superseded?(job.kind==='shift_reminder'?'La bitácora ya no requiere este recordatorio.':'Existe una decisión posterior; no se envía el resultado antiguo.'):error||null,...(sent?{sent_at:new Date().toISOString()}:{next_attempt_at:new Date(Date.now()+Math.min(3600,60*2**job.attempts)*1000).toISOString()})})});
  return sent||superseded?'':'Cambio guardado. El aviso de Discord '+(status==='failed'?'necesita revisión en Sincronización.':'está en cola para reintento automático.');
 }
 export async function durableNotice(kind:string,payload:any,deliver:()=>Promise<string>,db=jobsDb){

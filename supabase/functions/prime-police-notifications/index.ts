@@ -1,4 +1,5 @@
 import {deliverPrivateNotice} from '../prime-police-panel/private-notices.ts';
+import {deliverShiftReminder} from '../prime-police-panel/shift-reminders.ts';
 import {jobsDb,deliverClaimedNotice} from '../prime-police-panel/discord-jobs.ts';
 import {deliverPromotion} from '../prime-police-panel/promotion-announcements.ts';
 import {deliverDeparture} from '../prime-police-panel/departure-announcements.ts';
@@ -18,6 +19,7 @@ Deno.serve(async req=>{
   // The existing two-minute scheduler also checks the weekly deadline, in local
   // time with DST. A unique week key makes this safe across concurrent runs.
   let weeklyId:any=null;try{weeklyId=await jobsDb('rpc/enqueue_due_police_weekly_report',{method:'POST',body:'{}'});}catch(error){console.error('Weekly report enqueue:',String(error));}
+  try{await jobsDb('rpc/enqueue_due_police_shift_reminders',{method:'POST',body:'{}'});}catch(error){console.error('Shift reminder enqueue:',String(error));}
   let processed=0;const deadline=Date.now()+40000;
   while(processed<3&&Date.now()<deadline){
    const preferred=weeklyId;weeklyId=null;
@@ -30,7 +32,7 @@ Deno.serve(async req=>{
     }
     const result=await discordRequest(path,init);if(init.method==='POST'&&path.endsWith('/messages'))messageId=result?.id;return result;
    };
-   await deliverClaimedNotice(job,(kind,payload)=>kind==='weekly_report'?deliverWeeklyReport(payload,send):kind==='promotion'?deliverPromotion(payload,send):kind==='departure'?deliverDeparture(payload,send):kind==='dm'?deliverPrivateNotice(payload,send):Promise.resolve('Tipo de aviso no reconocido.'));
+   await deliverClaimedNotice(job,(kind,payload)=>kind==='shift_reminder'?deliverShiftReminder(payload,send):kind==='weekly_report'?deliverWeeklyReport(payload,send):kind==='promotion'?deliverPromotion(payload,send):kind==='departure'?deliverDeparture(payload,send):kind==='dm'?deliverPrivateNotice(payload,send):Promise.resolve('Tipo de aviso no reconocido.'));
    if(messageId&&job.kind==='weekly_report')await jobsDb('police_discord_jobs?id=eq.'+job.id+'&status=eq.sent',{method:'PATCH',body:JSON.stringify({discord_message_id:messageId})});
    processed++;
   }
