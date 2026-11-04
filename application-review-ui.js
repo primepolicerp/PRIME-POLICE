@@ -14,16 +14,35 @@ function previousRejectionsPanel(item){
  }
  return box;
 }
+function flaggedReviewAnswer(item,question){
+ const keys={'Motivación':'motivation','Responsabilidad y órdenes':'detention_rights','Mala praxis':'scene_resolution','Situaciones policiales':'roleplay_response','Experiencia policial previa':'previous_police','Experiencia en Roleplay':'roleplay_experience','Motivo del traslado':'transfer_reason','Conocimientos policiales':'police_knowledge','Rango y responsabilidades anteriores':'previous_responsibilities','Historial disciplinario':'disciplinary_history','Adaptación a la nueva institución':'adaptation','Disponibilidad y compromiso':'availability','Aportación a la institución':'contribution'};
+ const key=keys[question];return key?String(item.answers?.[key]||(key==='transfer_reason'?item.reason:'')||''):'';
+}
+function reviewFindingRow(flag,item){
+ const row=document.createElement('article');row.className='review-finding';
+ const question=document.createElement('span');question.className='review-finding-question';question.textContent=flag.question;
+ const title=document.createElement('strong');title.textContent=flag.title;
+ const explanation=document.createElement('p');explanation.textContent=flag.detail;
+ row.append(question,title,explanation);
+ const answer=flaggedReviewAnswer(item,flag.question);
+ if(answer){const disclosure=document.createElement('details'),summary=document.createElement('summary'),text=document.createElement('blockquote');disclosure.className='review-answer';summary.textContent='Ver respuesta señalada';text.textContent=answer;disclosure.append(summary,text);row.append(disclosure);}
+ return row;
+}
 function automaticReviewNotice(item){
  const review=item.automatic_review,box=document.createElement('div');
  if(!review)return box;
- box.className='detail';box.style.marginBottom='14px';box.setAttribute('role','status');
- if(review.unavailable){box.textContent='Análisis automático no disponible. Actualiza para reintentarlo; puedes revisar y decidir manualmente.';return box;}
- if(!review.flags?.length){box.textContent='Análisis automático: sin indicios de copia o referencias a IA. Esto no confirma autoría humana.';return box;}
- box.style.borderColor='#d5ad5a';
- const heading=document.createElement('strong');heading.textContent='⚠ Revisar respuestas · posibles indicios de copia o IA';box.append(heading);
- for(const flag of review.flags){const text=document.createElement('p');text.textContent=flag.question+' · '+flag.title+': '+flag.detail;box.append(text);}
- const note=document.createElement('small');note.textContent='Aviso orientativo, no un veredicto de IA. Comparación privada con hasta 200 solicitudes recientes. UCOP o Directiva deciden; no hay aceptación ni rechazo automático.';box.append(note);return box;
+ box.className='review-notice';
+ if(review.unavailable){box.classList.add('review-notice-neutral');box.textContent='Revisión automática no disponible. Puedes revisar las respuestas manualmente o actualizar para reintentar.';return box;}
+ if(!review.flags?.length){box.classList.add('review-notice-neutral');box.textContent='Sin coincidencias ni referencias explícitas a IA detectadas. Esto no confirma autoría humana.';return box;}
+ const head=document.createElement('div');head.className='review-notice-head';
+ const icon=document.createElement('span');icon.className='review-notice-icon';icon.textContent='!';icon.setAttribute('aria-hidden','true');
+ const intro=document.createElement('div'),heading=document.createElement('strong'),description=document.createElement('p');heading.textContent='Respuestas que necesitan revisión';
+ const questions=[...new Set(review.flags.map(flag=>flag.question))];description.textContent=questions.join(' · ');intro.append(heading,description);
+ const badge=document.createElement('span');badge.className='review-notice-count';badge.textContent=review.flags.length+' '+(review.flags.length===1?'hallazgo':'hallazgos');head.append(icon,intro,badge);
+ const disclosure=document.createElement('details');disclosure.className='review-findings';const summary=document.createElement('summary');summary.textContent='Ver hallazgos y respuestas señaladas';const findings=document.createElement('div');findings.className='review-findings-list';for(const flag of review.flags)findings.append(reviewFindingRow(flag,item));
+ const note=document.createElement('p');note.className='review-notice-note';note.textContent='Estas señales no confirman uso de IA. Contrasta las respuestas en entrevista; UCOP o Directiva toman la decisión.';
+ const sample=document.createElement('small');sample.className='review-sample';sample.textContent=Number.isInteger(review.compared)?'Comparación privada con '+review.compared+' solicitudes recientes.':'Comparación privada con hasta 200 solicitudes recientes.';
+ disclosure.append(summary,findings,sample);box.append(head,disclosure,note);return box;
 }
 function applicationReviewPanel(app){
  const box=document.createElement('details');box.className='detail';box.style.marginBottom='14px';
@@ -33,7 +52,7 @@ function applicationReviewPanel(app){
   const result=await request('application-review',{method:'GET',query:{id:app.id}});body.replaceChildren();
   const notice=document.createElement('p');notice.className='muted';notice.textContent=result.notice;body.append(notice);
   if(!result.flags.length){const empty=document.createElement('p');empty.textContent='Sin referencias explícitas ni coincidencias detectadas. Esto no acredita autoría humana.';body.append(empty);}
-  for(const flag of result.flags){const row=document.createElement('div');row.className='detail';row.style.marginBottom='8px';const strong=document.createElement('strong');strong.textContent=flag.question+' · '+flag.title;const text=document.createElement('p');text.className='muted';text.textContent=flag.detail;row.append(strong,text);body.append(row);}
+  for(const flag of result.flags)body.append(reviewFindingRow(flag,app));
   const sample=document.createElement('small');sample.className='muted';sample.textContent='Comparación con '+result.compared+' solicitudes recientes (máximo 200). Solo visible para gestores autorizados.';body.append(sample);
   const labels={reviewed:'Revisada · sin marca de IA',suspected_ai:'Posible uso de IA',declared_ai:'Uso de IA declarado por el postulante'};
   const heading=document.createElement('h4');heading.textContent='Constancia del revisor · últimas 5';body.append(heading);
