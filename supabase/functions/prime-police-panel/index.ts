@@ -3,6 +3,7 @@ import { administrationRoute } from './administration.ts';
 import { syncRejectionRole, clearRejectionRoles } from "./rejection-roles.ts";
 import { validateDecisionCorrection } from "./decision-correction.ts";
 import { applicationReview, saveApplicationReview } from "./application-review.ts";
+import {externalAiReview} from './external-ai-review.ts';
 import { PANEL_SITE_URL, PANEL_ORIGIN, isPanelOrigin, panelResponseHeaders } from "./site-config.ts";
 import { scheduleAcceptedPublicList } from "./public-accepted.ts";
 import { preparePlate } from "./plates.ts";
@@ -594,6 +595,7 @@ async function routePanel(req: Request): Promise<Response> {
     return String(candidate.nick||candidate.user?.global_name||candidate.user?.username||id);
    }});
   }
+  if(action==='external-ai-review'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return externalAiReview(req,{db,json,actor,applicationsOnly:applicationPermissions(member.roles||[]).applicationsOnly,key:Deno.env.get('SAPLING_API_KEY')||''});}
   if(action==='application-review'){if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return applicationReview(req,db,json);}
   if(action==='application-review-save'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return saveApplicationReview(req,db,json,actor,String(member.nick||member.user?.global_name||member.user?.username||actor));}
   if(['personnel-departure','personnel-reentry'].includes(action||'')&&req.method==='POST'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada.'},403);const member=await accessMember(actor);return changePersonnelStatus(req,action!,actor,{db,discord,json,actorIsDirector:(member.roles||[]).some((id:string)=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(id)),actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});}

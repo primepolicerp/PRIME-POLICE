@@ -263,7 +263,7 @@ function renderApplications() {
     updated.className = "muted";
     updated.textContent = decisionCredit(app);
     actions.append(spacer, updated);
-    card.append(head, previousRejectionsPanel(app), automaticReviewNotice(app), grid, applicationReviewPanel(app), actions);
+    card.append(head, previousRejectionsPanel(app), automaticReviewNotice(app), grid, externalAiReviewPanel(app,"applications"), applicationReviewPanel(app), actions);
     list.append(card);
   });
 }
@@ -319,7 +319,7 @@ function renderTransfers() {
       else appendAdmissionAction(actions,item,'transfer');
     }
     appendRecruitmentVeto(actions,item,'transfers');
-    const spacer=document.createElement("span");spacer.className="spacer";const reviewer=document.createElement("span");reviewer.className="muted";reviewer.textContent=decisionCredit(item);actions.append(spacer,reviewer);card.append(head,previousRejectionsPanel(item),automaticReviewNotice(item),grid,actions);list.append(card);
+    const spacer=document.createElement("span");spacer.className="spacer";const reviewer=document.createElement("span");reviewer.className="muted";reviewer.textContent=decisionCredit(item);actions.append(spacer,reviewer);card.append(head,previousRejectionsPanel(item),automaticReviewNotice(item),grid,externalAiReviewPanel(item,"transfers"),actions);list.append(card);
   });
 }
 async function loadTransfers(){
