@@ -2,6 +2,7 @@ import {createReviewCache,reviewSubmissionAnswers} from './application-review.ts
 import {attachRejectionHistory} from './rejection-history.ts';
 import {attachPersonnelMembership} from './personnel-membership.ts';
 import {personnelRegisterList} from './personnel-register-list.ts';
+import {attachApplicationAdmission} from './application-admission.ts';
 const kinds:Record<string,{table:string,search:string[],date:string,statuses:string[]}>={
  absences:{table:'police_absence_requests',search:['full_name','discord_username','discord_user_id','plate'],date:'created_at',statuses:['pending','approved','rejected','cancelled']},
  applications:{table:'police_applications',search:['full_name','discord_username','discord_user_id','answers->>character_info'],date:'created_at',statuses:['pending','accepted','rejected']},
@@ -17,7 +18,7 @@ async function query(path:string,init:RequestInit={}){
  if(!r.ok)throw Error('Could not read paginated records');
  return{rows:await r.json(),count:Number(r.headers.get('content-range')?.split('/')[1]||0)};
 }
-export async function listPagedRecords(req:Request,json:(v:unknown,status?:number)=>Response){
+export async function listPagedRecords(req:Request,json:(v:unknown,status?:number)=>Response,options:{applicationAdmissions?:boolean}={}){
  if(req.method!=='GET')return json({error:'Método no permitido.'},405);
  const p=new URL(req.url).searchParams,kind=p.get('kind')||'',config=kinds[kind];if(!config)return json({error:'Lista inválida.'},400);
  if(kind==='personnel'&&p.get('directory')!=='true')return personnelRegisterList(req,async body=>(await query('rpc/police_personnel_register',{method:'POST',body:JSON.stringify(body)})).rows,json);
@@ -35,6 +36,7 @@ export async function listPagedRecords(req:Request,json:(v:unknown,status?:numbe
  const table=review==='ai'?'police_rejected_ai_applications':baseTable;
  const result=await query(table+'?select='+projection+'&order='+ordering+'&limit='+limit+'&offset='+offset+filter);
  if(['preselections','transfers'].includes(kind))result.rows=await attachPersonnelMembership(result.rows,query);
+ if(kind==='applications'&&options.applicationAdmissions)result.rows=await attachApplicationAdmission(result.rows,query);
  if(['applications','transfers'].includes(kind))result.rows=await attachRejectionHistory(result.rows,config.table,query);
  if(['applications','transfers'].includes(kind)&&result.rows.length){
   try{

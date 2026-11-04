@@ -6,6 +6,14 @@ function appendAdmissionAction(container,person,source='preselection'){
   const label=document.createElement('span');label.className='muted';label.textContent=person.personnel_registered===true?'Ya registrado en Personal':'Actualiza para comprobar su registro en Personal';container.append(label);
  }
 }
+function appendAcceptedApplicationAdmission(container,app){
+ if(app.status!=='accepted'||restrictedToApplications)return;
+ if(app.personnel_registered===true){appendAdmissionAction(container,app,'application');return;}
+ if(app.admission_candidate&&app.personnel_registered===false&&!app.personnel_membership_unavailable&&!app.admission_lookup_unavailable){
+  appendAdmissionAction(container,{...app.admission_candidate,personnel_registered:false},'application');return;
+ }
+ const status=document.createElement('span');status.className='muted';status.textContent=app.personnel_membership_unavailable||app.admission_lookup_unavailable||app.personnel_registered===undefined?'Actualiza para comprobar si puede ingresar a Personal.':'Esta postulación ya no está pendiente de ingreso desde Preseleccionados.';container.append(status);
+}
 async function openPreselectionAdmission(person,source='preselection'){
  if(person.personnel_registered===true){showToast('Ya tiene una ficha. Revísala desde Personal.');return;}
  if(admissionSaving)return;admissionSource=source;admissionCandidate={...person};admissionOperation=crypto.randomUUID();$('preselectionAdmissionForm').reset();
@@ -26,7 +34,7 @@ $('preselectionAdmissionForm').addEventListener('submit',async event=>{
  if($('admissionRank').disabled){$('preselectionAdmissionFeedback').textContent='Espera a que terminen de cargar los rangos.';return;}
  if(!body.full_name||!body.plate||!body.approved_by_name||!body.interview_confirmed){$('preselectionAdmissionFeedback').textContent='Completa los datos y confirma la entrevista IC.';return;}
  admissionSaving=true;$('savePreselectionAdmission').disabled=true;$('preselectionAdmissionFeedback').textContent='Procesando el ingreso…';
- try{const result=await request(admissionSource==='transfer'?'transfer-admit':'preselection-admit',{method:'POST',body});const message=[result.message,result.assigned_plate?'Placa '+result.assigned_plate+'.':'',result.warning].filter(Boolean).join(' ');$('preselectionAdmissionDialog').close();admissionCandidate=null;showToast(message);directoryExpires=0;await (admissionSource==='transfer'?loadTransfers():loadPreselections());}
+ try{const result=await request(admissionSource==='transfer'?'transfer-admit':'preselection-admit',{method:'POST',body});const message=[result.message,result.assigned_plate?'Placa '+result.assigned_plate+'.':'',result.warning].filter(Boolean).join(' ');$('preselectionAdmissionDialog').close();admissionCandidate=null;showToast(message);directoryExpires=0;await (admissionSource==='application'?loadApplications():admissionSource==='transfer'?loadTransfers():loadPreselections());}
  catch(error){$('preselectionAdmissionFeedback').textContent=error.message;}
  finally{admissionSaving=false;$('savePreselectionAdmission').disabled=false;}
 });

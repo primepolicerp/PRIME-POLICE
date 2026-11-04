@@ -255,6 +255,7 @@ function renderApplications() {
       done.textContent = app.status === "accepted" ? "Rol confirmado: " + niceDate(app.role_assigned_at) : "Revisada: " + niceDate(app.reviewed_at);
       actions.append(done);
     }
+    appendAcceptedApplicationAdmission(actions,app);
     if(app.status==='rejected')actions.append(decisionButton('Corregir y aceptar','accept','accept correction-accept',app));
     appendRecruitmentVeto(actions,app,'applications');
     const spacer = document.createElement("span");

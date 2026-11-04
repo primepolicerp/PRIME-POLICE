@@ -607,7 +607,7 @@ async function routePanel(req: Request): Promise<Response> {
    const member=await accessMember(actor);return managePersonnelProfile(req,action,actor,{db,json,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});
   }
   if(['absence-summary','absence-review','absence-roster','absence-register'].includes(action||'')){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);return manageAbsences(req,action,actor,{db,json,notify:sendPrivateDiscordMessage,audit:postAuditLog});}
-  if (action === "records") { if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return listPagedRecords(req,json); }
+  if (action === "records") { const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return listPagedRecords(req,json,{applicationAdmissions:!applicationPermissions(member.roles||[]).applicationsOnly}); }
   if (action === "data" && req.method === "GET") return await listApplications(req);
   if (action === "decision" && req.method === "POST") return await decide(req);
   if (action === "transfers" && req.method === "GET") return await listTransfers(req);
