@@ -20,6 +20,9 @@ for(const s of ['busy','quota']){status=s;const r=await externalAiReview(req('PO
 for(const code of [402,401,429,500]){providerStatus=code;const r=await externalAiReview(req('POST'),ctx);assert.equal(r.status,503);assert.equal(writes.at(-1).status,'failed');}providerStatus=200;
 providerResult={results:[{score:1.5}]};assert.equal((await externalAiReview(req('POST'),ctx)).status,503);assert.equal(writes.at(-1).status,'failed');providerResult={results:[{score:.6}]};
 assert.equal((await externalAiReview(req('POST','transfers'),{...ctx,applicationsOnly:true})).status,403);
+const blocked=await externalAiReview(req('POST'),{...ctx,fetcher:async url=>url.endsWith('/account/status')?Response.json({api_access:false,blocked_reason:'subscription_expired',message:'MUST_NOT_EXPOSE_PROVIDER_RAW_MESSAGE'}):Response.json({msg:'Blocked'},{status:402})});
+const blockedBody=await blocked.json();assert.equal(blocked.status,503);assert(blockedBody.error.includes('acceso de API no está activo'));assert(!JSON.stringify(blockedBody).includes('MUST_NOT_EXPOSE'));
+assert(writes.every(w=>!('status' in w)||['processing','completed','failed'].includes(w.status)),'Detector writes must never accept or reject an application');
 assert.equal((await externalAiReview(req('DELETE'),ctx)).status,405);
 await externalAiReview(req('POST','transfers'),ctx);assert.equal(cached.answers[0].key,'transfer_reason');
 assert(applicationScopeAllowed('external-ai-review',new URLSearchParams('kind=applications')));assert(!applicationScopeAllowed('external-ai-review',new URLSearchParams('kind=transfers')));

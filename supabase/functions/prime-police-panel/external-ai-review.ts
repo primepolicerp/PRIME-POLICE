@@ -36,7 +36,16 @@ export async function externalAiReview(req:Request,c:Context){
  const save=async(status:string,result:any=null)=>c.db('police_external_ai_reviews'+filter+'&lease=eq.'+reservation.lease+'&status=eq.processing',{method:'PATCH',body:JSON.stringify({status,result,lease:null,locked_until:null,updated_at:new Date().toISOString()})});
  try{
   const response=await(c.fetcher||fetch)('https://api.sapling.ai/api/v1/aidetect',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.key},body:JSON.stringify({texts:eligible.map(a=>a.text),lang:'es',zero_retention:true,sent_scores:true}),signal:AbortSignal.timeout(25000)});
-  if(!response.ok){await save('failed');return c.json({error:response.status===402?'La prueba o cuota de Sapling no permite más análisis. Revisa API Settings; no se ha cambiado la decisión.':response.status===429?'Sapling ha limitado temporalmente las consultas. Reintenta más tarde.':response.status===401||response.status===403?'Sapling ha rechazado la clave. Revisa la configuración privada del servidor.':'El detector externo no pudo completar el análisis. Reintenta más tarde.',code:'detector_unavailable'},503);}
+  if(!response.ok){
+   let reason='';
+   if(response.status===402){
+    try{
+     const statusResponse=await(c.fetcher||fetch)('https://api.sapling.ai/api/v1/account/status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.key},body:'{}',signal:AbortSignal.timeout(8000)});
+     if(statusResponse.ok){const state=await statusResponse.json();const reasons:Record<string,string>={key_expired:'La clave de prueba ha caducado.',subscription_expired:'Sapling indica que el acceso de API no está activo.',credits_depleted:'Sapling indica que no hay créditos disponibles.',monthly_billing_limit:'Sapling indica que se alcanzó el límite mensual.',trial_daily_limit:'Sapling indica que se agotó la cuota gratuita de hoy; se restablece a medianoche UTC.',monthly_quota_exhausted:'Sapling indica que se agotó la cuota mensual.'};reason=reasons[state.blocked_reason]||'';}
+    }catch{/* Preserve the original provider failure. */}
+   }
+   await save('failed');return c.json({error:response.status===402?(reason||'La prueba o cuota de Sapling no permite más análisis.')+' Revisa API Settings; no se ha cambiado la decisión.':response.status===429?'Sapling ha limitado temporalmente las consultas. Reintenta más tarde.':response.status===401||response.status===403?'Sapling ha rechazado la clave. Revisa la configuración privada del servidor.':'El detector externo no pudo completar el análisis. Reintenta más tarde.',code:'detector_unavailable'},503);
+  }
   const raw=await response.json();if(!Array.isArray(raw.results)||raw.results.length!==eligible.length)throw Error('Invalid detector results');
   const result={provider:'Sapling',analyzed_at:new Date().toISOString(),answers:raw.results.map((r:any,n:number)=>normalizeExternalResult(r,eligible[n]))};
   await save('completed',result);return c.json({...base,result,cached:false});
