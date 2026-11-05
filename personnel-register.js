@@ -12,6 +12,7 @@ function updatePersonnelRegisterSort(){
 }
 function renderPersonnelRegisterRows(people,rows){
  updatePersonnelRegisterSort();if(rosterPageInfo?.counts)$('personnelAbsenceStat').textContent=rosterPageInfo.counts.absence??'—';
+ const batch=document.createDocumentFragment();
  for(const person of people){
   const row=document.createElement('tr');row.dataset.personId=person.discord_user_id;
   const cell=(label,cls='')=>{const td=document.createElement('td');td.dataset.label=label;td.className=cls;row.append(td);return td;};
@@ -21,8 +22,9 @@ function renderPersonnelRegisterRows(people,rows){
   const branch=document.createElement('span');branch.className='personnel-register-branch '+(person.unit==='CIC'?'cic':person.unit==='UCOP'?'ucop':'police');branch.textContent=['UCOP','CIC'].includes(person.unit)?person.unit:'Policía';branch.title=unitLabel(person.unit);cell('Rama','personnel-register-unit').append(branch);
   cell('Discord','personnel-register-discord').textContent=person.discord_username?'@'+person.discord_username:'—';
   const state=document.createElement('span');state.className='personnel-status '+(person.status!=='active'?'is-inactive':person.on_absence?'on-absence':'is-active');state.textContent=person.status!=='active'?'Baja':person.on_absence?'Ausencia':'Activo';cell('Estado','personnel-register-state').append(state);
-  const actions=document.createElement('div'),open=document.createElement('button');actions.className='personnel-register-row-actions';open.type='button';open.className='personnel-open-file';open.textContent='Ver ficha';open.onclick=()=>openPersonnelProfile(person);actions.append(open,personnelMenu(person));cell('Ficha','personnel-register-file').append(actions);rows.append(row);
+  const actions=document.createElement('div'),open=document.createElement('button');actions.className='personnel-register-row-actions';open.type='button';open.className='personnel-open-file';open.textContent='Ver ficha';open.onclick=()=>openPersonnelProfile(person);actions.append(open,personnelMenu(person));cell('Ficha','personnel-register-file').append(actions);batch.append(row);
  }
+ rows.append(batch);
 }
 function resetPersonnelRegister(){
  for(const id of ['personnelSearch','personnelRankFilter','personnelUnitFilter','personnelPlateFrom','personnelPlateTo'])$(id).value='';$('personnelStatusFilter').value='';$('personnelSort').value='plate';$('personnelSortDirection').value='asc';$('personnelFilterFeedback').hidden=true;updatePersonnelRegisterSort();activeRecordPage('personnel');
@@ -33,3 +35,18 @@ document.querySelectorAll('[data-personnel-sort]').forEach(button=>button.addEve
 $('resetPersonnelFilters').onclick=resetPersonnelRegister;
 window.addEventListener('panel-session-ended',()=>{for(const id of ['personnelSearch','personnelRankFilter','personnelUnitFilter','personnelPlateFrom','personnelPlateTo'])$(id).value='';$('personnelStatusFilter').value='';$('personnelSort').value='plate';$('personnelSortDirection').value='asc';$('personnelFilterFeedback').hidden=true;updatePersonnelRegisterSort();});
 updatePersonnelRegisterSort();
+
+const personnelFilterMedia=matchMedia('(max-width:820px)');
+function updatePersonnelFilterSummary(){
+ const fields=['personnelUnitFilter','personnelStatusFilter','personnelRankFilter','personnelPlateFrom','personnelPlateTo'];
+ const count=fields.filter(id=>$(id).value.trim()).length;
+ $('personnelFilterToggle').textContent='Filtros y orden'+(count?' · '+count+(count===1?' activo':' activos'):'');
+ if(!$('personnelFilterFeedback').hidden)$('personnelFilterPanel').open=true;
+}
+function setupPersonnelFilterPanel(){
+ const filters=document.querySelector('.personnel-register-filters'),order=document.querySelector('.personnel-register-order'),panel=document.createElement('details'),summary=document.createElement('summary');panel.id='personnelFilterPanel';summary.id='personnelFilterToggle';panel.append(summary);filters.before(panel);panel.append(filters,order,$('personnelFilterFeedback'));panel.open=!personnelFilterMedia.matches;
+ for(const id of ['personnelUnitFilter','personnelStatusFilter','personnelRankFilter','personnelPlateFrom','personnelPlateTo'])$(id).addEventListener('input',updatePersonnelFilterSummary);
+ $('resetPersonnelFilters').addEventListener('click',updatePersonnelFilterSummary);
+ personnelFilterMedia.addEventListener('change',()=>{panel.open=!personnelFilterMedia.matches;});window.addEventListener('panel-session-ended',()=>{panel.open=!personnelFilterMedia.matches;updatePersonnelFilterSummary();});updatePersonnelFilterSummary();
+}
+setupPersonnelFilterPanel();

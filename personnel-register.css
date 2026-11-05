@@ -5,3 +5,58 @@
 #personnelView .personnel-stream-footer[hidden]{display:none}
 #personnelView .personnel-stream-footer .btn{font-size:12px}
 @media(min-width:821px){#personnelView .personnel-register-table thead th{position:sticky;top:60px;z-index:1}}
+/* Compact filters and touch-friendly personnel screens. */
+#personnelFilterPanel{margin:15px 0 12px}
+#personnelFilterPanel>summary{display:none}
+@media(max-width:820px){
+ #personnelFilterPanel{border-top:1px solid var(--register-line);border-bottom:1px solid var(--register-line);margin:14px 0}
+ #personnelFilterPanel>summary{display:flex;align-items:center;justify-content:space-between;min-height:46px;padding:10px 1px;color:#b9cae1;font-size:12px;cursor:pointer;list-style:none}
+ #personnelFilterPanel>summary::-webkit-details-marker{display:none}
+ #personnelFilterPanel>summary::after{content:'＋';font-size:17px;color:#93b8e7}
+ #personnelFilterPanel[open]>summary::after{content:'−'}
+ #personnelFilterPanel .personnel-register-filters{margin-top:5px}
+ #personnelFilterPanel .personnel-register-order{margin-bottom:12px}
+ #personnelView .personnel-register-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ #personnelView .personnel-register-identity .personnel-agent-link{min-height:44px}
+ #personnelView .personnel-register-heading{margin-bottom:13px}
+ #personnelView .personnel-register-heading h2{font-size:21px}
+ #personnelView .personnel-register-count{font-size:12px}
+ #personnelView .personnel-stream-footer{flex-wrap:wrap;gap:8px;padding:14px 0;font-size:12px}
+ #personnelView .personnel-stream-footer .btn{min-height:44px}
+ #personnelProfileModal{padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+ #personnelProfileModal .profile-dialog{max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+ #personnelProfileModal .profile-head{padding:13px 16px}
+ #personnelProfileModal .profile-title h2{font-size:20px}
+ #personnelProfileModal .profile-title p{font-size:11px;line-height:1.5}
+ #personnelProfileModal .profile-body{overscroll-behavior:contain;scroll-padding-block:14px}
+ #personnelProfileModal .profile-dossier-top{grid-template-columns:1fr;gap:12px}
+ #personnelProfileModal .profile-dossier-photo{flex-direction:row;justify-content:flex-start;gap:14px;padding:10px 12px}
+ #personnelProfileModal .profile-avatar{width:52px;height:52px;font-size:22px}
+ #personnelProfileModal .profile-dossier-photo>small{font-size:11px}
+ #personnelProfileModal .profile-dossier-facts{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #personnelProfileModal .profile-dossier-facts .profile-field{padding:10px!important}
+ #personnelProfileModal .profile-dossier-facts small,#personnelProfileModal .profile-key-fields .profile-field small{font-size:10px;letter-spacing:.025em}
+ #personnelProfileModal .profile-dossier-facts strong{font-size:13px}
+ #personnelProfileModal .profile-footer{padding:10px 12px;gap:8px;flex-wrap:wrap}
+ #personnelProfileModal .profile-footer>.btn{min-height:44px;min-width:0}
+ #personnelProfileModal .profile-close{min-height:44px;min-width:44px}
+ #personnelProfileModal .profile-fold>summary,#personnelProfileModal .profile-note-composer>summary,#personnelProfileModal #profileRefresh,#personnelProfileModal .personnel-file-actions>summary{min-height:44px;display:flex;align-items:center}
+ #personnelProfileModal #profileSanctionButton{min-height:44px}
+ #personnelProfileModal .profile-note-buttons{flex-wrap:wrap}
+ #personnelProfileModal #profileReadFeedback{font-size:11px}
+}
+@media(max-width:820px){
+ .sidebar .sidebar-bottom .connection{max-width:none;text-align:left;font-size:11px;line-height:1.5}
+ body .workspace>.top{display:grid;grid-template-columns:minmax(0,1fr) 44px auto;align-items:center;gap:5px 10px;min-height:0;padding:10px 12px;margin-bottom:16px}
+ .workspace>.top .workspace-location{grid-column:1;grid-row:1;min-width:0}
+ .workspace>.top .workspace-location h1{font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+ .workspace>.top .workspace-location .eyebrow{font-size:8px;margin-bottom:3px}
+ #openGlobalSearch{grid-column:2;grid-row:1;order:initial;min-width:44px;max-width:44px;width:44px;height:44px;min-height:44px;flex-basis:auto;padding:0;display:flex;align-items:center;justify-content:center}
+ #openGlobalSearch>span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+ #openGlobalSearch>kbd{display:none}
+ #openGlobalSearch::after{content:'⌕';font-size:24px;color:#b7cfea}
+ #openAdministrativeAlerts{grid-column:3;grid-row:1;min-height:44px;font-size:11px!important;padding:8px}
+ #permissionsHelp{grid-column:1/-1;grid-row:2;justify-self:end;margin:0}
+ #permissionsHelp>summary{min-height:30px;padding:2px 0;font-size:10px}
+ .workspace>.top .permissions-help-content{right:0;max-width:calc(100vw - 55px)}
+}

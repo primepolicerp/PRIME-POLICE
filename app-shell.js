@@ -12,8 +12,19 @@ async function openSessionManager(){
 }
 $('openSessionManager').addEventListener('click',openSessionManager);$('closeSessionManager').addEventListener('click',()=>$('sessionDialog').close());
 $('logoutOtherSessions').addEventListener('click',async()=>{const button=$('logoutOtherSessions');button.disabled=true;try{const result=await request('logout-others',{method:'POST'});await openSessionManager();$('sessionFeedback').textContent=result.message;}catch(error){$('sessionFeedback').textContent=error.message;}finally{button.disabled=false;}});
-function labelMobileTables(){document.querySelectorAll('.table-wrap table').forEach(table=>{table.classList.add('mobile-record-table');const headers=[...table.querySelectorAll('thead th')].map(th=>th.textContent.trim());table.querySelectorAll('tbody tr').forEach(row=>{[...row.children].forEach((cell,i)=>{if(cell.colSpan===1)cell.dataset.label=headers[i]||'';});});});}
-const mobileTableObserver=new MutationObserver(()=>{clearTimeout(mobileTableObserver.timer);mobileTableObserver.timer=setTimeout(labelMobileTables,50);});mobileTableObserver.observe($('appView'),{childList:true,subtree:true});labelMobileTables();
+const mobileTableMedia=matchMedia('(max-width:620px)'),pendingMobileTables=new Set();let mobileTableFrame=0;
+function labelMobileTables(tables=document.querySelectorAll('.table-wrap table')){
+ for(const table of tables){if(!table.isConnected)continue;table.classList.add('mobile-record-table');if(!mobileTableMedia.matches)continue;const headers=[...table.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+  for(const row of table.querySelectorAll('tbody tr'))for(const [i,cell]of [...row.children].entries())if(cell.colSpan===1&&cell.dataset.label!==(headers[i]||''))cell.dataset.label=headers[i]||'';
+ }
+}
+function queueMobileTable(table){if(!table?.closest('.table-wrap'))return;pendingMobileTables.add(table);if(!mobileTableFrame)mobileTableFrame=requestAnimationFrame(()=>{mobileTableFrame=0;labelMobileTables(pendingMobileTables);pendingMobileTables.clear();});}
+const mobileTableObserver=new MutationObserver(changes=>{
+ for(const change of changes){const target=change.target.nodeType===1?change.target:change.target.parentElement;if(target?.closest('thead'))queueMobileTable(target.closest('table'));
+  for(const node of change.addedNodes){if(node.nodeType!==1)continue;if(node.matches('table,tr,td,th'))queueMobileTable(node.closest('table'));for(const element of node.querySelectorAll('table,tr'))queueMobileTable(element.closest('table'));}
+ }
+});mobileTableObserver.observe($('appView'),{childList:true,subtree:true});labelMobileTables();
+mobileTableMedia.addEventListener('change',()=>labelMobileTables());
 window.addEventListener('panel-data-changed',()=>{directoryExpires=0;rankReadCache=null;});
 window.addEventListener('panel-session-ended',()=>{
  for(const state of Object.values(recordPages))state.sequence++;

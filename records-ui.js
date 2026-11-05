@@ -66,10 +66,10 @@ async function loadPersonnelStream(append=false){
  if(filters===null){state.streamBusy=false;rows.removeAttribute('aria-busy');const footer=$('recordPager-personnel');if(footer)footer.hidden=true;return;}
  personnelStreamFooter(state);
  try{
-  const result=await request('records',{method:'GET',query:{kind:'personnel',offset,limit:50,status:$('personnelStatusFilter').value,search:$('personnelSearch').value,counts:'true',rank:$('personnelRankFilter').value,...filters}});
+  const result=await request('records',{method:'GET',query:{kind:'personnel',offset,limit:50,status:$('personnelStatusFilter').value,search:$('personnelSearch').value,counts:append&&offset>0?'false':'true',rank:$('personnelRankFilter').value,...filters}});
   if(sequence!==state.sequence||token!==session)return;
   const seen=new Set((append?rosterPage:[]).map(p=>p.discord_user_id)),fresh=(result.records||[]).filter(p=>!seen.has(p.discord_user_id)&&seen.add(p.discord_user_id));
-  rosterPageInfo={counts:result.counts,total:result.total};rosterPage=append?[...rosterPage,...fresh]:fresh;
+  rosterPageInfo={counts:append&&offset>0?rosterPageInfo.counts:result.counts,total:result.total};rosterPage=append?[...rosterPage,...fresh]:fresh;
   state.nextOffset=Number.isInteger(result.next_offset)&&result.next_offset>offset?result.next_offset:null;state.loadedSequence=sequence;
   if(append&&offset>0)renderPersonnelRegisterRows(fresh,rows);else renderPersonnel();
  }catch(error){if(sequence===state.sequence&&token===session){state.streamBusy=false;state.loadedSequence=sequence;state.nextOffset=offset;personnelStreamFooter(state,error.message);state.streamError=true;}}

@@ -10,6 +10,7 @@ function restoreProfileDraft(){
 function resetProfileNote(){if(profilePerson)profileDrafts.delete(profilePerson.discord_user_id);profileEditingNote=null;profileNoteId=crypto.randomUUID();$('profileNoteText').value='';$('saveProfileNote').textContent='Añadir observación';$('cancelProfileNoteEdit').hidden=true;}
 function beforeClosePersonnelFile(){
  if(profileSaving)return false;
+ clearTimeout(profileSectionTimer);profilePendingSections.clear();
  profileAvatarGeneration++;profileSequence++;profilePerson=null;profileEditingNote=null;$('profileNoteText').value='';
  for(const id of ['profileNotes','profileHistory','profileAbsences','profileSanctions'])$(id).replaceChildren();
  if(profileFocus?.isConnected)profileFocus.focus();return true;
@@ -81,8 +82,18 @@ $('profileNoteText').addEventListener('input',()=>{if(profilePerson)profileDraft
 $('profileNoteForm').addEventListener('submit',event=>{event.preventDefault();saveProfileObservation(profileEditingNote?'edit':'add');});
 $('cancelProfileNoteEdit').addEventListener('click',()=>{if(!profileSaving)resetProfileNote();});
 $('profileRefresh').addEventListener('click',()=>{if(profilePerson&&!profileSaving){loadPersonnelFile(profilePerson,true);if($('profileAccessDetails').open)loadProfileAccess(profilePerson);}});
-let profileSectionTimer=null;
-for(const details of document.querySelectorAll('[data-profile-section]'))details.addEventListener('toggle',()=>{if(details.open&&details.dataset.profilePinned!=='true'&&profilePerson&&!profileSaving){clearTimeout(profileSectionTimer);profileSectionTimer=setTimeout(()=>{if(profilePerson&&!profileSaving)loadPersonnelFile(profilePerson,true);},0);}});
+let profileSectionTimer=null;const profilePendingSections=new Set();
+async function loadPersonnelFileSections(sections){
+ if(!profilePerson||profileSaving||!sections.length)return;const id=profilePerson.discord_user_id,sequence=profileSequence,session=token;
+ for(const section of sections){const target={absences:'profileAbsences',movements:'profileMovements',history:'profileHistory'}[section];if(target)profileEmpty($(target),'Consultando este apartado…');}
+ try{const data=await request('personnel-profile',{method:'GET',query:{discord_user_id:id,sections:sections.join(','),history_offset:profileHistoryOffset,movement_offset:profileMovementOffset}});
+  if(sequence!==profileSequence||session!==token||profilePerson?.discord_user_id!==id)return;const failed=new Set(data.failed_sections||[]);
+  if(sections.includes('absences'))renderProfileAbsences(data.absences||[],failed.has('absences'));
+  if(sections.includes('movements'))renderPersonnelMovements(data.movements||[],data.movement_next_offset,failed.has('movements'));
+  if(sections.includes('history')){renderProfileHistory(data.history||[],failed.has('history'));profileHistoryNext=data.history_next_offset??null;$('profileHistoryPrevious').disabled=profileHistoryOffset===0;$('profileHistoryNext').disabled=profileHistoryNext===null;$('profileHistoryPager').hidden=profileHistoryOffset===0&&profileHistoryNext===null;}
+ }catch(error){if(sequence!==profileSequence||session!==token)return;for(const section of sections){const target={absences:'profileAbsences',movements:'profileMovements',history:'profileHistory'}[section];if(target)profileEmpty($(target),'No se pudo cargar este apartado. Pulsa Actualizar ficha para reintentar.');}}
+}
+for(const details of document.querySelectorAll('[data-profile-section]'))details.addEventListener('toggle',()=>{if(details.open&&details.dataset.profilePinned!=='true'&&profilePerson&&!profileSaving){profilePendingSections.add(details.dataset.profileSection);clearTimeout(profileSectionTimer);const id=profilePerson.discord_user_id;profileSectionTimer=setTimeout(()=>{const sections=[...profilePendingSections].filter(section=>document.querySelector('[data-profile-section="'+section+'"]').open);profilePendingSections.clear();if(profilePerson?.discord_user_id===id&&!profileSaving)loadPersonnelFileSections(sections);},0);}});
 $('profileAccessDetails').addEventListener('toggle',()=>{if($('profileAccessDetails').open&&profilePerson)loadProfileAccess(profilePerson);});
 for(const [button,type,direction]of [['profileNotesNext','note',1],['profileNotesPrevious','note',-1],['profileHistoryNext','history',1],['profileHistoryPrevious','history',-1]])$(button).addEventListener('click',()=>{if(!profilePerson||profileSaving)return;if(type==='note')profileNoteOffset=direction===1?profileNoteNext:Math.max(0,profileNoteOffset-25);else profileHistoryOffset=direction===1?profileHistoryNext:Math.max(0,profileHistoryOffset-20);loadPersonnelFile(profilePerson,true);});
 $('profileEditButton').addEventListener('click',()=>{if(!profilePerson||profileSaving)return;const person={...profilePerson};closePersonnelProfile();document.querySelector('[data-view="personnel"]').click();openPersonnelForm(person);});
