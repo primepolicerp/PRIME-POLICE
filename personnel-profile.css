@@ -71,46 +71,63 @@
 #personnelProfileModal .dossier-intro{border:0!important;background:transparent!important;border-radius:0!important}
 #personnelProfileModal .dossier-intro .btn{background:#263346!important;border-color:#3a4d66!important;color:#b9d1f0!important}
 @media(max-width:700px){#personnelProfileModal .profile-dialog{max-height:calc(100dvh - 16px)}#personnelProfileModal .profile-body{padding:14px}#personnelProfileModal .profile-key-fields{grid-template-columns:repeat(2,minmax(0,1fr))}#personnelProfileModal .profile-head{padding:14px}#personnelProfileModal .profile-footer{padding:10px}#personnelProfileModal .profile-footer .btn{min-width:120px;min-height:40px}#personnelProfileModal .profile-metrics .profile-stat{padding:9px 8px}#personnelProfileModal .dossier-intro{align-items:flex-start}#personnelProfileModal .profile-read-feedback{flex-direction:row;align-items:center}}
-/* PRIME POLICE file: restrained type, four sections and one action menu. */
-#personnelProfileModal .profile-dialog{width:min(880px,100%);border-radius:12px;background:#161a20;box-shadow:0 24px 80px #0008}
-#personnelProfileModal .profile-head{background:#1a1f27!important;border-bottom:1px solid #303844;padding:22px 24px}
-#personnelProfileModal .profile-title .eyebrow{font-size:9px;letter-spacing:.15em;color:#8e9db1;margin-bottom:6px}
-#personnelProfileModal .profile-title h2{font-size:23px;font-weight:650;letter-spacing:-.025em}
-#personnelProfileModal .profile-title p{font-size:11px;color:#96a3b5;margin-top:6px}
-#personnelProfileModal .profile-avatar{width:50px;height:50px;border-radius:50%;background:#253449;border-color:#425b7a;font-size:18px}
-.personnel-file-tabs{display:flex;gap:20px;padding:0 24px;border-bottom:1px solid #303844;flex-shrink:0}
-.personnel-file-tabs button{border:0;border-bottom:2px solid transparent;background:transparent;color:#9aa7b8;padding:15px 2px 12px;font:inherit;font-size:12px;cursor:pointer}
-.personnel-file-tabs button[aria-selected=true]{color:#d5e7ff;border-color:#84b4f5}
-.personnel-file-tabs button:focus-visible,.personnel-file-actions>summary:focus-visible{outline:2px solid #84b4f5;outline-offset:3px}
-#personnelProfileModal .profile-body{padding:20px 24px;min-height:290px;background:#161a20}
-#personnelProfileModal .profile-key-fields{padding-bottom:18px;border-bottom:1px solid #303844;margin-bottom:20px;gap:16px}
-#personnelProfileModal .profile-key-fields .profile-field{padding:0;background:transparent!important}
-#personnelProfileModal .profile-field small{font-size:9px;letter-spacing:.06em;color:#8e9db1}
-#personnelProfileModal .profile-key-fields .profile-field strong{font-size:14px;font-weight:600;color:#dde6f2}
+/* PRIME POLICE dossier: identity, service facts and two working sections. */
+#personnelProfileModal .profile-dialog{width:min(980px,100%);border-radius:12px;background:#171d25;box-shadow:0 24px 80px #0008}
+#personnelProfileModal .profile-head{padding:19px 24px;background:#202935!important;border-bottom:1px solid #344153}
+#personnelProfileModal .profile-title h2{font-size:23px;letter-spacing:-.025em;font-weight:650}
+#personnelProfileModal .profile-title .eyebrow{font-size:9px;letter-spacing:.15em;color:#95aecb;margin-bottom:6px}
+#personnelProfileModal .profile-title p{font-size:11px;color:#9cacc0;margin-top:6px}
+#personnelProfileModal .profile-body{padding:20px 24px;min-height:0;background:#171d25}
 #personnelProfileModal .profile-overview{padding:0 0 14px}
-#personnelProfileModal .profile-overview p{font-size:11px;color:#8e9db1}
-#personnelProfileModal .profile-metrics{margin:0 0 20px;border:0}
-#personnelProfileModal .profile-metrics .profile-stat{padding:5px 16px 5px 0}
-#personnelProfileModal .profile-metrics .profile-stat strong{font-size:20px;font-weight:550}
-#personnelProfileModal .personnel-file-panel>.profile-fold{border:0;background:transparent!important;padding:0;margin:0 0 14px}
-#personnelProfileModal .personnel-file-panel>.profile-fold[open]>summary{border:0;padding:0;margin-bottom:15px;min-height:0;list-style:none;font-size:12px;color:#b2bfd1}
-#personnelProfileModal .personnel-file-panel>.profile-fold[open]>summary::-webkit-details-marker{display:none}
-#personnelProfileModal .personnel-file-panel>.profile-fold>*:not(summary){margin-left:0;margin-right:0}
-#personnelProfileModal #profileIdentityDetails .profile-field{background:transparent!important;border:0;padding:8px 0}
-#personnelProfileModal .profile-read-feedback{margin-top:20px;font-size:10px;border-color:#303844}
-#personnelProfileModal .profile-read-feedback .btn{background:transparent;border:0;font-size:10px;padding:8px 0}
-#personnelProfileModal .profile-footer{padding:12px 24px;background:#1a1f27;align-items:center;justify-content:space-between}
+#personnelProfileModal .profile-overview p{font-size:11px;color:#96a8bf}
+.profile-dossier-top{display:grid;grid-template-columns:132px minmax(0,1fr);gap:20px;align-items:stretch;margin-bottom:16px}
+.profile-dossier-photo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:1px solid #344153;border-radius:10px;background:#1d2733;padding:14px 10px}
+.profile-dossier-photo>small{font-size:10px;color:#93a8c2}
+#personnelProfileModal .profile-avatar{display:grid;place-items:center;width:84px;height:84px;border:1px solid #49617f;background:#2b405b;color:#b8d5fc;font-size:29px;border-radius:50%;overflow:hidden;flex-shrink:0}
+#personnelProfileModal .profile-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-dossier-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#personnelProfileModal .profile-dossier-facts .profile-field{padding:12px 13px;border:1px solid #344153!important;background:#1d2632!important;border-radius:7px}
+#personnelProfileModal .profile-dossier-facts small{font-size:9px;letter-spacing:.06em;color:#94a8c2;margin-bottom:6px}
+#personnelProfileModal .profile-dossier-facts strong{font-size:14px;font-weight:600;color:#e1eaf7;line-height:1.5}
+#personnelProfileModal .profile-key-fields{grid-template-columns:1.45fr 1fr .75fr .85fr;gap:9px;margin-bottom:20px}
+#personnelProfileModal .profile-key-fields .profile-field{padding:12px 14px;border:1px solid #344153!important;background:#202c3b!important;border-radius:7px}
+#personnelProfileModal .profile-key-fields .profile-field small{font-size:9px;color:#9eb1cb}
+#personnelProfileModal .profile-key-fields .profile-field strong{font-size:14px;color:#dceaff;font-weight:600}
+#personnelProfileModal #profilePlate{font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:.07em}
+#personnelProfileModal #profileStatus{color:#8dd2b7}
+#personnelProfileModal #profileCareerButton{border:0!important;background:transparent!important;padding:4px 0;color:#a5cafa!important;font-size:10px;min-height:25px;margin:3px 0 0}
+.profile-dossier-columns{display:grid;grid-template-columns:1.08fr 1fr;gap:16px;align-items:start;margin-bottom:18px}
+#personnelProfileModal .profile-dossier-columns>.profile-section{margin:0;padding:16px;background:#1c2531!important;border:1px solid #344153;border-radius:9px;min-width:0}
+#personnelProfileModal .profile-dossier-columns>.profile-fold>summary{padding:0 0 12px;min-height:0;font-size:12px;font-weight:650;color:#dce8f9;list-style:none;border-bottom:1px solid #344153;margin-bottom:12px}
+#personnelProfileModal .profile-dossier-columns>.profile-fold>summary::-webkit-details-marker{display:none}
+#personnelProfileModal .profile-dossier-columns>.profile-fold>*:not(summary){margin-left:0;margin-right:0}
+#personnelProfileModal .profile-dossier-columns .profile-empty{font-size:12px;text-align:left;color:#91a3bc;padding:8px 0;margin:0 0 13px;line-height:1.7}
+#personnelProfileModal .personnel-note{background:transparent;border:0;border-left:2px solid #6999d8;padding:2px 0 2px 12px;border-radius:0;margin:15px 0}
+#personnelProfileModal .personnel-note-content{font-size:12px;margin-bottom:7px}
+#personnelProfileModal .personnel-note small{font-size:10px;color:#94a8c1}
+#personnelProfileModal .personnel-note-actions{justify-content:flex-start;gap:12px;margin:3px 0 0}
+#personnelProfileModal .personnel-note-actions .btn{border:0!important;background:transparent!important;font-size:10px;padding:4px 0;color:#a2bee3!important}
+#personnelProfileModal .profile-note-composer{border-top:1px solid #344153;padding-top:7px}
+#personnelProfileModal .profile-note-composer>summary{font-size:11px;color:#acd0ff;padding:8px 0;cursor:pointer;list-style:none;min-height:34px}
+#personnelProfileModal .profile-note-composer>summary::-webkit-details-marker{display:none}
+#personnelProfileModal #profileNoteForm label{font-size:10px;color:#a9bdd9;margin:8px 0}
+#personnelProfileModal #profileNoteText{min-height:88px;font-size:12px;background:#161e29;border-color:#3b4c63}
+#personnelProfileModal #profileNotesPolicy{font-size:10px}
+#personnelProfileModal .profile-sanction-counts{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;border:0;margin:0 0 12px}
+#personnelProfileModal .profile-sanction-counts .profile-stat{padding:10px 12px!important;border-radius:6px!important;background:#263143!important}
+#personnelProfileModal .profile-sanction-counts small{font-size:9px;letter-spacing:.03em}
+#personnelProfileModal .profile-sanction-counts strong{font-size:21px}
+#personnelProfileModal .profile-record{font-size:12px;border-color:#344153}
+#personnelProfileModal .profile-sanction-actions{border-top:1px solid #344153;padding-top:12px;display:flex;justify-content:flex-end}
+#personnelProfileModal #profileSanctionButton{font-size:11px;min-height:34px;padding:7px 12px;background:#2c466a!important;color:#cee1fc!important;border-color:#43618b!important}
+#personnelProfileModal .profile-read-feedback{margin-top:15px;border-color:#344153;font-size:10px}
+#personnelProfileModal #profileRefresh{border:0;background:transparent;font-size:10px;color:#a7c3e8;padding:8px 0}
+#personnelProfileModal .profile-footer{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:13px 24px;background:#202935;border-color:#344153}
+#personnelProfileModal .profile-footer>.personnel-file-actions{margin-right:auto}
 .personnel-file-actions{position:relative}
-.personnel-file-actions>summary{cursor:pointer;list-style:none;color:#aab8cb;font-size:12px;padding:10px 0}
-.personnel-file-actions>summary::after{content:' ⌄';margin-left:7px}
-.personnel-file-action-list{position:absolute;bottom:44px;left:0;width:205px;display:grid;gap:5px;padding:8px;border:1px solid #394556;border-radius:8px;background:#202731;box-shadow:0 8px 30px #0006;z-index:5}
-#personnelProfileModal .personnel-file-action-list .btn{width:100%;min-width:0;text-align:left;justify-content:flex-start;margin:0}
-#personnelProfileModal .personnel-file-panel:focus-visible{outline:1px solid #84b4f5;outline-offset:4px}
-@media(max-width:700px){#personnelProfileModal .profile-head{padding:17px}#personnelProfileModal .profile-title h2{font-size:20px}.personnel-file-tabs{padding:0 17px;gap:19px}.personnel-file-tabs button{min-height:48px;font-size:12px}#personnelProfileModal .profile-body{padding:17px;min-height:0}#personnelProfileModal .profile-key-fields{gap:16px 20px}#personnelProfileModal .profile-footer{padding:12px 17px;flex-wrap:nowrap}#personnelProfileModal .profile-footer>.btn{flex:0 1 auto;min-width:0;min-height:42px}#personnelProfileModal .profile-read-feedback{gap:8px}.personnel-file-action-list{bottom:45px}#personnelProfileModal .profile-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
-#personnelProfileModal #personnelFilePanel-summary>.profile-metrics,#personnelProfileModal .profile-activity-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
-#personnelProfileModal #profileIdentityDetails{border:0!important;background:transparent!important;padding:0!important}
-#personnelProfileModal #profileIdentityDetails>summary{padding:12px 0!important;min-height:42px;color:#99acc5;font-size:11px}
-#personnelProfileModal #profileIdentityDetails .profile-field{border:0!important;border-radius:0!important;background:transparent!important;padding:8px 0!important}
-#personnelProfileModal #profileIdentityDetails>.profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-#personnelProfileModal #profileCareerButton,#personnelProfileModal #profileRefresh{border:0!important;background:transparent!important;color:#a5c6f2!important}
-#personnelProfileModal .personnel-file-panel>.profile-fold{border:0!important;background:transparent!important}
+.personnel-file-actions>summary{font-size:11px;color:#b0c0d6;cursor:pointer;list-style:none;padding:12px 0}
+.personnel-file-actions>summary::after{content:' ⌄';margin-left:8px}
+.personnel-file-action-list{position:absolute;left:0;bottom:40px;min-width:180px;padding:8px;display:grid;gap:5px;background:#243143;border:1px solid #456080;border-radius:7px;box-shadow:0 12px 28px #0006;z-index:5}
+#personnelProfileModal .personnel-file-action-list .btn{width:100%;min-width:0;text-align:left}
+@media(max-width:700px){#personnelProfileModal .profile-head{padding:16px}#personnelProfileModal .profile-title h2{font-size:21px}#personnelProfileModal .profile-body{padding:16px}.profile-dossier-top{grid-template-columns:92px minmax(0,1fr);gap:10px}.profile-dossier-photo{padding:10px 6px}#personnelProfileModal .profile-avatar{width:64px;height:64px;font-size:23px}.profile-dossier-photo>small{font-size:9px;text-align:center}.profile-dossier-facts{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#personnelProfileModal .profile-dossier-facts .profile-field{padding:9px!important}#personnelProfileModal .profile-dossier-facts small{font-size:8px;letter-spacing:.02em}#personnelProfileModal .profile-dossier-facts strong{font-size:12px}#personnelProfileModal .profile-key-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#personnelProfileModal .profile-key-fields .profile-field{padding:10px!important}.profile-dossier-columns{grid-template-columns:1fr;gap:12px}#personnelProfileModal .profile-dossier-columns>.profile-section{padding:14px}#personnelProfileModal .profile-footer{padding:12px;gap:8px;flex-wrap:wrap}#personnelProfileModal .profile-footer>.btn{flex:0 1 auto;min-width:0;font-size:11px;min-height:42px}#personnelProfileModal .profile-footer>.personnel-file-actions{flex:1;min-width:90px}#personnelProfileModal .profile-note-composer>summary,#personnelProfileModal #profileCareerButton,#personnelProfileModal .personnel-note-actions .btn{min-height:40px}#personnelProfileModal #profileNoteText{font-size:16px}#personnelProfileModal .profile-read-feedback{flex-direction:row}}
+@media(max-width:360px){.profile-dossier-top{grid-template-columns:1fr}.profile-dossier-photo{flex-direction:row;justify-content:flex-start;gap:14px;padding:12px}.profile-dossier-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}

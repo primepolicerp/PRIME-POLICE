@@ -604,7 +604,7 @@ async function routePanel(req: Request): Promise<Response> {
   if(action==='personnel-career'){if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return personnelCareer(req,{db,json});}
   if(action==='personnel-profile'||['personnel-note-add','personnel-note-edit','personnel-note-archive'].includes(action||'')){
    const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);
-   const member=await accessMember(actor);return managePersonnelProfile(req,action,actor,{db,json,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});
+   const member=await accessMember(actor);return managePersonnelProfile(req,action,actor,{db,discord,json,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});
   }
   if(['absence-summary','absence-review','absence-roster','absence-register'].includes(action||'')){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);return manageAbsences(req,action,actor,{db,json,notify:sendPrivateDiscordMessage,audit:postAuditLog});}
   if (action === "records") { const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return listPagedRecords(req,json,{applicationAdmissions:!applicationPermissions(member.roles||[]).applicationsOnly}); }

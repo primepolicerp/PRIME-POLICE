@@ -1,14 +1,22 @@
-type Context={db:(path:string,init?:RequestInit)=>Promise<any>,json:(value:unknown,status?:number)=>Response,actorName:string};
+type Context={db:(path:string,init?:RequestInit)=>Promise<any>,json:(value:unknown,status?:number)=>Response,actorName:string,discord?:(path:string)=>Promise<any>};
+export function personnelDiscordAvatar(target:string,member:any){
+ const hash=/^(?:a_)?[a-f0-9]{32}$/;
+ if(!/^\d{17,20}$/.test(target))return null;
+ if(hash.test(String(member?.avatar||'')))return 'https://cdn.discordapp.com/guilds/1539970134469378068/users/'+target+'/avatars/'+member.avatar+'.png?size=256';
+ if(hash.test(String(member?.user?.avatar||'')))return 'https://cdn.discordapp.com/avatars/'+target+'/'+member.user.avatar+'.png?size=256';
+ return null;
+}
 const profileUuid=(value:string)=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
 export async function managePersonnelProfile(req:Request,action:string,actor:string,c:Context){
  const params=new URL(req.url).searchParams;
  if(action==='personnel-profile'&&req.method==='GET'){
   const target=params.get('discord_user_id')||'',noteOffset=Number(params.get('note_offset')||0),historyOffset=Number(params.get('history_offset')||0),movementOffset=Number(params.get('movement_offset')||0);
   if(!/^\d{17,20}$/.test(target)||![noteOffset,historyOffset,movementOffset].every(n=>Number.isSafeInteger(n)&&n>=0))return c.json({error:'Ficha o página inválida.'},400);
-  const allowed=['summary','notes','history','absences','sanctions','movements'],sections=params.has('sections')?(params.get('sections')||'').split(','):allowed;
+  const allowed=['summary','notes','history','absences','sanctions','movements','avatar'],sections=params.has('sections')?(params.get('sections')||'').split(','):allowed.filter(key=>key!=='avatar');
   if(!sections.length||sections.some(key=>!allowed.includes(key)))return c.json({error:'Apartado de ficha inválido.'},400);
   const people=await c.db('police_personnel?select=*&discord_user_id=eq.'+target+'&limit=1');if(!people?.length)return c.json({error:'La ficha de personal ya no existe.'},404);
   const operations=[
+   ['avatar',async()=>({avatar_url:c.discord?personnelDiscordAvatar(target,await c.discord('/guilds/1539970134469378068/members/'+target)):null})],
    ['movements',()=>c.db('police_personnel_movements?select=*&discord_user_id=eq.'+target+'&order=created_at.desc,id.desc&limit=21&offset='+movementOffset)],
    ['summary',()=>c.db('rpc/police_personnel_profile_summary',{method:'POST',body:JSON.stringify({p_user:target})})],
    ['notes',()=>c.db('police_personnel_notes?select=*&discord_user_id=eq.'+target+'&archived_at=is.null&order=created_at.desc,id.desc&limit=26&offset='+noteOffset)],

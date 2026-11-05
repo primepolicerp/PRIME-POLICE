@@ -64,6 +64,7 @@ jobs:
           node --experimental-strip-types scripts/check-personnel-career.mjs
           node --experimental-strip-types scripts/check-personnel-register.mjs
           node --experimental-strip-types scripts/check-profile-loading.mjs
+          node --experimental-strip-types scripts/check-personnel-avatar.mjs
           node scripts/check-promotion-workspace.mjs
           node --experimental-strip-types scripts/check-recruitment-veto.mjs
           node --experimental-strip-types scripts/check-admission-fields.mjs

@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {managePersonnelProfile,personnelDiscordAvatar} from '../supabase/functions/prime-police-panel/personnel-profile.ts';
+const id='222222222222222222',hash='a'.repeat(32),member={avatar:hash,user:{avatar:'b'.repeat(32)}},calls=[];
+assert.equal(personnelDiscordAvatar(id,member),`https://cdn.discordapp.com/guilds/1539970134469378068/users/${id}/avatars/${hash}.png?size=256`);
+assert.equal(personnelDiscordAvatar(id,{user:{avatar:'a_'+hash}}),`https://cdn.discordapp.com/avatars/${id}/a_${hash}.png?size=256`);
+for(const value of [null,{}, {avatar:'https://evil.test/a.png'},{user:{avatar:'../secret'}}])assert.equal(personnelDiscordAvatar(id,value),null);
+assert.equal(personnelDiscordAvatar('../bad',member),null);
+const c={actorName:'Gestor',json:(body,status=200)=>Response.json(body,{status}),db:async path=>{calls.push(path);assert(path.startsWith('police_personnel?'));return[{discord_user_id:id}];},discord:async path=>{calls.push(path);assert.equal(path,'/guilds/1539970134469378068/members/'+id);return member;}};
+const req=new Request('https://test?discord_user_id='+id+'&sections=avatar');
+let result=await(await managePersonnelProfile(req,'personnel-profile',id,c)).json();assert.equal(result.avatar.avatar_url,personnelDiscordAvatar(id,member));assert.deepEqual(result.loaded_sections,['avatar']);assert.equal(calls.length,2);assert.deepEqual(result.failed_sections,[]);
+result=await(await managePersonnelProfile(req,'personnel-profile',id,{...c,discord:async()=>{throw Error('Discord unavailable');}})).json();assert.deepEqual(result.failed_sections,['avatar']);assert.equal(result.person.discord_user_id,id);
+assert.equal((await managePersonnelProfile(req,'personnel-profile',id,{...c,db:async()=>[]})).status,404);
+assert.equal((await managePersonnelProfile(new Request('https://test?discord_user_id=bad&sections=avatar'),'personnel-profile',id,c)).status,400);
+console.log('Personnel avatar: fixed Discord CDN, validated hashes/IDs, guild photo precedence, optional isolated read, missing member fallback and no writes: PASS');
