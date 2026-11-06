@@ -36,4 +36,12 @@ photoMessages=[];await run(noUpload);assert(!calls.some(x=>x.init?.method==='POS
 photoMessages=[pasted];await run(noUpload);const fromClipboard=JSON.parse(calls.find(x=>x.db==='police_evidence_records').init.body);assert.equal(fromClipboard.photo_message_id,pasted.id);assert(!('photo_url'in fromClipboard));assert.equal(fromClipboard.h50,'Pedro Martinez · #0002');
 photoUsed=true;await run(noUpload);assert(!calls.some(x=>x.init?.method==='POST'));assert(calls.some(x=>x.reply?.content.includes('ya tiene una evidencia')));photoUsed=false;
 const direct=await run({type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_open'}});assert.equal(direct.type,9);assert.equal(direct.data.custom_id,'prime_evidence_submit');assert.equal(direct.data.components[3].component.type,5);
+// Production opens through Discord's validating callback, rather than the inline mock.
+let modalCalls=0;
+const throughCallback=await handleEvidenceInteraction({type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_open'}},actor,{...c,openModal:async(i,data)=>{modalCalls++;assert.equal(data.components[3].component.type,5);return new Response(null,{status:202});}});
+assert.equal(throughCallback.status,202);assert.equal(modalCalls,1);
+for(const modal of [evidenceForm(),evidenceForm(person),evidenceSearchModal()]){
+ assert(modal.title.length<=45);assert(modal.components.length<=5);
+ for(const row of modal.components.filter(row=>row.type===18)){assert(row.label.length<=45);assert((row.description||'').length<=100);}
+}
 console.log('Evidence form: one-step user picker, fresh active roster validation, mandatory photo by upload or recent own Discord screenshot, strict nonblank fields, no image storage, duplicate screenshot rejected: PASS');

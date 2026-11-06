@@ -1,7 +1,7 @@
 const GUILD='1539970134469378068',POLICE='1539970134482092038',EXPELLED='1539970134482092034',VETO='1564310246128619560';
 const BOT_ID='1540484542354428025';
 export const EVIDENCE_TEST_CHANNEL_ID='1539970137455853693';
-type Context={db:(path:string,init?:RequestInit)=>Promise<any>,discord:(path:string,init?:RequestInit)=>Promise<any>,response:(type:number,data:any)=>Response,ephemeral:(text:string)=>Response,reply:(i:any,payload:any)=>Promise<void>,waitUntil:(task:Promise<any>)=>void};
+type Context={db:(path:string,init?:RequestInit)=>Promise<any>,discord:(path:string,init?:RequestInit)=>Promise<any>,response:(type:number,data:any)=>Response,ephemeral:(text:string)=>Response,reply:(i:any,payload:any)=>Promise<void>,waitUntil:(task:Promise<any>)=>void,openModal?:(i:any,data:any)=>Promise<Response>};
 const text=(value:any)=>String(value??'').replace(/[\u200B-\u200D\u2060\uFEFF]/g,'').trim();
 const input=(id:string,placeholder:string,max:number,style=1)=>({type:4,custom_id:id,style,placeholder,min_length:1,max_length:max,required:true});
 function component(i:any,id:string){let result:any;const visit=(node:any)=>{if(!node||typeof node!=='object')return;if(node.custom_id===id)result=node;if(node.component)visit(node.component);for(const child of node.components||[])visit(child);};for(const node of i.data?.components||[])visit(node);return result;}
@@ -14,7 +14,7 @@ export function evidenceForm(person?:any){return {custom_id:'prime_evidence_subm
  {type:18,label:'Locker de evidencias',component:input('evidence_locker','Ej.: 29 o EVIDENCIAS',100)},
  {type:18,label:'Objetos incautados',component:input('evidence_objects','Cantidad, nombre y calibre de los objetos',1500,2)},
  {type:18,label:'Responsable H-50',description:'Busca y selecciona su usuario de Discord. Debe tener ficha activa.',component:{type:5,custom_id:'evidence_h50_user',placeholder:'Escribe el nombre del H-50',min_values:1,max_values:1,required:true,...(/^\d{17,20}$/.test(person?.discord_user_id||'')?{default_values:[{id:person.discord_user_id,type:'user'}]}:{})}},
- {type:18,label:'Fotografía · adjuntar o usar captura del canal',description:'Si ya pegaste y enviaste la captura mencionando a RH Police, no la adjuntes otra vez.',component:{type:19,custom_id:'evidence_photo',file_types:['image'],min_values:0,max_values:1,required:false}}
+ {type:18,label:'Fotografía de la evidencia',description:'Si ya pegaste y enviaste la captura mencionando a RH Police, no la adjuntes otra vez.',component:{type:19,custom_id:'evidence_photo',file_types:['image'],min_values:0,max_values:1,required:false}}
  ]};}
 function photoError(photo:any){
  if(!photo||!['image/png','image/jpeg','image/webp','image/gif'].includes(String(photo.content_type||'').toLowerCase())||!Number.isSafeInteger(photo.size)||photo.size<=0)return 'Debes adjuntar una fotografía válida y no vacía: PNG, JPG, WEBP o GIF.';
@@ -56,12 +56,12 @@ async function saveEvidence(i:any,userId:string,c:Context){
 export async function handleEvidenceInteraction(i:any,userId:string,c:Context):Promise<Response|null>{
  const custom=String(i.data?.custom_id||'');if(!['prime_evidence_open','prime_evidence_h50_search','prime_evidence_h50_select','prime_evidence_submit'].includes(custom))return null;
  if(i.guild_id!==GUILD||!/^\d{17,20}$/.test(userId)||!permitted(i.member?.roles||[]))return c.ephemeral('Debes registrar evidencias desde el servidor con el rol Policía activo.');
- if(i.type===3&&custom==='prime_evidence_open')return c.response(9,evidenceForm());
+ if(i.type===3&&custom==='prime_evidence_open')return c.openModal?c.openModal(i,evidenceForm()):c.response(9,evidenceForm());
  if(i.type===3&&custom==='prime_evidence_h50_select'){
   const values=i.data?.values,id=Array.isArray(values)&&values.length===1?String(values[0]):'';
   const option=(i.message?.components||[]).flatMap((row:any)=>row.components||[]).filter((node:any)=>node.custom_id===custom).flatMap((node:any)=>node.options||[]).find((item:any)=>item.value===id);
   if(!/^\d{17,20}$/.test(id)||!option)return c.ephemeral('Selecciona un H-50 válido o vuelve a buscar.');
-  return c.response(9,evidenceForm({discord_user_id:id,selectionLabel:text(option.label)}));
+  const form=evidenceForm({discord_user_id:id,selectionLabel:text(option.label)});return c.openModal?c.openModal(i,form):c.response(9,form);
  }
  if(i.type===5&&custom==='prime_evidence_h50_search'){
   const query=text(component(i,'evidence_h50_query')?.value);if(!query||query.length>100)return c.ephemeral('Escribe un nombre, usuario o placa para buscar al H-50.');

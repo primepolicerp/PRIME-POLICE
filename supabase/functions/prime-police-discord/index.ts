@@ -4,6 +4,7 @@ import { identityModal, handleApplicationSteps } from "./application-steps.ts";
 import {transferIdentityModal,handleTransferSteps} from "./transfer-steps.ts";
 import {TRANSFER_QUESTIONS,validTransferAnswers} from "../_shared/transfer-questions.ts";
 import { handleAbsenceInteraction, absencePanel, ABSENCE_CHANNEL_ID } from "./absences.ts";
+import {openEvidenceModal} from './evidence-modal-response.ts';
 import {handleEvidenceInteraction,EVIDENCE_TEST_CHANNEL_ID} from './evidence.ts';
 const GUILD_ID = "1539970134469378068";
 const PRESELECTION_ROLE_ID = "1564685481457877012";
@@ -137,7 +138,7 @@ async function handle(i:any){
  if((i.member?.roles||[]).includes(RECRUITMENT_VETO_ROLE)&&(/^(prime_apply|prime_application|prime_transfer|prime_rank_request)/.test(String(i.data?.custom_id||''))||['postulacion','traslado'].includes(i.data?.name)))return ephemeral(RECRUITMENT_VETO_MESSAGE);
  const applicationStep=await handleApplicationSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processApplicationSubmit});if(applicationStep)return applicationStep;
  const transferStep=await handleTransferSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processTransferSubmit});if(transferStep)return transferStep;
- const evidence=await handleEvidenceInteraction(i,userId,{db,discord,response,ephemeral,reply:editInteractionResponse,waitUntil:task=>EdgeRuntime.waitUntil(task)});if(evidence)return evidence;
+ const evidence=await handleEvidenceInteraction(i,userId,{db,discord,response,ephemeral,reply:editInteractionResponse,waitUntil:task=>EdgeRuntime.waitUntil(task),openModal:openEvidenceModal});if(evidence)return evidence;
  const absence=await handleAbsenceInteraction(i,{db,discord,response,ephemeral,values,reply:editInteractionReply});if(absence)return absence;
  if(i.type===2){
   const name=i.data?.name;
@@ -216,7 +217,7 @@ async function handle(i:any){
 }
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:CORS});
- if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,evidence_form:"h50-userselect-pasted-photo-v2",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
+ if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,evidence_form:"h50-modal-confirmation-v3",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
  if(req.method!=="POST")return json({error:"Method not allowed"},405);
  const body=await req.text();if(!await validSignature(req,body))return json({error:"Invalid Discord signature or DISCORD_PUBLIC_KEY not configured"},401);
  let i:any;try{i=JSON.parse(body)}catch{return json({error:"Invalid JSON"},400)}
