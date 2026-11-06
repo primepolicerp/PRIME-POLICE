@@ -1,4 +1,12 @@
 let evidenceRecords=[],evidenceOffset=0,evidenceHasMore=false,evidenceSequence=0,evidenceBusy=false,evidenceSearchTimer=null,evidenceRefreshTimer=null,evidenceSummary=null,evidenceOfficerTotals=[];
+function appendEvidenceMessageLinks(container,record,label='Abrir mensaje'){
+ if(!/^\d{17,20}$/.test(record.channel_id||'')||!/^\d{17,20}$/.test(record.discord_message_id||''))return false;
+ const path='1539970134469378068/'+record.channel_id+'/'+record.discord_message_id,group=document.createElement('span'),app=document.createElement('a'),web=document.createElement('a');group.className='evidence-message-links';app.className='evidence-link';app.href='discord://-/channels/'+path;app.textContent=label;app.title='Abrir este mensaje en la aplicación de Discord';web.className='evidence-link evidence-web-link';web.href='https://discord.com/channels/'+path;web.target='_blank';web.rel='noopener noreferrer';web.textContent='Ver en web';group.append(app,web);container.append(group);return true;
+}
+function appendEvidenceH50(container,record){
+ if(!/^\d{17,20}$/.test(record.h50_discord_user_id||'')){container.textContent=record.h50||'—';return;}
+ const link=document.createElement('a');link.href='discord://-/users/'+record.h50_discord_user_id;link.className='evidence-link evidence-user-mention';link.textContent='@'+String(record.h50_discord_username||record.h50||record.h50_discord_user_id).replace(/^@/,'');link.title=(record.h50||'Responsable H-50')+' · ID '+record.h50_discord_user_id;container.append(link);
+}
 let evidenceHistorySequence=0,evidenceHistoryOfficer=null,evidenceHistoryOffset=0,evidenceHistoryIds=new Set();
 function evidenceHistoryDialog(){
  let dialog=$('evidenceHistoryDialog');if(dialog)return dialog;
@@ -25,8 +33,8 @@ async function loadEvidenceHistory(reset){
   for(const record of data.records){
    if(record.discord_user_id!==officer.discord_user_id||evidenceHistoryIds.has(record.id))continue;evidenceHistoryIds.add(record.id);
    const card=document.createElement('article'),head=document.createElement('div'),date=document.createElement('strong'),fields=document.createElement('dl');card.className='evidence-history-record';head.className='evidence-history-record-head';date.textContent=niceDate(record.created_at);head.append(date);
-   if(/^\d{17,20}$/.test(record.channel_id||'')&&/^\d{17,20}$/.test(record.discord_message_id||'')){const link=document.createElement('a');link.href='https://discord.com/channels/1539970134469378068/'+record.channel_id+'/'+record.discord_message_id;link.target='_blank';link.rel='noopener noreferrer';link.className='evidence-link';link.textContent='Ver en Discord ↗';head.append(link);}
-   for(const [label,value]of [['Locker',record.locker],['Responsable H-50',record.h50],['Objetos incautados',record.objects_description]]){const group=document.createElement('div'),term=document.createElement('dt'),description=document.createElement('dd');term.textContent=label;description.textContent=String(value||'—');group.append(term,description);fields.append(group);}
+   appendEvidenceMessageLinks(head,record,'Abrir en Discord');
+   for(const [label,value]of [['Locker',record.locker],['Responsable H-50',record.h50],['Objetos incautados',record.objects_description]]){const group=document.createElement('div'),term=document.createElement('dt'),description=document.createElement('dd');term.textContent=label;if(label==='Responsable H-50')appendEvidenceH50(description,record);else description.textContent=String(value||'—');group.append(term,description);fields.append(group);}
    card.append(head,fields);batch.append(card);
   }
   $('evidenceHistoryRecords').append(batch);evidenceHistoryOffset=data.next_offset??0;button.hidden=!data.has_more;
@@ -59,9 +67,9 @@ function renderEvidenceOfficerOptions(selected){const select=$('evidenceOfficerF
 function renderEvidenceRecords(){
  const tbody=$('evidenceRows'),batch=document.createDocumentFragment();tbody.replaceChildren();
  for(const x of evidenceRecords){const tr=document.createElement('tr');
-  for(const [label,value]of [['Fecha y hora',niceDate(x.created_at)],['Policía',x.officer_name],['Placa',x.plate],['Locker',x.locker],['Objetos incautados',x.objects_description],['Responsable H-50',x.h50]]){const td=document.createElement('td');td.dataset.label=label;td.textContent=String(value??'—');tr.append(td);}
+  for(const [label,value]of [['Fecha y hora',niceDate(x.created_at)],['Policía',x.officer_name],['Placa',x.plate],['Locker',x.locker],['Objetos incautados',x.objects_description],['Responsable H-50',x.h50]]){const td=document.createElement('td');td.dataset.label=label;if(label==='Responsable H-50')appendEvidenceH50(td,x);else td.textContent=String(value??'—');tr.append(td);}
   const td=document.createElement('td');td.dataset.label='Discord';
-  if(/^\d{17,20}$/.test(x.channel_id||'')&&/^\d{17,20}$/.test(x.discord_message_id||'')){const a=document.createElement('a');a.className='evidence-link';a.href='https://discord.com/channels/1539970134469378068/'+x.channel_id+'/'+x.discord_message_id;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Abrir mensaje';td.append(a);}else td.textContent='Enlace no disponible';
+  if(!appendEvidenceMessageLinks(td,x))td.textContent='Enlace no disponible';
   tr.append(td);batch.append(tr);
  }
  if(!evidenceRecords.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.className='muted';td.textContent=evidenceSummary?'No hay evidencias que coincidan con estos filtros.':'Sin registros cargados.';tr.append(td);batch.append(tr);}tbody.append(batch);
