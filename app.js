@@ -23,10 +23,23 @@ function parseApplicationIdentity(fullName         , answers      = {}) {
 
 const API_BASE = "https://ngkmylqsdeevdtrjrgfn.supabase.co/functions/v1/prime-police-panel";
 const TOKEN_KEY = "primePolicePanelSession";
+function savePanelSession(value) {
+  try { localStorage.setItem(TOKEN_KEY, value); sessionStorage.removeItem(TOKEN_KEY); return; } catch {}
+  try { sessionStorage.setItem(TOKEN_KEY, value); } catch {}
+}
+function readPanelSession() {
+  try { const saved = localStorage.getItem(TOKEN_KEY); if (saved) return saved; } catch {}
+  try { const previous = sessionStorage.getItem(TOKEN_KEY); if (previous) { savePanelSession(previous); return previous; } } catch {}
+  return "";
+}
+function clearPanelSession() {
+  try { localStorage.removeItem(TOKEN_KEY); } catch {}
+  try { sessionStorage.removeItem(TOKEN_KEY); } catch {}
+}
 let activeStatus = "pending";
 let activeRankRequestStatus = "pending";
 let activeTransferStatus = "pending";
-let token = sessionStorage.getItem(TOKEN_KEY) || "";
+let token = readPanelSession();
 let applications = [];
 let rankRequests = [];
 let transfers = [];
@@ -59,7 +72,7 @@ function showLogin() {
   $("sideNav").classList.add("hidden");
   $("accountCard").classList.add("hidden");
   $("logoutButton").classList.add("hidden");
-  sessionStorage.removeItem(TOKEN_KEY);
+  clearPanelSession();
   $("loginView").classList.remove("hidden");
   $("appView").classList.add("hidden");
   if(hadSession)window.dispatchEvent(new Event("panel-session-ended"));
@@ -620,7 +633,7 @@ if (oauthErrorFromUrl) {
   $("loginError").textContent = "Comprobando tu cuenta y tus roles…";
   request("login", {method:"POST",body:{code:oauthCodeFromUrl}}).then(async result => {
     token = result.token;
-    sessionStorage.setItem(TOKEN_KEY, token);
+    savePanelSession(token);
     $("loginError").textContent = "";
     showApp();
     await loadAccountProfile();
