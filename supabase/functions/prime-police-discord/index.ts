@@ -5,7 +5,7 @@ import {transferIdentityModal,handleTransferSteps} from "./transfer-steps.ts";
 import {TRANSFER_QUESTIONS,validTransferAnswers} from "../_shared/transfer-questions.ts";
 import { handleAbsenceInteraction, absencePanel, ABSENCE_CHANNEL_ID } from "./absences.ts";
 import {openEvidenceModal} from './evidence-modal-response.ts';
-import {handleEvidenceInteraction,EVIDENCE_TEST_CHANNEL_ID} from './evidence.ts';
+import {handleEvidenceInteraction,EVIDENCE_CHANNEL_ID} from './evidence.ts';
 const GUILD_ID = "1539970134469378068";
 const PRESELECTION_ROLE_ID = "1564685481457877012";
 const POLICE_ROLE_ID = "1539970134482092038";
@@ -130,8 +130,8 @@ function transferModal(){return transferIdentityModal(modalInput,response);}
 
 function values(interaction:any){const out:any={};const visit=(node:any)=>{if(!node||typeof node!=="object")return;if(typeof node.custom_id==="string"&&node.value!==undefined)out[node.custom_id]=String(node.value||"").trim();if(Array.isArray(node.components))for(const child of node.components)visit(child);if(node.component)visit(node.component)};for(const component of interaction.data?.components||[])visit(component);return out}
 
-// Evidence pilot: photo remains on Discord; only metadata is stored in Supabase.
-const evidencePanel={embeds:[{title:"🔬 PRIME POLICE · Registro de evidencias (PRUEBA)",description:"Pega y envía tu captura en este canal mencionando a **RH Police**, y pulsa **Registrar evidencia**. También puedes adjuntar la foto desde el formulario. El bot publicará el registro en este canal y guardará los datos en el panel web. La fotografía no se copia a la web.",color:3447003,footer:{text:"RH Police · Registro de evidencias · Prueba"}}],components:[{type:1,components:[{type:2,style:1,label:"Registrar evidencia",custom_id:"prime_evidence_open"}]}]};
+// Evidence register: photo remains on Discord; only metadata is stored in Supabase.
+const evidencePanel={embeds:[{title:"🔬 PRIME POLICE · Registro de evidencias",description:"**1. Copia y pega tu captura** en este canal con **Ctrl+V** (no hace falta guardarla en el PC). En móvil, usa **Pegar** si está disponible o comparte la imagen a Discord.\n**2. Menciona a RH Police y envía la foto.** Una imagen por mensaje.\n**3. Pulsa Registrar evidencia** dentro de los próximos 10 minutos, elige al H-50 y completa locker y objetos.\n\nTambién puedes adjuntar la foto en el formulario. **La fotografía y los datos son obligatorios.** El historial se registra automáticamente en la web; las fotos permanecen en Discord.",color:3447003,footer:{text:"RH Police · Registro de evidencias"}}],components:[{type:1,components:[{type:2,style:1,label:"Registrar evidencia",custom_id:"prime_evidence_open"}]}]};
 async function handle(i:any){
  if(i.type===1)return response(1,{});
  const user=i.member?.user||i.user;const userId=String(user?.id||"");const username=String(user?.global_name||user?.username||"Usuario Discord");
@@ -143,8 +143,8 @@ async function handle(i:any){
  if(i.type===2){
   const name=i.data?.name;
   if(name==="publicar_evidencias"){
-   if(!canManage(i))return ephemeral("Solo UCOP o Directiva puede publicar el panel de pruebas.");
-   EdgeRuntime.waitUntil((async()=>{try{await publishOrUpdatePanel(EVIDENCE_TEST_CHANNEL_ID,"prime_evidence_open",evidencePanel);await editInteractionReply(i,"Panel de evidencias publicado en el canal de pruebas.");}catch(e){console.error("Evidence panel publish:",String(e));await editInteractionReply(i,"No se pudo publicar el panel. Comprueba los permisos del bot.");}})());
+   if(!canManage(i))return ephemeral("Solo UCOP o Directiva puede publicar el panel de evidencias.");
+   EdgeRuntime.waitUntil((async()=>{try{await publishOrUpdatePanel(EVIDENCE_CHANNEL_ID,"prime_evidence_open",evidencePanel);await editInteractionReply(i,"Panel de evidencias publicado en el canal de evidencias.");}catch(e){console.error("Evidence panel publish:",String(e));await editInteractionReply(i,"No se pudo publicar el panel. Comprueba los permisos del bot.");}})());
    return ephemeral("⏳ Publicando panel de evidencias…");
   }
   if(name==="publicar_postulaciones"){
@@ -159,8 +159,8 @@ async function handle(i:any){
      await publishOrUpdatePanel(TRANSFER_CHANNEL_ID,"prime_transfer",transferPanel);
      await publishOrUpdatePanel("1539970136302288946","prime_duty_start",{embeds:[{title:"◷ PRIME POLICE · Control de servicio",description:"Registra tu entrada al comenzar el servicio y tu salida al finalizar.",color:6593023,footer:{text:"PRIME POLICE · Bitácoras"}}],components:[{type:1,components:[{type:2,style:3,label:"Entrar en servicio",custom_id:"prime_duty_start"},{type:2,style:4,label:"Salir de servicio",custom_id:"prime_duty_end"}]}]});
      await publishOrUpdatePanel(ABSENCE_CHANNEL_ID,"prime_absence",absencePanel);
-     await publishOrUpdatePanel(EVIDENCE_TEST_CHANNEL_ID,"prime_evidence_open",evidencePanel);
-     await editInteractionReply(i,"Paneles de postulaciones, ingreso, traslados, servicio, ausencias y evidencias de prueba actualizados.");
+     await publishOrUpdatePanel(EVIDENCE_CHANNEL_ID,"prime_evidence_open",evidencePanel);
+     await editInteractionReply(i,"Paneles de postulaciones, ingreso, traslados, servicio, ausencias y evidencias actualizados.");
     }catch(error){
      console.error("Could not publish application announcement:",String(error));
      try{await editInteractionReply(i,"No se pudo publicar el formulario. Comprueba los permisos del bot y vuelve a intentarlo.");}catch(replyError){console.error("Could not update deferred interaction:",String(replyError));}
@@ -217,7 +217,7 @@ async function handle(i:any){
 }
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:CORS});
- if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,evidence_form:"h50-live-initials-v9",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
+ if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,evidence_form:"evidence-production-paste-v10",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
  if(req.method!=="POST")return json({error:"Method not allowed"},405);
  const body=await req.text();if(!await validSignature(req,body))return json({error:"Invalid Discord signature or DISCORD_PUBLIC_KEY not configured"},401);
  let i:any;try{i=JSON.parse(body)}catch{return json({error:"Invalid JSON"},400)}

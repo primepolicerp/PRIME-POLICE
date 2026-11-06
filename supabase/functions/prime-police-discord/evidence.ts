@@ -1,6 +1,6 @@
 const GUILD='1539970134469378068',POLICE='1539970134482092038',EXPELLED='1539970134482092034',VETO='1564310246128619560';
 const BOT_ID='1540484542354428025';
-export const EVIDENCE_TEST_CHANNEL_ID='1539970137455853693';
+export const EVIDENCE_CHANNEL_ID='1539970136050499672';
 type Context={db:(path:string,init?:RequestInit)=>Promise<any>,discord:(path:string,init?:RequestInit)=>Promise<any>,response:(type:number,data:any)=>Response,ephemeral:(text:string)=>Response,reply:(i:any,payload:any)=>Promise<void>,waitUntil:(task:Promise<any>)=>void,openModal?:(i:any,data:any)=>Promise<Response>};
 const text=(value:any)=>String(value??'').replace(/[\u200B-\u200D\u2060\uFEFF]/g,'').trim();
 const input=(id:string,placeholder:string,max:number,style=1)=>({type:4,custom_id:id,style,placeholder,min_length:1,max_length:max,required:true});
@@ -10,7 +10,7 @@ function permitted(roles:string[]){return roles.includes(POLICE)&&!roles.include
 function label(person:any){return text(person.full_name)+' · #'+(text(person.plate)||'Sin placa');}
 export function evidenceSearchModal(){return {custom_id:'prime_evidence_h50_search',title:'Buscar responsable H-50',components:[{type:18,label:'Nombre o placa del policía',description:'Escribe el nombre completo, una parte o la placa. Pulsa Enviar para ver las coincidencias.',component:input('evidence_h50_query','Ej.: Pedro, Martinez o 0002',100)}]};}
 export function evidenceForm(person:any){return {custom_id:'prime_evidence_submit',title:'Registrar evidencia · PRIME POLICE',components:[
- {type:10,content:'📷 Para pegar una captura: envíala en este canal mencionando a **RH Police** antes de enviar este formulario. También puedes adjuntarla abajo. La fotografía es obligatoria.'},
+ {type:10,content:'📷 Sin guardar archivos: copia la captura y pégala con **Ctrl+V** en el canal de evidencias, menciona a **RH Police** y envíala antes de abrir el formulario (máximo 10 minutos). En móvil, mantén pulsado y elige **Pegar**, o comparte la imagen a Discord. También puedes adjuntarla abajo. La foto es obligatoria.'},
  {type:18,label:'Locker de evidencias',component:input('evidence_locker','Ej.: 29 o EVIDENCIAS',100)},
  {type:18,label:'Objetos incautados',component:input('evidence_objects','Cantidad, nombre y calibre de los objetos',1500,2)},
  {type:18,label:'Responsable H-50',description:'Policía seleccionado de la plantilla. Para cambiarlo, vuelve a la lista.',component:{type:3,custom_id:'evidence_h50_user',min_values:1,max_values:1,required:true,options:[{label:(text(person.selectionLabel)||label(person)).slice(0,100),value:person.discord_user_id,default:true}]}},
@@ -22,7 +22,7 @@ function photoError(photo:any){
  return null;
 }
 export function recentPastedPhoto(messages:any[],userId:string,now=Date.now()){
- const source=messages.find(message=>String(message.author?.id)===userId&&!message.author?.bot&&String(message.channel_id)===EVIDENCE_TEST_CHANNEL_ID&&message.mentions?.some((user:any)=>String(user.id)===BOT_ID)&&Array.isArray(message.attachments)&&message.attachments.length&&Number.isFinite(Date.parse(message.timestamp))&&now-Date.parse(message.timestamp)>=0&&now-Date.parse(message.timestamp)<=600000);
+ const source=messages.find(message=>String(message.author?.id)===userId&&!message.author?.bot&&String(message.channel_id)===EVIDENCE_CHANNEL_ID&&message.mentions?.some((user:any)=>String(user.id)===BOT_ID)&&Array.isArray(message.attachments)&&message.attachments.length&&Number.isFinite(Date.parse(message.timestamp))&&now-Date.parse(message.timestamp)>=0&&now-Date.parse(message.timestamp)<=600000);
  if(!source||!/^\d{17,20}$/.test(String(source.id)))return {error:'Falta la foto: pega la captura en este canal, menciona a RH Police y envíala. Después vuelve a Registrar evidencia. También puedes adjuntarla en el formulario.'};
  if(source.attachments.length!==1)return {error:'Envía una sola fotografía por mensaje para que el bot identifique la evidencia correcta.'};
  const error=photoError(source.attachments[0]);return error?{error}:{photo:source.attachments[0],sourceId:String(source.id)};
@@ -47,11 +47,11 @@ async function saveEvidence(i:any,userId:string,c:Context){
  const h50Member=await c.discord('/guilds/'+GUILD+'/members/'+data.h50Id);
  if(h50Member.user?.bot||!permitted(h50Member.roles||[])){await c.reply(i,{content:'El responsable H-50 debe ser un policía activo del servidor, sin expulsión ni veto. Selecciona otro responsable de la plantilla.'});return;}
  let photo=data.photo,sourceId:string|null=null;
- if(!photo){const source=recentPastedPhoto(await c.discord('/channels/'+EVIDENCE_TEST_CHANNEL_ID+'/messages?limit=100'),userId);if(source.error){await c.reply(i,{content:source.error});return;}photo=source.photo;sourceId=source.sourceId!;
+ if(!photo){const source=recentPastedPhoto(await c.discord('/channels/'+EVIDENCE_CHANNEL_ID+'/messages?limit=100'),userId);if(source.error){await c.reply(i,{content:source.error});return;}photo=source.photo;sourceId=source.sourceId!;
   const used=await c.db('police_evidence_records?select=id&photo_message_id=eq.'+sourceId+'&limit=1');if(used?.length){await c.reply(i,{content:'Esa captura ya tiene una evidencia registrada. Pega una captura nueva o adjunta la fotografía correcta.'});return;}}
  const h50=label(responsible),clean=(value:any)=>String(value??'').replace(/@/g,'＠').replace(/`/g,"'").slice(0,1500);
- const message=await c.discord('/channels/'+EVIDENCE_TEST_CHANNEL_ID+'/messages',{method:'POST',body:JSON.stringify({content:'Responsable H-50: <@'+data.h50Id+'>',allowed_mentions:{parse:[],users:[data.h50Id]},embeds:[{title:'🔬 Evidencia policial · PRIME POLICE',color:3447003,fields:[{name:'Policía',value:clean(label(author)),inline:false},{name:'Locker',value:clean(data.locker),inline:true},{name:'H-50',value:'<@'+data.h50Id+'> · '+clean(h50),inline:true},{name:'Objetos incautados',value:clean(data.objects),inline:false}],image:{url:photo.url},footer:{text:'Registro automático RH Police · Prueba'}}]})});
- try{await c.db('police_evidence_records',{method:'POST',body:JSON.stringify({discord_user_id:userId,officer_name:author.full_name,plate:author.plate||'',locker:data.locker,objects_description:data.objects,h50,h50_discord_user_id:data.h50Id,h50_discord_username:responsible.discord_username||h50Member.user?.username||'',photo_message_id:sourceId,discord_message_id:String(message.id),channel_id:EVIDENCE_TEST_CHANNEL_ID})});}
+ const message=await c.discord('/channels/'+EVIDENCE_CHANNEL_ID+'/messages',{method:'POST',body:JSON.stringify({content:'Responsable H-50: <@'+data.h50Id+'>',allowed_mentions:{parse:[],users:[data.h50Id]},embeds:[{title:'🔬 Evidencia policial · PRIME POLICE',color:3447003,fields:[{name:'Policía',value:clean(label(author)),inline:false},{name:'Locker',value:clean(data.locker),inline:true},{name:'H-50',value:'<@'+data.h50Id+'> · '+clean(h50),inline:true},{name:'Objetos incautados',value:clean(data.objects),inline:false}],image:{url:photo.url},footer:{text:'Registro automático RH Police'}}]})});
+ try{await c.db('police_evidence_records',{method:'POST',body:JSON.stringify({discord_user_id:userId,officer_name:author.full_name,plate:author.plate||'',locker:data.locker,objects_description:data.objects,h50,h50_discord_user_id:data.h50Id,h50_discord_username:responsible.discord_username||h50Member.user?.username||'',photo_message_id:sourceId,discord_message_id:String(message.id),channel_id:EVIDENCE_CHANNEL_ID})});}
  catch{await c.reply(i,{content:'La evidencia se publicó en Discord, pero falló el registro web. Avisa a UCOP con este mensaje: '+String(message.id)});return;}
  await c.reply(i,{content:'✅ Evidencia registrada en Discord y en la web. H-50: '+clean(h50)+'. Mensaje: '+String(message.id)});
 }
