@@ -1,0 +1,53 @@
+# PRIME POLICE — instrucciones para Claude
+
+## Proyecto y arquitectura
+
+- Repositorio: `primepolicerp/PRIME-POLICE`, rama publicada: `main`.
+- Producción: https://primepolice.link/.
+- Frontend: JavaScript sin framework; `index.html`, `app.js` y módulos `*-ui.js`. Mantener sus controles y permisos existentes.
+- `scripts/build-site.mjs` genera únicamente archivos públicos en `dist/`, con recursos compactados, hashes, SRI y CSP. No publicar la carpeta raíz ni funciones, migraciones o documentos internos como archivos de la web.
+- GitHub Pages: `.github/workflows/pages.yml`. El despliegue utiliza nombres de artefacto únicos por ejecución/intento.
+- Supabase: proyecto `ngkmylqsdeevdtrjrgfn`. Funciones `prime-police-panel` (API y permisos), `prime-police-discord` (RH Police e interacciones) y `prime-police-notifications` (avisos). Sus despliegues son independientes de Pages.
+- SQL versionado en `supabase/migrations/`. No borrar ni reparar el historial de migraciones para ocultar diferencias; recuperar cualquier migración que falte.
+
+## Preparación y comprobaciones
+
+Usar Node.js 22 o posterior y las dependencias fijadas en package-lock.json:
+
+```sh
+npm ci --ignore-scripts
+node --check app.js
+node --check evidence-ui.js
+node scripts/check-session-persistence.mjs
+node --experimental-strip-types scripts/check-evidence-form.mjs
+node --experimental-strip-types scripts/check-evidence-records.mjs
+node --experimental-strip-types scripts/check-evidence-modal-response.mjs
+npm run build
+node scripts/check-public-build.mjs
+```
+
+Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del módulo modificado y el comando de TypeScript. Las pruebas no necesitan tokens reales. No crear evidencias, mensajes, sanciones o bajas de producción para probar interfaces.
+
+## Evidencias: estado actual
+
+- Discord → `public.police_evidence_records` → endpoint autenticado `evidence-records` → `evidence-ui.js`.
+- Las fotografías permanecen en Discord. No copiar imágenes a Storage, al repositorio o a los datos del panel. La API de lectura no devuelve photo_url.
+- Locker, objetos, H-50 y fotografía son obligatorios. La fotografía puede adjuntarse o recuperarse de una captura reciente enviada por el autor al canal de evidencias mencionando al bot.
+- El H-50 se elige de `police_personnel` activo. Validar de nuevo su ficha y rol Policía al guardar; bloquear bots, expulsados y vetados.
+- El botón «Buscar en plantilla» ofrece grupos por iniciales A–F, G–L, M–R y S–Z/Otros. `police_evidence_h50_initials` consulta la plantilla actual en cada petición; no mantener listas manuales. Paginación si un grupo supera las 25 opciones permitidas por Discord.
+- Guardar ID y usuario del H-50; el mensaje de Discord menciona únicamente al H-50 seleccionado mediante allowed_mentions explícito.
+- El historial de cada agente se abre en una ventana propia. Los enlaces principales intentan abrir la aplicación de Discord y conservan «Ver en web» como alternativa.
+- Los campos de texto de los formularios de Discord no tienen autocompletado en tiempo real. No prometer esa función; el usuario eligió mantener la búsqueda por nombre o placa al enviar el formulario.
+- Canal de evidencias: `1539970137455853693`; servidor: `1539970134469378068`.
+
+## Reglas del proyecto
+
+- Conservar los registros e historiales. No borrar datos de producción para resolver errores.
+- Aplicar permisos en el servidor, no solo ocultar botones. Mantener RLS y acceso privado por servicio; no conceder lecturas públicas a tablas administrativas.
+- Personal activo lleva Policía, con su rama UCOP/CIC y Directiva cuando corresponda. Preseleccionados y traslados son etapas independientes; no tratarlos como miembros de la plantilla.
+- Los avisos de posible IA son orientativos: nunca aceptar, rechazar ni sancionar automáticamente por un detector.
+- La sesión se guarda de forma persistente en el navegador; cerrar sesión borra el almacenamiento y revoca la sesión del servidor. No anular caducidad, revocaciones ni validaciones de roles.
+- No incluir claves o tokens en el código, en chats ni en commits. No copiar sesiones del navegador o del ordenador original. Configurar credenciales propias mediante los mecanismos privados del entorno cuando sean necesarias.
+- Antes de editar, revisar git status y conservar cambios ajenos. Trabajar en una rama para cambios nuevos y abrir una revisión cuando corresponda.
+- Publicar solo si la petición lo incluye. Después, comprobar GitHub Actions y los archivos servidos por el dominio; desplegar las funciones afectadas si hubo cambios del backend. Informar qué se verificó y qué sigue pendiente.
+- Responder en español y explicar de forma breve qué cambió. No afirmar que algo está publicado o corregido en producción sin comprobarlo.

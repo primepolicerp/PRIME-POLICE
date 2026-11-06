@@ -7,7 +7,7 @@ const submission=()=>({type:5,guild_id:guild,member:{roles:[role]},data:{custom_
 const form=evidenceForm(person);assert.equal(form.components.length,5);for(const row of form.components.filter(row=>[3,4].includes(row.component?.type)))assert(row.component.required);assert.equal(form.components[3].component.type,3);assert.equal(form.components[4].component.required,false);assert.equal(form.components[4].component.min_values,0);
 assert.equal(evidenceSearchModal().components[0].component.required,true);assert.equal(evidenceSubmission(submission()).h50Id,responsible);
 const calls=[],tasks=[];let currentRoles=[role],h50Active=true,authorActive=true,matches=[person],photoMessages=[],photoUsed=false,roster=[person],h50Roles=[role];
-const c={response:(type,data)=>Response.json({type,data}),ephemeral:content=>Response.json({type:4,data:{flags:64,content}}),waitUntil:p=>tasks.push(p),reply:async(i,payload)=>calls.push({reply:payload}),discord:async(path,init)=>{calls.push({discord:path,init});return init?.method==='POST'?{id:'444444444444444444'}:path.includes('/messages?')?photoMessages:{roles:path.endsWith(responsible)?h50Roles:currentRoles};},db:async(path,init)=>{calls.push({db:path,init});if(path.startsWith('rpc/'))return matches;if(path.includes('&order=full_name.asc')){const offset=Number(path.match(/&offset=(\d+)/)[1]);return roster.slice(offset,offset+101);}if(path==='police_evidence_records')return[];if(path.startsWith('police_evidence_records?'))return photoUsed?[{id:'used'}]:[];return path.includes(actor)?authorActive?[author]:[]:h50Active?[person]:[];}};
+const c={response:(type,data)=>Response.json({type,data}),ephemeral:content=>Response.json({type:4,data:{flags:64,content}}),waitUntil:p=>tasks.push(p),reply:async(i,payload)=>calls.push({reply:payload}),discord:async(path,init)=>{calls.push({discord:path,init});return init?.method==='POST'?{id:'444444444444444444'}:path.includes('/messages?')?photoMessages:{roles:path.endsWith(responsible)?h50Roles:currentRoles};},db:async(path,init)=>{calls.push({db:path,init});if(path==='rpc/police_evidence_h50_initials'){const {p_group,p_offset}=JSON.parse(init.body),groups={AF:'abcdef',GL:'ghijkl',MR:'mnopqr',SZ:'stuvwxyz'},all=roster.filter(p=>{const first=p.full_name.trim()[0]?.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()||'';return p.status!=='inactive'&&(groups[p_group].includes(first)&&first!==''||p_group==='SZ'&&!/^[a-z]$/.test(first));});return {records:all.slice(p_offset,p_offset+25),total:all.length,has_more:all.length>p_offset+25,next_offset:all.length>p_offset+25?p_offset+25:null};}if(path.startsWith('rpc/'))return matches;if(path.includes('&order=full_name.asc')){const offset=Number(path.match(/&offset=(\d+)/)[1]);return roster.slice(offset,offset+101);}if(path==='police_evidence_records')return[];if(path.startsWith('police_evidence_records?'))return photoUsed?[{id:'used'}]:[];return path.includes(actor)?authorActive?[author]:[]:h50Active?[person]:[];}};
 async function run(i){calls.length=0;const response=await handleEvidenceInteraction(i,actor,c);await Promise.all(tasks.splice(0));return response?await response.json():null;}
 for(const [name,mutate]of [
  ['blank locker',i=>i.data.components[0].component.value='  \n\u200B '],['blank objects',i=>i.data.components[1].component.value='\t\u2060'],
@@ -40,24 +40,21 @@ photoUsed=true;await run(noUpload);assert(!calls.some(x=>x.init?.method==='POST'
 const open={type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_open'}};
 const first=await run(open);assert.equal(first.type,9);assert.equal(first.data.custom_id,'prime_evidence_h50_search');assert.equal(calls.length,0);
 const list={...open,data:{custom_id:'prime_evidence_h50_page:0'}};
-const direct=await run(list);assert.equal(direct.type,6);assert(calls.some(x=>x.db?.includes('status=eq.active&order=')));
-assert.equal(calls.find(x=>x.reply?.components)?.reply.components[0].components[0].type,3);
-// Discord allows 25 options per select: expose all current agents using up to four menus.
-for(const size of [1,25,26,73,91,100,101,173]){
- roster=Array.from({length:size},(_,n)=>({...person,discord_user_id:String(200000000000000000n+BigInt(n))}));
- const allIds=[];
- for(let offset=0;offset<size;offset+=100){
-  await run({...open,data:{custom_id:'prime_evidence_h50_page:'+offset}});const payload=calls.find(x=>x.reply?.components)?.reply;
-  const menus=payload.components.filter(row=>row.components[0].type===3).map(row=>row.components[0]),buttons=payload.components.at(-1).components;
-  assert(payload.components.length<=5);assert.equal(menus.length,Math.ceil(Math.min(100,size-offset)/25));assert.equal(new Set(menus.map(x=>x.custom_id)).size,menus.length);
-  for(const menu of menus){assert(menu.options.length<=25);allIds.push(...menu.options.map(x=>x.value));}
-  assert.equal(buttons[0].disabled,offset===0);assert.equal(buttons[1].disabled,offset+100>=size);
-  const last=menus.at(-1),choice=last.options.at(-1),interaction={type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:last.custom_id,values:[choice.value]},message:{components:payload.components}};
-  const chosen=await run(interaction);assert.equal(chosen.type,9);assert.equal(chosen.data.components[3].component.options[0].value,choice.value);assert.equal(calls.length,0);
- }
- assert.equal(allIds.length,size);assert.equal(new Set(allIds).size,size);assert.deepEqual(allIds,roster.map(x=>x.discord_user_id));
+const direct=await run(list);assert.equal(direct.type,7);assert.equal(calls.length,0);assert.equal(direct.data.components[0].components.length,4);
+assert(direct.data.components[0].components.every(x=>x.custom_id.startsWith('prime_evidence_h50_group:')));
+roster=Array.from({length:173},(_,n)=>({...person,full_name:['Ana','John','Pedro','Saul'][n%4]+' '+n,discord_user_id:String(200000000000000000n+BigInt(n))}));
+const allIds=[];
+for(const group of ['AF','GL','MR','SZ'])for(let offset=0;;offset+=25){
+ await run({...open,data:{custom_id:'prime_evidence_h50_group:'+group+':'+offset}});const payload=calls.find(x=>x.reply?.components)?.reply,menu=payload.components[0].components[0];assert.equal(menu.type,3);assert(menu.options.length<=25);assert(payload.components.length<=5);allIds.push(...menu.options.map(x=>x.value));
+ const choice=menu.options.at(-1),chosen=await run({...open,data:{custom_id:menu.custom_id,values:[choice.value]},message:{components:payload.components}});assert.equal(chosen.type,9);assert.equal(chosen.data.components[3].component.options[0].value,choice.value);
+ if(payload.components.at(-1).components[1].disabled)break;
 }
-for(const id of ['prime_evidence_h50_page:-1','prime_evidence_h50_page:26','prime_evidence_h50_page:injection']){assert.equal((await run({...open,data:{custom_id:id}})).type,4);assert.equal(calls.length,0);}
+assert.equal(allIds.length,173);assert.equal(new Set(allIds).size,173);
+// A new active officer appears on the next read; an inactive officer disappears.
+roster=[person];await run({...open,data:{custom_id:'prime_evidence_h50_group:MR:0'}});assert.equal(calls.find(x=>x.reply?.components).reply.components[0].components[0].options.length,1);
+roster.push({...person,discord_user_id:'999999999999999999',full_name:'Nuevo Agente'});await run({...open,data:{custom_id:'prime_evidence_h50_group:MR:0'}});assert.equal(calls.find(x=>x.reply?.components).reply.components[0].components[0].options.length,2);
+roster[1].status='inactive';await run({...open,data:{custom_id:'prime_evidence_h50_group:MR:0'}});assert.equal(calls.find(x=>x.reply?.components).reply.components[0].components[0].options.length,1);
+for(const id of ['prime_evidence_h50_group:XX:0','prime_evidence_h50_group:AF:-1','prime_evidence_h50_group:AF:26']){assert.equal((await run({...open,data:{custom_id:id}})).type,4);assert.equal(calls.length,0);}
 for(const roles of [[],[role,'1564310246128619560'],[role,'1539970134482092034']]){h50Roles=roles;await run(submission());assert(!calls.some(x=>x.init?.method==='POST'));}h50Roles=[role];
 let modalCalls=0;
 const throughCallback=await handleEvidenceInteraction(selected,actor,{...c,openModal:async(i,data)=>{modalCalls++;assert.equal(data.components[3].component.type,3);assert.equal(data.components[3].component.options[0].value,responsible);return new Response(null,{status:202});}});
