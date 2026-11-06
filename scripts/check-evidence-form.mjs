@@ -7,7 +7,7 @@ const submission=()=>({type:5,guild_id:guild,member:{roles:[role]},data:{custom_
 const form=evidenceForm(person);assert.equal(form.components.length,5);for(const row of form.components.filter(row=>[3,4].includes(row.component?.type)))assert(row.component.required);assert.equal(form.components[3].component.type,3);assert.equal(form.components[4].component.required,false);assert.equal(form.components[4].component.min_values,0);
 assert.equal(evidenceSearchModal().components[0].component.required,true);assert.equal(evidenceSubmission(submission()).h50Id,responsible);
 const calls=[],tasks=[];let currentRoles=[role],h50Active=true,authorActive=true,matches=[person],photoMessages=[],photoUsed=false,roster=[person],h50Roles=[role];
-const c={response:(type,data)=>Response.json({type,data}),ephemeral:content=>Response.json({type:4,data:{flags:64,content}}),waitUntil:p=>tasks.push(p),reply:async(i,payload)=>calls.push({reply:payload}),discord:async(path,init)=>{calls.push({discord:path,init});return init?.method==='POST'?{id:'444444444444444444'}:path.includes('/messages?')?photoMessages:{roles:path.endsWith(responsible)?h50Roles:currentRoles};},db:async(path,init)=>{calls.push({db:path,init});if(path.startsWith('rpc/'))return matches;if(path.includes('&order=full_name.asc')){const offset=Number(path.match(/&offset=(\d+)/)[1]);return roster.slice(offset,offset+26);}if(path==='police_evidence_records')return[];if(path.startsWith('police_evidence_records?'))return photoUsed?[{id:'used'}]:[];return path.includes(actor)?authorActive?[author]:[]:h50Active?[person]:[];}};
+const c={response:(type,data)=>Response.json({type,data}),ephemeral:content=>Response.json({type:4,data:{flags:64,content}}),waitUntil:p=>tasks.push(p),reply:async(i,payload)=>calls.push({reply:payload}),discord:async(path,init)=>{calls.push({discord:path,init});return init?.method==='POST'?{id:'444444444444444444'}:path.includes('/messages?')?photoMessages:{roles:path.endsWith(responsible)?h50Roles:currentRoles};},db:async(path,init)=>{calls.push({db:path,init});if(path.startsWith('rpc/'))return matches;if(path.includes('&order=full_name.asc')){const offset=Number(path.match(/&offset=(\d+)/)[1]);return roster.slice(offset,offset+101);}if(path==='police_evidence_records')return[];if(path.startsWith('police_evidence_records?'))return photoUsed?[{id:'used'}]:[];return path.includes(actor)?authorActive?[author]:[]:h50Active?[person]:[];}};
 async function run(i){calls.length=0;const response=await handleEvidenceInteraction(i,actor,c);await Promise.all(tasks.splice(0));return response?await response.json():null;}
 for(const [name,mutate]of [
  ['blank locker',i=>i.data.components[0].component.value='  \n\u200B '],['blank objects',i=>i.data.components[1].component.value='\t\u2060'],
@@ -42,18 +42,21 @@ const first=await run(open);assert.equal(first.type,9);assert.equal(first.data.c
 const list={...open,data:{custom_id:'prime_evidence_h50_page:0'}};
 const direct=await run(list);assert.equal(direct.type,6);assert(calls.some(x=>x.db?.includes('status=eq.active&order=')));
 assert.equal(calls.find(x=>x.reply?.components)?.reply.components[0].components[0].type,3);
-// Every page has at most 25 choices and the next page is available, without truncating the roster.
-roster=Array.from({length:26},(_,n)=>({...person,discord_user_id:String(200000000000000000n+BigInt(n))}));
-await run(list);let page=calls.find(x=>x.reply?.components)?.reply;
-assert.equal(page.components[0].components[0].options.length,25);assert.equal(page.components[1].components[1].disabled,false);
-assert.equal(page.components[1].components[0].disabled,true);
-await run({...open,data:{custom_id:'prime_evidence_h50_page:25'}});
-assert(calls.some(x=>x.db?.includes('&offset=25&limit=26')));
-page=calls.find(x=>x.reply?.components)?.reply;assert.equal(page.components[1].components[0].disabled,false);assert.equal(page.components[1].components[1].disabled,true);
-roster=Array.from({length:73},(_,n)=>({...person,discord_user_id:String(200000000000000000n+BigInt(n))}));
-const allIds=[];
-for(const offset of [0,25,50]){await run({...open,data:{custom_id:'prime_evidence_h50_page:'+offset}});const payload=calls.find(x=>x.reply?.components)?.reply;allIds.push(...payload.components[0].components[0].options.map(x=>x.value));assert.equal(payload.components[1].components[1].disabled,offset===50);}
-assert.equal(allIds.length,73);assert.equal(new Set(allIds).size,73);assert.deepEqual(allIds,roster.map(x=>x.discord_user_id));
+// Discord allows 25 options per select: expose all current agents using up to four menus.
+for(const size of [1,25,26,73,91,100,101,173]){
+ roster=Array.from({length:size},(_,n)=>({...person,discord_user_id:String(200000000000000000n+BigInt(n))}));
+ const allIds=[];
+ for(let offset=0;offset<size;offset+=100){
+  await run({...open,data:{custom_id:'prime_evidence_h50_page:'+offset}});const payload=calls.find(x=>x.reply?.components)?.reply;
+  const menus=payload.components.filter(row=>row.components[0].type===3).map(row=>row.components[0]),buttons=payload.components.at(-1).components;
+  assert(payload.components.length<=5);assert.equal(menus.length,Math.ceil(Math.min(100,size-offset)/25));assert.equal(new Set(menus.map(x=>x.custom_id)).size,menus.length);
+  for(const menu of menus){assert(menu.options.length<=25);allIds.push(...menu.options.map(x=>x.value));}
+  assert.equal(buttons[0].disabled,offset===0);assert.equal(buttons[1].disabled,offset+100>=size);
+  const last=menus.at(-1),choice=last.options.at(-1),interaction={type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:last.custom_id,values:[choice.value]},message:{components:payload.components}};
+  const chosen=await run(interaction);assert.equal(chosen.type,9);assert.equal(chosen.data.components[3].component.options[0].value,choice.value);assert.equal(calls.length,0);
+ }
+ assert.equal(allIds.length,size);assert.equal(new Set(allIds).size,size);assert.deepEqual(allIds,roster.map(x=>x.discord_user_id));
+}
 for(const id of ['prime_evidence_h50_page:-1','prime_evidence_h50_page:26','prime_evidence_h50_page:injection']){assert.equal((await run({...open,data:{custom_id:id}})).type,4);assert.equal(calls.length,0);}
 for(const roles of [[],[role,'1564310246128619560'],[role,'1539970134482092034']]){h50Roles=roles;await run(submission());assert(!calls.some(x=>x.init?.method==='POST'));}h50Roles=[role];
 let modalCalls=0;

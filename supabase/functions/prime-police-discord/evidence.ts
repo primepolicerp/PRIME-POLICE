@@ -56,7 +56,7 @@ async function saveEvidence(i:any,userId:string,c:Context){
  await c.reply(i,{content:'✅ Evidencia registrada en Discord y en la web. H-50: '+clean(h50)+'. Mensaje: '+String(message.id)});
 }
 export async function handleEvidenceInteraction(i:any,userId:string,c:Context):Promise<Response|null>{
- const custom=String(i.data?.custom_id||'');if(!['prime_evidence_open','prime_evidence_h50_find','prime_evidence_h50_search','prime_evidence_h50_select','prime_evidence_submit'].includes(custom)&&!custom.startsWith('prime_evidence_h50_page:'))return null;
+ const custom=String(i.data?.custom_id||'');if(!['prime_evidence_open','prime_evidence_h50_find','prime_evidence_h50_search','prime_evidence_h50_select','prime_evidence_submit'].includes(custom)&&!custom.startsWith('prime_evidence_h50_page:')&&!custom.startsWith('prime_evidence_h50_select:'))return null;
  if(i.guild_id!==GUILD||!/^\d{17,20}$/.test(userId)||!permitted(i.member?.roles||[]))return c.ephemeral('Debes registrar evidencias desde el servidor con el rol Policía activo.');
  if(i.type===3&&['prime_evidence_open','prime_evidence_h50_find'].includes(custom))return c.openModal?c.openModal(i,evidenceSearchModal()):c.response(9,evidenceSearchModal());
  if(i.type===3&&custom.startsWith('prime_evidence_h50_page:')){
@@ -66,16 +66,16 @@ export async function handleEvidenceInteraction(i:any,userId:string,c:Context):P
   c.waitUntil((async()=>{try{
    const authors=await c.db('police_personnel?select=discord_user_id&discord_user_id=eq.'+userId+'&status=eq.active&limit=1');
    if(!authors?.length){await c.reply(i,{content:'Necesitas una ficha policial activa para registrar evidencias.'});return;}
-   const matches=await c.db('police_personnel?select=discord_user_id,full_name,plate,discord_username&status=eq.active&order=full_name.asc,discord_user_id.asc&offset='+offset+'&limit=26');
-   const rows=matches.slice(0,25),buttons=[{type:2,style:2,label:'Anterior',custom_id:'prime_evidence_h50_page:'+Math.max(0,offset-25),disabled:offset===0},{type:2,style:2,label:'Siguiente',custom_id:'prime_evidence_h50_page:'+(offset+25),disabled:matches.length<=25},{type:2,style:1,label:'Buscar nombre o placa',custom_id:'prime_evidence_h50_find'}];
+   const matches=await c.db('police_personnel?select=discord_user_id,full_name,plate,discord_username&status=eq.active&order=full_name.asc,discord_user_id.asc&offset='+offset+'&limit=101');
+   const rows=matches.slice(0,100),buttons=[{type:2,style:2,label:'Anterior',custom_id:'prime_evidence_h50_page:'+Math.max(0,offset-100),disabled:offset===0},{type:2,style:2,label:'Siguiente',custom_id:'prime_evidence_h50_page:'+(offset+100),disabled:matches.length<=100},{type:2,style:1,label:'Buscar nombre o placa',custom_id:'prime_evidence_h50_find'}];
    const components:any[]=[];
-   if(rows.length)components.push({type:1,components:[{type:3,custom_id:'prime_evidence_h50_select',placeholder:'Selecciona al responsable H-50',min_values:1,max_values:1,options:rows.map((person:any)=>({label:label(person).slice(0,100),value:person.discord_user_id,description:('@'+(person.discord_username||'Sin usuario Discord')).slice(0,100)}))}]});
+   for(let start=0;start<rows.length;start+=25){const group=rows.slice(start,start+25);components.push({type:1,components:[{type:3,custom_id:'prime_evidence_h50_select:'+(offset+start),placeholder:'Agentes '+(offset+start+1)+' a '+(offset+start+group.length)+' · Nombre y placa',min_values:1,max_values:1,options:group.map((person:any)=>({label:label(person).slice(0,100),value:person.discord_user_id,description:('@'+(person.discord_username||'Sin usuario Discord')).slice(0,100)}))}]});}
    components.push({type:1,components:buttons});
-   await c.reply(i,{content:rows.length?'**Responsable H-50 · Plantilla policial activa**\nNombre y placa · Página '+(offset/25+1)+'. Usa Siguiente para ver el resto o busca por nombre, usuario o placa.':'No hay agentes en esta página. Vuelve a Anterior o busca por nombre o placa.',components,allowed_mentions:{parse:[]}});
+   await c.reply(i,{content:rows.length?'**Responsable H-50 · Toda la plantilla policial activa**\n'+rows.length+' agentes en '+Math.ceil(rows.length/25)+' listas. Abre cualquiera de las listas de abajo para elegir por nombre y placa.'+(matches.length>100?' Hay más agentes en Siguiente.':''):'No hay agentes en esta página. Vuelve a Anterior o busca por nombre o placa.',components,allowed_mentions:{parse:[]}});
   }catch(error){console.error('Evidence roster list failed:',String(error));await c.reply(i,{content:'No se pudo cargar la plantilla. Vuelve a Registrar evidencia.'});}})());
   return c.response(6,{});
  }
- if(i.type===3&&custom==='prime_evidence_h50_select'){
+ if(i.type===3&&(custom==='prime_evidence_h50_select'||/^prime_evidence_h50_select:\d{1,6}$/.test(custom))){
   const values=i.data?.values,id=Array.isArray(values)&&values.length===1?String(values[0]):'';
   const option=(i.message?.components||[]).flatMap((row:any)=>row.components||[]).filter((node:any)=>node.custom_id===custom).flatMap((node:any)=>node.options||[]).find((item:any)=>item.value===id);
   if(!/^\d{17,20}$/.test(id)||!option)return c.ephemeral('Selecciona un H-50 válido o vuelve a buscar.');
