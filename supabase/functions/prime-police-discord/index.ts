@@ -130,7 +130,7 @@ function transferModal(){return transferIdentityModal(modalInput,response);}
 function values(interaction:any){const out:any={};const visit=(node:any)=>{if(!node||typeof node!=="object")return;if(typeof node.custom_id==="string"&&node.value!==undefined)out[node.custom_id]=String(node.value||"").trim();if(Array.isArray(node.components))for(const child of node.components)visit(child);if(node.component)visit(node.component)};for(const component of interaction.data?.components||[])visit(component);return out}
 
 // Evidence pilot: photo remains on Discord; only metadata is stored in Supabase.
-const evidencePanel={embeds:[{title:"🔬 PRIME POLICE · Registro de evidencias (PRUEBA)",description:"Pulsa **Registrar evidencia**, completa los datos y adjunta una captura de la incautación. El bot publicará el registro en este canal y guardará los datos en el panel web. La fotografía no se copia a la web.",color:3447003,footer:{text:"RH Police · Registro de evidencias · Prueba"}}],components:[{type:1,components:[{type:2,style:1,label:"Registrar evidencia",custom_id:"prime_evidence_open"}]}]};
+const evidencePanel={embeds:[{title:"🔬 PRIME POLICE · Registro de evidencias (PRUEBA)",description:"Pega y envía tu captura en este canal mencionando a **RH Police**, y pulsa **Registrar evidencia**. También puedes adjuntar la foto desde el formulario. El bot publicará el registro en este canal y guardará los datos en el panel web. La fotografía no se copia a la web.",color:3447003,footer:{text:"RH Police · Registro de evidencias · Prueba"}}],components:[{type:1,components:[{type:2,style:1,label:"Registrar evidencia",custom_id:"prime_evidence_open"}]}]};
 async function handle(i:any){
  if(i.type===1)return response(1,{});
  const user=i.member?.user||i.user;const userId=String(user?.id||"");const username=String(user?.global_name||user?.username||"Usuario Discord");
@@ -216,7 +216,7 @@ async function handle(i:any){
 }
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:CORS});
- if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,evidence_form:"h50-roster-required-photo-v1",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
+ if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,evidence_form:"h50-userselect-pasted-photo-v2",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
  if(req.method!=="POST")return json({error:"Method not allowed"},405);
  const body=await req.text();if(!await validSignature(req,body))return json({error:"Invalid Discord signature or DISCORD_PUBLIC_KEY not configured"},401);
  let i:any;try{i=JSON.parse(body)}catch{return json({error:"Invalid JSON"},400)}

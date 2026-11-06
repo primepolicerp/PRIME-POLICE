@@ -1,4 +1,5 @@
 const GUILD='1539970134469378068',POLICE='1539970134482092038',EXPELLED='1539970134482092034',VETO='1564310246128619560';
+const BOT_ID='1540484542354428025';
 export const EVIDENCE_TEST_CHANNEL_ID='1539970137455853693';
 type Context={db:(path:string,init?:RequestInit)=>Promise<any>,discord:(path:string,init?:RequestInit)=>Promise<any>,response:(type:number,data:any)=>Response,ephemeral:(text:string)=>Response,reply:(i:any,payload:any)=>Promise<void>,waitUntil:(task:Promise<any>)=>void};
 const text=(value:any)=>String(value??'').replace(/[\u200B-\u200D\u2060\uFEFF]/g,'').trim();
@@ -8,20 +9,32 @@ function selectedId(i:any){const values=component(i,'evidence_h50_user')?.values
 function permitted(roles:string[]){return roles.includes(POLICE)&&!roles.includes(EXPELLED)&&!roles.includes(VETO);}
 function label(person:any){return text(person.full_name)+' · #'+(text(person.plate)||'Sin placa');}
 export function evidenceSearchModal(){return {custom_id:'prime_evidence_h50_search',title:'Buscar responsable H-50',components:[{type:18,label:'Nombre, usuario de Discord o placa',description:'Busca a un policía de la plantilla activa.',component:input('evidence_h50_query','Ej.: Pedro, PEDRITO o 0002',100)}]};}
-export function evidenceForm(person:any){return {custom_id:'prime_evidence_submit',title:'Registrar evidencia · PRIME POLICE',components:[
+export function evidenceForm(person?:any){return {custom_id:'prime_evidence_submit',title:'Registrar evidencia · PRIME POLICE',components:[
+ {type:10,content:'📷 Para pegar una captura: envíala en este canal mencionando a **RH Police** antes de enviar este formulario. También puedes adjuntarla abajo. La fotografía es obligatoria.'},
  {type:18,label:'Locker de evidencias',component:input('evidence_locker','Ej.: 29 o EVIDENCIAS',100)},
  {type:18,label:'Objetos incautados',component:input('evidence_objects','Cantidad, nombre y calibre de los objetos',1500,2)},
- {type:18,label:'Responsable H-50 · plantilla',description:'Responsable seleccionado. Para cambiarlo, cierra y vuelve a buscar.',component:{type:3,custom_id:'evidence_h50_user',min_values:1,max_values:1,required:true,options:[{label:text(person.selectionLabel||label(person)).slice(0,100),value:person.discord_user_id,default:true}]}},
- {type:18,label:'Fotografía obligatoria',description:'Adjunta una imagen PNG, JPG, WEBP o GIF de las evidencias.',component:{type:19,custom_id:'evidence_photo',min_values:1,max_values:1,required:true}}
+ {type:18,label:'Responsable H-50',description:'Busca y selecciona su usuario de Discord. Debe tener ficha activa.',component:{type:5,custom_id:'evidence_h50_user',placeholder:'Escribe el nombre del H-50',min_values:1,max_values:1,required:true,...(/^\d{17,20}$/.test(person?.discord_user_id||'')?{default_values:[{id:person.discord_user_id,type:'user'}]}:{})}},
+ {type:18,label:'Fotografía · adjuntar o usar captura del canal',description:'Si ya pegaste y enviaste la captura mencionando a RH Police, no la adjuntes otra vez.',component:{type:19,custom_id:'evidence_photo',file_types:['image'],min_values:0,max_values:1,required:false}}
  ]};}
+function photoError(photo:any){
+ if(!photo||!['image/png','image/jpeg','image/webp','image/gif'].includes(String(photo.content_type||'').toLowerCase())||!Number.isSafeInteger(photo.size)||photo.size<=0)return 'Debes adjuntar una fotografía válida y no vacía: PNG, JPG, WEBP o GIF.';
+ try{const url=new URL(photo.url);if(url.protocol!=='https:'||!['cdn.discordapp.com','media.discordapp.net'].includes(url.hostname)||!/^\/(?:ephemeral-)?attachments\//.test(url.pathname)||url.username||url.password)throw Error();}catch{return 'La fotografía debe ser un archivo de Discord.';}
+ return null;
+}
+export function recentPastedPhoto(messages:any[],userId:string,now=Date.now()){
+ const source=messages.find(message=>String(message.author?.id)===userId&&!message.author?.bot&&String(message.channel_id)===EVIDENCE_TEST_CHANNEL_ID&&message.mentions?.some((user:any)=>String(user.id)===BOT_ID)&&Array.isArray(message.attachments)&&message.attachments.length&&Number.isFinite(Date.parse(message.timestamp))&&now-Date.parse(message.timestamp)>=0&&now-Date.parse(message.timestamp)<=600000);
+ if(!source||!/^\d{17,20}$/.test(String(source.id)))return {error:'Falta la foto: pega la captura en este canal, menciona a RH Police y envíala. Después vuelve a Registrar evidencia. También puedes adjuntarla en el formulario.'};
+ if(source.attachments.length!==1)return {error:'Envía una sola fotografía por mensaje para que el bot identifique la evidencia correcta.'};
+ const error=photoError(source.attachments[0]);return error?{error}:{photo:source.attachments[0],sourceId:String(source.id)};
+}
 export function evidenceSubmission(i:any){
  const locker=text(component(i,'evidence_locker')?.value),objects=text(component(i,'evidence_objects')?.value),h50Id=selectedId(i),files=component(i,'evidence_photo')?.values;
  if(!locker||!objects)return {error:'Completa el locker y los objetos incautados. No se aceptan campos vacíos ni solo espacios.'};
  if(locker.length>100||objects.length>1500)return {error:'El locker admite 100 caracteres y los objetos 1500.'};
  if(!h50Id)return {error:'Selecciona un responsable H-50 de la plantilla. Si abriste el formulario anterior, ciérralo y vuelve a Registrar evidencia.'};
- const photo=Array.isArray(files)&&files.length===1?i.data?.resolved?.attachments?.[files[0]]:null;
- if(!photo||String(photo.id)!==String(files[0])||!['image/png','image/jpeg','image/webp','image/gif'].includes(String(photo.content_type||'').toLowerCase())||!Number.isSafeInteger(photo.size)||photo.size<=0)return {error:'Debes adjuntar una fotografía válida y no vacía: PNG, JPG, WEBP o GIF.'};
- try{const url=new URL(photo.url);if(url.protocol!=='https:'||!['cdn.discordapp.com','media.discordapp.net'].includes(url.hostname)||!/^\/(?:ephemeral-)?attachments\//.test(url.pathname)||url.username||url.password)throw Error();}catch{return {error:'La fotografía debe ser un archivo adjuntado en este formulario de Discord.'};}
+ if(files!==undefined&&(!Array.isArray(files)||files.length>1))return {error:'Adjunta una sola fotografía válida.'};
+ const photo=files?.length===1?i.data?.resolved?.attachments?.[files[0]]:null;
+ if(files?.length===1){if(!photo||String(photo.id)!==String(files[0]))return {error:'El archivo adjunto no es válido.'};const error=photoError(photo);if(error)return {error};}
  return {locker,objects,h50Id,photo};
 }
 async function saveEvidence(i:any,userId:string,c:Context){
@@ -31,16 +44,19 @@ async function saveEvidence(i:any,userId:string,c:Context){
  const [authors,responsibles]=await Promise.all([c.db(personPath(userId)),c.db(personPath(data.h50Id!))]);const author=authors?.[0],responsible=responsibles?.[0];
  if(!author){await c.reply(i,{content:'No tienes ficha policial activa. Contacta con UCOP.'});return;}
  if(!responsible||!text(responsible.full_name)){await c.reply(i,{content:'El H-50 seleccionado ya no está en la plantilla activa. Vuelve a buscar al responsable antes de registrar la evidencia.'});return;}
+ let photo=data.photo,sourceId:string|null=null;
+ if(!photo){const source=recentPastedPhoto(await c.discord('/channels/'+EVIDENCE_TEST_CHANNEL_ID+'/messages?limit=100'),userId);if(source.error){await c.reply(i,{content:source.error});return;}photo=source.photo;sourceId=source.sourceId!;
+  const used=await c.db('police_evidence_records?select=id&photo_message_id=eq.'+sourceId+'&limit=1');if(used?.length){await c.reply(i,{content:'Esa captura ya tiene una evidencia registrada. Pega una captura nueva o adjunta la fotografía correcta.'});return;}}
  const h50=label(responsible),clean=(value:any)=>String(value??'').replace(/@/g,'＠').replace(/`/g,"'").slice(0,1500);
- const message=await c.discord('/channels/'+EVIDENCE_TEST_CHANNEL_ID+'/messages',{method:'POST',body:JSON.stringify({allowed_mentions:{parse:[]},embeds:[{title:'🔬 Evidencia policial · PRIME POLICE',color:3447003,fields:[{name:'Policía',value:clean(label(author)),inline:false},{name:'Locker',value:clean(data.locker),inline:true},{name:'H-50',value:clean(h50),inline:true},{name:'Objetos incautados',value:clean(data.objects),inline:false}],image:{url:data.photo.url},footer:{text:'Registro automático RH Police · Prueba'}}]})});
- try{await c.db('police_evidence_records',{method:'POST',body:JSON.stringify({discord_user_id:userId,officer_name:author.full_name,plate:author.plate||'',locker:data.locker,objects_description:data.objects,h50,discord_message_id:String(message.id),channel_id:EVIDENCE_TEST_CHANNEL_ID})});}
+ const message=await c.discord('/channels/'+EVIDENCE_TEST_CHANNEL_ID+'/messages',{method:'POST',body:JSON.stringify({allowed_mentions:{parse:[]},embeds:[{title:'🔬 Evidencia policial · PRIME POLICE',color:3447003,fields:[{name:'Policía',value:clean(label(author)),inline:false},{name:'Locker',value:clean(data.locker),inline:true},{name:'H-50',value:clean(h50),inline:true},{name:'Objetos incautados',value:clean(data.objects),inline:false}],image:{url:photo.url},footer:{text:'Registro automático RH Police · Prueba'}}]})});
+ try{await c.db('police_evidence_records',{method:'POST',body:JSON.stringify({discord_user_id:userId,officer_name:author.full_name,plate:author.plate||'',locker:data.locker,objects_description:data.objects,h50,photo_message_id:sourceId,discord_message_id:String(message.id),channel_id:EVIDENCE_TEST_CHANNEL_ID})});}
  catch{await c.reply(i,{content:'La evidencia se publicó en Discord, pero falló el registro web. Avisa a UCOP con este mensaje: '+String(message.id)});return;}
  await c.reply(i,{content:'✅ Evidencia registrada en Discord y en la web. H-50: '+clean(h50)+'. Mensaje: '+String(message.id)});
 }
 export async function handleEvidenceInteraction(i:any,userId:string,c:Context):Promise<Response|null>{
  const custom=String(i.data?.custom_id||'');if(!['prime_evidence_open','prime_evidence_h50_search','prime_evidence_h50_select','prime_evidence_submit'].includes(custom))return null;
  if(i.guild_id!==GUILD||!/^\d{17,20}$/.test(userId)||!permitted(i.member?.roles||[]))return c.ephemeral('Debes registrar evidencias desde el servidor con el rol Policía activo.');
- if(i.type===3&&custom==='prime_evidence_open')return c.response(9,evidenceSearchModal());
+ if(i.type===3&&custom==='prime_evidence_open')return c.response(9,evidenceForm());
  if(i.type===3&&custom==='prime_evidence_h50_select'){
   const values=i.data?.values,id=Array.isArray(values)&&values.length===1?String(values[0]):'';
   const option=(i.message?.components||[]).flatMap((row:any)=>row.components||[]).filter((node:any)=>node.custom_id===custom).flatMap((node:any)=>node.options||[]).find((item:any)=>item.value===id);
