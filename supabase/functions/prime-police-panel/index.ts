@@ -10,6 +10,7 @@ import { preparePlate } from "./plates.ts";
 import { queuePrivateNotice } from "./private-notices.ts";
 import { workspaceRoute } from "./workspace.ts";
 import { personnelAccess } from "./personnel-access.ts";
+import { evidenceRecords } from "./evidence-records.ts";
 import { personnelCareer } from "./personnel-career.ts";
 import { changePersonnelStatus } from "./personnel-status.ts";
 import { managePersonnelProfile } from "./personnel-profile.ts";
@@ -607,14 +608,12 @@ async function routePanel(req: Request): Promise<Response> {
    const member=await accessMember(actor);return managePersonnelProfile(req,action,actor,{db,discord,json,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});
   }
   if(['absence-summary','absence-review','absence-roster','absence-register'].includes(action||'')){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);return manageAbsences(req,action,actor,{db,json,notify:sendPrivateDiscordMessage,audit:postAuditLog});}
-  if (action === "evidence-records" && req.method === "GET") {
+  if (action === "evidence-records") {
    const actor=await authorizedUser(req);
    if(!actor)return json({error:"Sesión caducada o sin permisos de gestión."},403);
    const member=await accessMember(actor);
    if(applicationPermissions(member.roles||[]).applicationsOnly)return json({error:"Sin permiso para consultar evidencias."},403);
-   const u=new URL(req.url),offset=Math.max(0,Math.min(100000,Number(u.searchParams.get("offset")||0)||0));
-   const rows=await db("police_evidence_records?select=id,discord_user_id,officer_name,plate,locker,objects_description,h50,discord_message_id,channel_id,status,created_at&order=created_at.desc&limit=100&offset="+offset);
-   return json({records:rows||[],offset,has_more:(rows||[]).length===100});
+   return evidenceRecords(req,body=>db('rpc/police_evidence_register',{method:'POST',body:JSON.stringify(body)}),json);
   }
   if (action === "records") { const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return listPagedRecords(req,json,{applicationAdmissions:!applicationPermissions(member.roles||[]).applicationsOnly}); }
   if (action === "data" && req.method === "GET") return await listApplications(req);

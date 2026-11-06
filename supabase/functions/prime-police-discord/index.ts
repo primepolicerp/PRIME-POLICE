@@ -158,7 +158,7 @@ async function saveEvidence(i:any,userId:string){
  ],image:{url:String(photo.url)},footer:{text:"Registro automático RH Police · Prueba"}}]};
  const msg=await discord("/channels/"+EVIDENCE_TEST_CHANNEL_ID+"/messages",{method:"POST",body:JSON.stringify(payload)}) as any;
  try{
-  await db("police_evidence_records",{method:"POST",body:JSON.stringify({discord_user_id:userId,officer_name:p.full_name,plate:p.plate||"",locker,objects_description:objects,h50,photo_url:String(photo.url),discord_message_id:String(msg.id),channel_id:EVIDENCE_TEST_CHANNEL_ID})});
+  await db("police_evidence_records",{method:"POST",body:JSON.stringify({discord_user_id:userId,officer_name:p.full_name,plate:p.plate||"",locker,objects_description:objects,h50,discord_message_id:String(msg.id),channel_id:EVIDENCE_TEST_CHANNEL_ID})});
  }catch(e){console.error("Evidence metadata failed:",String(e));await editInteractionReply(i,"La evidencia se publicó en Discord, pero falló el registro web. Avisa a UCOP con este mensaje: "+String(msg.id));return;}
  await editInteractionReply(i,"✅ Evidencia registrada correctamente en Discord y en el panel web. Mensaje: "+String(msg.id));
 }

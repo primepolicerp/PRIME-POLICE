@@ -31,6 +31,7 @@ jobs:
           node --check intake-editor.js
           node --check preselection-ingress.js
           node --check records-ui.js
+          node --check evidence-ui.js
           node --check app-shell.js
           node --check absence-ui.js
           node --check dashboard.js
@@ -74,6 +75,7 @@ jobs:
           node --experimental-strip-types scripts/check-shift-reminders.mjs
           node --experimental-strip-types scripts/check-transfer-questionnaire.mjs
           node --experimental-strip-types scripts/check-external-ai-review.mjs
+          node --experimental-strip-types scripts/check-evidence-records.mjs
           npm run build
           node scripts/check-public-build.mjs
       - name: Upload site

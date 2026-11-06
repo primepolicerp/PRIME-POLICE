@@ -12,4 +12,7 @@ for(const filename of assets){
  if(filename.endsWith('.js'))assert(html.includes("script-src '"+expected+"'; script-src-attr 'none';"));
 }
 assert(!html.includes("script-src 'self'"));assert(!html.includes("'unsafe-eval'"));
-console.log('Public artifact allowlist, single compact script, no backend credentials/names or source maps: PASS');
+assert(html.includes('id="evidenceView"')&&html.includes('data-view="evidence"'));
+const evidenceScript=await fs.readFile('dist/assets/'+assets.find(name=>name.endsWith('.js')),'utf8');
+assert(evidenceScript.includes('evidence-records')&&evidenceScript.includes('evidenceOfficerFilter'),'Evidence workspace must be included in the production bundle');
+console.log('Public artifact allowlist, single compact script, evidence workspace included, no backend credentials/names or source maps: PASS');
