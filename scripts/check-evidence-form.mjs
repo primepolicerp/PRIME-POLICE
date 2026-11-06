@@ -4,10 +4,10 @@ const actor='111111111111111111',responsible='222222222222222222',guild='1539970
 const person={discord_user_id:responsible,full_name:'Pedro Martinez',plate:'0002',discord_username:'PEDRITO'},author={discord_user_id:actor,full_name:'Agente Ejemplo',plate:'0123'};
 const wrap=component=>({type:18,component});
 const submission=()=>({type:5,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_submit',components:[wrap({custom_id:'evidence_locker',value:'29'}),wrap({custom_id:'evidence_objects',value:'Dos objetos'}),wrap({custom_id:'evidence_h50_user',values:[responsible]}),wrap({custom_id:'evidence_photo',values:[photoId]})],resolved:{attachments:{[photoId]:{id:photoId,content_type:'image/png',size:100,url:'https://cdn.discordapp.com/attachments/123/456/photo.png'}}}}});
-const form=evidenceForm(person);assert.equal(form.components.length,5);for(const row of form.components.filter(row=>[4,5].includes(row.component?.type)))assert(row.component.required);assert.equal(form.components[3].component.type,5);assert.equal(form.components[4].component.required,false);assert.equal(form.components[4].component.min_values,0);
+const form=evidenceForm(person);assert.equal(form.components.length,5);for(const row of form.components.filter(row=>[3,4].includes(row.component?.type)))assert(row.component.required);assert.equal(form.components[3].component.type,3);assert.equal(form.components[4].component.required,false);assert.equal(form.components[4].component.min_values,0);
 assert.equal(evidenceSearchModal().components[0].component.required,true);assert.equal(evidenceSubmission(submission()).h50Id,responsible);
-const calls=[],tasks=[];let currentRoles=[role],h50Active=true,authorActive=true,matches=[person],photoMessages=[],photoUsed=false;
-const c={response:(type,data)=>Response.json({type,data}),ephemeral:content=>Response.json({type:4,data:{flags:64,content}}),waitUntil:p=>tasks.push(p),reply:async(i,payload)=>calls.push({reply:payload}),discord:async(path,init)=>{calls.push({discord:path,init});return init?.method==='POST'?{id:'444444444444444444'}:path.includes('/messages?')?photoMessages:{roles:currentRoles};},db:async(path,init)=>{calls.push({db:path,init});if(path.startsWith('rpc/'))return matches;if(path==='police_evidence_records')return[];if(path.startsWith('police_evidence_records?'))return photoUsed?[{id:'used'}]:[];return path.includes(actor)?authorActive?[author]:[]:h50Active?[person]:[];}};
+const calls=[],tasks=[];let currentRoles=[role],h50Active=true,authorActive=true,matches=[person],photoMessages=[],photoUsed=false,roster=[person],h50Roles=[role];
+const c={response:(type,data)=>Response.json({type,data}),ephemeral:content=>Response.json({type:4,data:{flags:64,content}}),waitUntil:p=>tasks.push(p),reply:async(i,payload)=>calls.push({reply:payload}),discord:async(path,init)=>{calls.push({discord:path,init});return init?.method==='POST'?{id:'444444444444444444'}:path.includes('/messages?')?photoMessages:{roles:path.endsWith(responsible)?h50Roles:currentRoles};},db:async(path,init)=>{calls.push({db:path,init});if(path.startsWith('rpc/'))return matches;if(path.includes('&order=full_name.asc')){const offset=Number(path.match(/&offset=(\d+)/)[1]);return roster.slice(offset,offset+26);}if(path==='police_evidence_records')return[];if(path.startsWith('police_evidence_records?'))return photoUsed?[{id:'used'}]:[];return path.includes(actor)?authorActive?[author]:[]:h50Active?[person]:[];}};
 async function run(i){calls.length=0;const response=await handleEvidenceInteraction(i,actor,c);await Promise.all(tasks.splice(0));return response?await response.json():null;}
 for(const [name,mutate]of [
  ['blank locker',i=>i.data.components[0].component.value='  \n\u200B '],['blank objects',i=>i.data.components[1].component.value='\t\u2060'],
@@ -23,7 +23,7 @@ authorActive=false;await run(submission());assert(!calls.some(x=>x.init?.method=
 await run(submission());const saved=JSON.parse(calls.find(x=>x.db==='police_evidence_records').init.body);assert.equal(saved.h50,'Pedro Martinez · #0002');assert(!('photo_url'in saved));assert.equal(saved.discord_user_id,actor);assert.equal(saved.officer_name,author.full_name);assert(calls.find(x=>x.discord?.includes('/messages')).init.body.includes('cdn.discordapp.com'));
 const search={type:5,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_h50_search',components:[wrap({custom_id:'evidence_h50_query',value:'PEDRITO'})]}};
 assert.equal((await run(search)).type,5);let result=calls.find(x=>x.reply?.components)?.reply;const select=result.components[0].components[0];assert.equal(select.options[0].value,responsible);assert.equal(JSON.parse(calls.find(x=>x.db?.startsWith('rpc/')).init.body).p_search,'PEDRITO');
-const selected={type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_h50_select',values:[responsible]},message:{components:result.components}};let opened=await run(selected);assert.equal(opened.type,9);assert.equal(opened.data.components[3].component.type,5);assert.equal(calls.length,0,'Opening modal must not wait for network');
+const selected={type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_h50_select',values:[responsible]},message:{components:result.components}};let opened=await run(selected);assert.equal(opened.type,9);assert.equal(opened.data.components[3].component.type,3);assert.equal(calls.length,0,'Opening modal must not wait for network');
 matches=Array.from({length:26},()=>person);await run(search);assert(calls.some(x=>x.reply?.content.includes('demasiados')));assert(!calls.some(x=>x.reply?.components?.[0]?.components?.[0]?.type===3));
 matches=[];await run(search);assert(calls.some(x=>x.reply?.content.includes('No se encontró')));
 assert.equal(await run({type:3,data:{custom_id:'another_feature'}}),null);
@@ -35,13 +35,28 @@ const noUpload=submission();noUpload.data.components[3].component.values=[];
 photoMessages=[];await run(noUpload);assert(!calls.some(x=>x.init?.method==='POST'));assert(calls.some(x=>x.reply?.content.includes('Falta la foto')));
 photoMessages=[pasted];await run(noUpload);const fromClipboard=JSON.parse(calls.find(x=>x.db==='police_evidence_records').init.body);assert.equal(fromClipboard.photo_message_id,pasted.id);assert(!('photo_url'in fromClipboard));assert.equal(fromClipboard.h50,'Pedro Martinez · #0002');
 photoUsed=true;await run(noUpload);assert(!calls.some(x=>x.init?.method==='POST'));assert(calls.some(x=>x.reply?.content.includes('ya tiene una evidencia')));photoUsed=false;
-const direct=await run({type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_open'}});assert.equal(direct.type,9);assert.equal(direct.data.custom_id,'prime_evidence_submit');assert.equal(direct.data.components[3].component.type,5);
-// Production opens through Discord's validating callback, rather than the inline mock.
+const open={type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_open'}};
+const direct=await run(open);assert.equal(direct.type,5);assert(calls.some(x=>x.db?.includes('status=eq.active&order=')));
+assert.equal(calls.find(x=>x.reply?.components)?.reply.components[0].components[0].type,3);
+// Every page has at most 25 choices and the next page is available, without truncating the roster.
+roster=Array.from({length:26},(_,n)=>({...person,discord_user_id:String(200000000000000000n+BigInt(n))}));
+await run(open);let page=calls.find(x=>x.reply?.components)?.reply;
+assert.equal(page.components[0].components[0].options.length,25);assert.equal(page.components[1].components[1].disabled,false);
+assert.equal(page.components[1].components[0].disabled,true);
+await run({...open,data:{custom_id:'prime_evidence_h50_page:25'}});
+assert(calls.some(x=>x.db?.includes('&offset=25&limit=26')));
+page=calls.find(x=>x.reply?.components)?.reply;assert.equal(page.components[1].components[0].disabled,false);assert.equal(page.components[1].components[1].disabled,true);
+roster=Array.from({length:73},(_,n)=>({...person,discord_user_id:String(200000000000000000n+BigInt(n))}));
+const allIds=[];
+for(const offset of [0,25,50]){await run({...open,data:{custom_id:'prime_evidence_h50_page:'+offset}});const payload=calls.find(x=>x.reply?.components)?.reply;allIds.push(...payload.components[0].components[0].options.map(x=>x.value));assert.equal(payload.components[1].components[1].disabled,offset===50);}
+assert.equal(allIds.length,73);assert.equal(new Set(allIds).size,73);assert.deepEqual(allIds,roster.map(x=>x.discord_user_id));
+for(const id of ['prime_evidence_h50_page:-1','prime_evidence_h50_page:26','prime_evidence_h50_page:injection']){assert.equal((await run({...open,data:{custom_id:id}})).type,4);assert.equal(calls.length,0);}
+for(const roles of [[],[role,'1564310246128619560'],[role,'1539970134482092034']]){h50Roles=roles;await run(submission());assert(!calls.some(x=>x.init?.method==='POST'));}h50Roles=[role];
 let modalCalls=0;
-const throughCallback=await handleEvidenceInteraction({type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_open'}},actor,{...c,openModal:async(i,data)=>{modalCalls++;assert.equal(data.components[3].component.type,5);return new Response(null,{status:202});}});
+const throughCallback=await handleEvidenceInteraction(selected,actor,{...c,openModal:async(i,data)=>{modalCalls++;assert.equal(data.components[3].component.type,3);assert.equal(data.components[3].component.options[0].value,responsible);return new Response(null,{status:202});}});
 assert.equal(throughCallback.status,202);assert.equal(modalCalls,1);
-for(const modal of [evidenceForm(),evidenceForm(person),evidenceSearchModal()]){
+for(const modal of [evidenceForm(person),evidenceSearchModal()]){
  assert(modal.title.length<=45);assert(modal.components.length<=5);
  for(const row of modal.components.filter(row=>row.type===18)){assert(row.label.length<=45);assert((row.description||'').length<=100);}
 }
-console.log('Evidence form: one-step user picker, fresh active roster validation, mandatory photo by upload or recent own Discord screenshot, strict nonblank fields, no image storage, duplicate screenshot rejected: PASS');
+console.log('Evidence form: paginated active-roster picker, fresh active roster validation, mandatory photo by upload or recent own Discord screenshot, strict nonblank fields, no image storage, duplicate screenshot rejected: PASS');
