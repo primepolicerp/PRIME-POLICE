@@ -127,6 +127,42 @@ function modal(){return identityModal(modalInput,response);}
 function transferModal(){return transferIdentityModal(modalInput,response);}
 
 function values(interaction:any){const out:any={};const visit=(node:any)=>{if(!node||typeof node!=="object")return;if(typeof node.custom_id==="string"&&node.value!==undefined)out[node.custom_id]=String(node.value||"").trim();if(Array.isArray(node.components))for(const child of node.components)visit(child);if(node.component)visit(node.component)};for(const component of interaction.data?.components||[])visit(component);return out}
+
+// Evidence pilot: photo remains on Discord; only metadata is stored in Supabase.
+const EVIDENCE_TEST_CHANNEL_ID="1539970137455853693";
+const evidencePanel={embeds:[{title:"🔬 PRIME POLICE · Registro de evidencias (PRUEBA)",description:"Pulsa **Registrar evidencia**, completa los datos y adjunta una captura de la incautación. El bot publicará el registro en este canal y guardará los datos en el panel web. La fotografía no se copia a la web.",color:3447003,footer:{text:"RH Police · Registro de evidencias · Prueba"}}],components:[{type:1,components:[{type:2,style:1,label:"Registrar evidencia",custom_id:"prime_evidence_open"}]}]};
+function evidenceModal(){return response(9,{custom_id:"prime_evidence_submit",title:"Registrar evidencia · PRIME POLICE",components:[
+ {type:18,label:"Locker de evidencias",component:modalInput("evidence_locker","Ej.: EVIDENCIAS",true,1,100)},
+ {type:18,label:"Objetos incautados",component:modalInput("evidence_objects","Cantidad, nombre y calibre de los objetos",true,2,1500)},
+ {type:18,label:"Responsable H-50",component:modalInput("evidence_h50","Nombre y placa del H-50",true,1,100)},
+ {type:18,label:"Fotografía obligatoria",description:"Adjunta una captura del inventario con las evidencias.",component:{type:19,custom_id:"evidence_photo",min_values:1,max_values:1,required:true}}
+]})}
+async function saveEvidence(i:any,userId:string){
+ const a=values(i),attachments=i.data?.resolved?.attachments||{};
+ const selected=(i.data?.components||[]).flatMap((x:any)=>x.component?[x.component]:x.components||[]).find((x:any)=>x.custom_id==="evidence_photo");
+ const photoId=Array.isArray(selected?.values)?selected.values[0]:null;
+ const photo=photoId?attachments[photoId]:null;
+ if(!photo||!String(photo.content_type||"").startsWith("image/")||!String(photo.url||"").startsWith("https://")){await editInteractionReply(i,"Debes adjuntar una imagen válida de las evidencias.");return;}
+ const objects=String(a.evidence_objects||"").trim().slice(0,1500),locker=String(a.evidence_locker||"").trim().slice(0,100),h50=String(a.evidence_h50||"").trim().slice(0,100);
+ if(!objects||!locker||!h50){await editInteractionReply(i,"Faltan datos obligatorios.");return;}
+ const member=await discord("/guilds/"+GUILD_ID+"/members/"+encodeURIComponent(userId)) as any;
+ if(!(member.roles||[]).includes(POLICE_ROLE_ID)||(member.roles||[]).includes(EXPELLED_ROLE_ID)){await editInteractionReply(i,"Debes tener el rol Policía activo.");return;}
+ const p=(await db("police_personnel?select=full_name,plate&discord_user_id=eq."+encodeURIComponent(userId)+"&status=eq.active&limit=1"))?.[0];
+ if(!p){await editInteractionReply(i,"No tienes ficha policial activa. Contacta con UCOP.");return;}
+ const clean=(v:any)=>String(v||"").replace(/@/g,"＠").replace(/\u0060/g,"'").slice(0,1500);
+ const payload={allowed_mentions:{parse:[]},embeds:[{title:"🔬 Evidencia policial · PRIME POLICE",color:3447003,fields:[
+ {name:"Policía",value:clean(p.full_name)+" · #"+clean(p.plate||"Sin placa"),inline:false},
+ {name:"Locker",value:clean(locker),inline:true},
+ {name:"H-50",value:clean(h50),inline:true},
+ {name:"Objetos incautados",value:clean(objects),inline:false}
+ ],image:{url:String(photo.url)},footer:{text:"Registro automático RH Police · Prueba"}}]};
+ const msg=await discord("/channels/"+EVIDENCE_TEST_CHANNEL_ID+"/messages",{method:"POST",body:JSON.stringify(payload)}) as any;
+ try{
+  await db("police_evidence_records",{method:"POST",body:JSON.stringify({discord_user_id:userId,officer_name:p.full_name,plate:p.plate||"",locker,objects_description:objects,h50,photo_url:String(photo.url),discord_message_id:String(msg.id),channel_id:EVIDENCE_TEST_CHANNEL_ID})});
+ }catch(e){console.error("Evidence metadata failed:",String(e));await editInteractionReply(i,"La evidencia se publicó en Discord, pero falló el registro web. Avisa a UCOP con este mensaje: "+String(msg.id));return;}
+ await editInteractionReply(i,"✅ Evidencia registrada correctamente en Discord y en el panel web. Mensaje: "+String(msg.id));
+}
+
 async function handle(i:any){
  if(i.type===1)return response(1,{});
  const user=i.member?.user||i.user;const userId=String(user?.id||"");const username=String(user?.global_name||user?.username||"Usuario Discord");
@@ -136,6 +172,11 @@ async function handle(i:any){
  const absence=await handleAbsenceInteraction(i,{db,discord,response,ephemeral,values,reply:editInteractionReply});if(absence)return absence;
  if(i.type===2){
   const name=i.data?.name;
+  if(name==="publicar_evidencias"){
+   if(!canManage(i))return ephemeral("Solo UCOP o Directiva puede publicar el panel de pruebas.");
+   EdgeRuntime.waitUntil((async()=>{try{await publishOrUpdatePanel(EVIDENCE_TEST_CHANNEL_ID,"prime_evidence_open",evidencePanel);await editInteractionReply(i,"Panel de evidencias publicado en el canal de pruebas.");}catch(e){console.error("Evidence panel publish:",String(e));await editInteractionReply(i,"No se pudo publicar el panel. Comprueba los permisos del bot.");}})());
+   return ephemeral("⏳ Publicando panel de evidencias…");
+  }
   if(name==="publicar_postulaciones"){
    if(!canManage(i))return ephemeral("No tienes permiso para publicar las postulaciones.");
    EdgeRuntime.waitUntil((async()=>{
@@ -180,10 +221,15 @@ async function handle(i:any){
    }catch(error){console.error("Duty interaction:",String(error));await editInteractionReply(i,"No se pudo registrar el servicio. Contacta con RR. HH. y comprueba tu bitácora antes de repetir.");}})());
    return ephemeral("⏳ Registrando tu servicio… Esta confirmación es privada.");
   }
+  if(i.data?.custom_id==="prime_evidence_open")return evidenceModal();
   if(i.data?.custom_id==="prime_apply")return modal();
   if(i.data?.custom_id==="prime_transfer")return transferModal();
   if(i.data?.custom_id==="prime_rank_request")return rankRequestModal();
   return ephemeral("Interacción no reconocida.");
+ }
+ if(i.type===5&&i.data?.custom_id==="prime_evidence_submit"){
+  EdgeRuntime.waitUntil((async()=>{try{await saveEvidence(i,userId);}catch(e){console.error("Evidence submit:",String(e));try{await editInteractionReply(i,"No se pudo registrar la evidencia. Contacta con UCOP.");}catch{}}})());
+  return response(5,{flags:64});
  }
  if(i.type===5&&i.data?.custom_id==="prime_rank_request_submit"){
   const a=values(i);
