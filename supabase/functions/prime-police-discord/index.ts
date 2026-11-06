@@ -189,7 +189,8 @@ async function handle(i:any){
      await publishOrUpdatePanel(TRANSFER_CHANNEL_ID,"prime_transfer",transferPanel);
      await publishOrUpdatePanel("1539970136302288946","prime_duty_start",{embeds:[{title:"◷ PRIME POLICE · Control de servicio",description:"Registra tu entrada al comenzar el servicio y tu salida al finalizar.",color:6593023,footer:{text:"PRIME POLICE · Bitácoras"}}],components:[{type:1,components:[{type:2,style:3,label:"Entrar en servicio",custom_id:"prime_duty_start"},{type:2,style:4,label:"Salir de servicio",custom_id:"prime_duty_end"}]}]});
      await publishOrUpdatePanel(ABSENCE_CHANNEL_ID,"prime_absence",absencePanel);
-     await editInteractionReply(i,"Paneles de postulaciones, ingreso, traslados, servicio y ausencias actualizados.");
+     await publishOrUpdatePanel(EVIDENCE_TEST_CHANNEL_ID,"prime_evidence_open",evidencePanel);
+     await editInteractionReply(i,"Paneles de postulaciones, ingreso, traslados, servicio, ausencias y evidencias de prueba actualizados.");
     }catch(error){
      console.error("Could not publish application announcement:",String(error));
      try{await editInteractionReply(i,"No se pudo publicar el formulario. Comprueba los permisos del bot y vuelve a intentarlo.");}catch(replyError){console.error("Could not update deferred interaction:",String(replyError));}
