@@ -8,7 +8,7 @@ function component(i:any,id:string){let result:any;const visit=(node:any)=>{if(!
 function selectedId(i:any){const values=component(i,'evidence_h50_user')?.values;return Array.isArray(values)&&values.length===1&&/^\d{17,20}$/.test(values[0])?String(values[0]):'';}
 function permitted(roles:string[]){return roles.includes(POLICE)&&!roles.includes(EXPELLED)&&!roles.includes(VETO);}
 function label(person:any){return text(person.full_name)+' · #'+(text(person.plate)||'Sin placa');}
-export function evidenceSearchModal(){return {custom_id:'prime_evidence_h50_search',title:'Buscar responsable H-50',components:[{type:18,label:'Nombre, usuario de Discord o placa',description:'Busca a un policía de la plantilla activa.',component:input('evidence_h50_query','Ej.: Pedro, PEDRITO o 0002',100)}]};}
+export function evidenceSearchModal(){return {custom_id:'prime_evidence_h50_search',title:'¿Quién es el responsable H-50?',components:[{type:18,label:'@usuario o nombre del policía',description:'Escribe su usuario, con o sin @. También puedes buscar por nombre o placa.',component:input('evidence_h50_query','@pedrito',100)}]};}
 export function evidenceForm(person:any){return {custom_id:'prime_evidence_submit',title:'Registrar evidencia · PRIME POLICE',components:[
  {type:10,content:'📷 Para pegar una captura: envíala en este canal mencionando a **RH Police** antes de enviar este formulario. También puedes adjuntarla abajo. La fotografía es obligatoria.'},
  {type:18,label:'Locker de evidencias',component:input('evidence_locker','Ej.: 29 o EVIDENCIAS',100)},
@@ -58,9 +58,9 @@ async function saveEvidence(i:any,userId:string,c:Context){
 export async function handleEvidenceInteraction(i:any,userId:string,c:Context):Promise<Response|null>{
  const custom=String(i.data?.custom_id||'');if(!['prime_evidence_open','prime_evidence_h50_find','prime_evidence_h50_search','prime_evidence_h50_select','prime_evidence_submit'].includes(custom)&&!custom.startsWith('prime_evidence_h50_page:'))return null;
  if(i.guild_id!==GUILD||!/^\d{17,20}$/.test(userId)||!permitted(i.member?.roles||[]))return c.ephemeral('Debes registrar evidencias desde el servidor con el rol Policía activo.');
- if(i.type===3&&custom==='prime_evidence_h50_find')return c.openModal?c.openModal(i,evidenceSearchModal()):c.response(9,evidenceSearchModal());
- if(i.type===3&&(custom==='prime_evidence_open'||custom.startsWith('prime_evidence_h50_page:'))){
-  const raw=custom==='prime_evidence_open'?'0':custom.split(':')[1];
+ if(i.type===3&&['prime_evidence_open','prime_evidence_h50_find'].includes(custom))return c.openModal?c.openModal(i,evidenceSearchModal()):c.response(9,evidenceSearchModal());
+ if(i.type===3&&custom.startsWith('prime_evidence_h50_page:')){
+  const raw=custom.split(':')[1];
   if(!/^\d{1,6}$/.test(raw)||Number(raw)%25!==0)return c.ephemeral('Página no válida. Vuelve a Registrar evidencia.');
   const offset=Number(raw);
   c.waitUntil((async()=>{try{
@@ -73,7 +73,7 @@ export async function handleEvidenceInteraction(i:any,userId:string,c:Context):P
    components.push({type:1,components:buttons});
    await c.reply(i,{content:rows.length?'**Responsable H-50 · Plantilla policial activa**\nNombre y placa · Página '+(offset/25+1)+'. Usa Siguiente para ver el resto o busca por nombre, usuario o placa.':'No hay agentes en esta página. Vuelve a Anterior o busca por nombre o placa.',components,allowed_mentions:{parse:[]}});
   }catch(error){console.error('Evidence roster list failed:',String(error));await c.reply(i,{content:'No se pudo cargar la plantilla. Vuelve a Registrar evidencia.'});}})());
-  return custom==='prime_evidence_open'?c.response(5,{flags:64}):c.response(6,{});
+  return c.response(6,{});
  }
  if(i.type===3&&custom==='prime_evidence_h50_select'){
   const values=i.data?.values,id=Array.isArray(values)&&values.length===1?String(values[0]):'';
@@ -82,10 +82,10 @@ export async function handleEvidenceInteraction(i:any,userId:string,c:Context):P
   const form=evidenceForm({discord_user_id:id,selectionLabel:text(option.label)});return c.openModal?c.openModal(i,form):c.response(9,form);
  }
  if(i.type===5&&custom==='prime_evidence_h50_search'){
-  const query=text(component(i,'evidence_h50_query')?.value);if(!query||query.length>100)return c.ephemeral('Escribe un nombre, usuario o placa para buscar al H-50.');
+  const query=text(component(i,'evidence_h50_query')?.value).replace(/^@/, '').trim();if(!query||query.length>100)return c.ephemeral('Escribe el usuario después de @, su nombre o su placa para buscar al H-50.');
   c.waitUntil((async()=>{try{const member=await c.discord('/guilds/'+GUILD+'/members/'+userId);if(!permitted(member.roles||[])){await c.reply(i,{content:'Tu cuenta ya no tiene el rol Policía autorizado.'});return;}
    const authors=await c.db('police_personnel?select=discord_user_id&discord_user_id=eq.'+userId+'&status=eq.active&limit=1');if(!authors?.length){await c.reply(i,{content:'Necesitas una ficha policial activa para registrar evidencias.'});return;}
-   const matches=await c.db('rpc/police_evidence_h50_search',{method:'POST',body:JSON.stringify({p_search:query.replace(/^@/, '').trim()})}),again={type:1,components:[{type:2,style:2,label:'Cambiar búsqueda',custom_id:'prime_evidence_h50_find'},{type:2,style:2,label:'Ver toda la plantilla',custom_id:'prime_evidence_open'}]};
+   const matches=await c.db('rpc/police_evidence_h50_search',{method:'POST',body:JSON.stringify({p_search:query})}),again={type:1,components:[{type:2,style:2,label:'Cambiar búsqueda',custom_id:'prime_evidence_h50_find'},{type:2,style:2,label:'Ver toda la plantilla',custom_id:'prime_evidence_h50_page:0'}]};
    if(!matches.length||matches.length>25){await c.reply(i,{content:matches.length?'Hay demasiados resultados. Escribe un nombre o placa más preciso.':'No se encontró ningún policía activo con ese nombre, usuario o placa.',components:[again],allowed_mentions:{parse:[]}});return;}
    await c.reply(i,{content:'Selecciona al responsable H-50 de la plantilla. Después completa la evidencia y adjunta la fotografía.',components:[{type:1,components:[{type:3,custom_id:'prime_evidence_h50_select',placeholder:'Seleccionar responsable H-50',min_values:1,max_values:1,options:matches.map((person:any)=>({label:label(person).slice(0,100),value:person.discord_user_id,description:('@'+(person.discord_username||'Sin usuario Discord')).slice(0,100)}))}]},again],allowed_mentions:{parse:[]}});
   }catch(error){console.error('Evidence H50 search failed:',String(error));await c.reply(i,{content:'No se pudo consultar la plantilla. Vuelve a buscar en unos instantes.'});}})());return c.response(5,{flags:64});

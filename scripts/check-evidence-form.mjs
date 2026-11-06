@@ -23,6 +23,8 @@ authorActive=false;await run(submission());assert(!calls.some(x=>x.init?.method=
 await run(submission());const saved=JSON.parse(calls.find(x=>x.db==='police_evidence_records').init.body);assert.equal(saved.h50,'Pedro Martinez · #0002');assert(!('photo_url'in saved));assert.equal(saved.discord_user_id,actor);assert.equal(saved.officer_name,author.full_name);assert(calls.find(x=>x.discord?.includes('/messages')).init.body.includes('cdn.discordapp.com'));
 const search={type:5,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_h50_search',components:[wrap({custom_id:'evidence_h50_query',value:'PEDRITO'})]}};
 assert.equal((await run(search)).type,5);let result=calls.find(x=>x.reply?.components)?.reply;const select=result.components[0].components[0];assert.equal(select.options[0].value,responsible);assert.equal(JSON.parse(calls.find(x=>x.db?.startsWith('rpc/')).init.body).p_search,'PEDRITO');
+const withAt=structuredClone(search);withAt.data.components[0].component.value='@PEDRITO';await run(withAt);assert.equal(JSON.parse(calls.find(x=>x.db?.startsWith('rpc/')).init.body).p_search,'PEDRITO');
+const justAt=structuredClone(search);justAt.data.components[0].component.value='@';assert.equal((await run(justAt)).type,4);assert.equal(calls.length,0);
 const selected={type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_h50_select',values:[responsible]},message:{components:result.components}};let opened=await run(selected);assert.equal(opened.type,9);assert.equal(opened.data.components[3].component.type,3);assert.equal(calls.length,0,'Opening modal must not wait for network');
 matches=Array.from({length:26},()=>person);await run(search);assert(calls.some(x=>x.reply?.content.includes('demasiados')));assert(!calls.some(x=>x.reply?.components?.[0]?.components?.[0]?.type===3));
 matches=[];await run(search);assert(calls.some(x=>x.reply?.content.includes('No se encontró')));
@@ -36,11 +38,13 @@ photoMessages=[];await run(noUpload);assert(!calls.some(x=>x.init?.method==='POS
 photoMessages=[pasted];await run(noUpload);const fromClipboard=JSON.parse(calls.find(x=>x.db==='police_evidence_records').init.body);assert.equal(fromClipboard.photo_message_id,pasted.id);assert(!('photo_url'in fromClipboard));assert.equal(fromClipboard.h50,'Pedro Martinez · #0002');
 photoUsed=true;await run(noUpload);assert(!calls.some(x=>x.init?.method==='POST'));assert(calls.some(x=>x.reply?.content.includes('ya tiene una evidencia')));photoUsed=false;
 const open={type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_open'}};
-const direct=await run(open);assert.equal(direct.type,5);assert(calls.some(x=>x.db?.includes('status=eq.active&order=')));
+const first=await run(open);assert.equal(first.type,9);assert.equal(first.data.custom_id,'prime_evidence_h50_search');assert.equal(calls.length,0);
+const list={...open,data:{custom_id:'prime_evidence_h50_page:0'}};
+const direct=await run(list);assert.equal(direct.type,6);assert(calls.some(x=>x.db?.includes('status=eq.active&order=')));
 assert.equal(calls.find(x=>x.reply?.components)?.reply.components[0].components[0].type,3);
 // Every page has at most 25 choices and the next page is available, without truncating the roster.
 roster=Array.from({length:26},(_,n)=>({...person,discord_user_id:String(200000000000000000n+BigInt(n))}));
-await run(open);let page=calls.find(x=>x.reply?.components)?.reply;
+await run(list);let page=calls.find(x=>x.reply?.components)?.reply;
 assert.equal(page.components[0].components[0].options.length,25);assert.equal(page.components[1].components[1].disabled,false);
 assert.equal(page.components[1].components[0].disabled,true);
 await run({...open,data:{custom_id:'prime_evidence_h50_page:25'}});
