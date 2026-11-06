@@ -51,3 +51,7 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - Antes de editar, revisar git status y conservar cambios ajenos. Trabajar en una rama para cambios nuevos y abrir una revisión cuando corresponda.
 - Publicar solo si la petición lo incluye. Después, comprobar GitHub Actions y los archivos servidos por el dominio; desplegar las funciones afectadas si hubo cambios del backend. Informar qué se verificó y qué sigue pendiente.
 - Responder en español y explicar de forma breve qué cambió. No afirmar que algo está publicado o corregido en producción sin comprobarlo.
+
+## Vista previa conservada
+
+`docs/previews/prime-police-h50-formatos.html` conserva las propuestas interactivas del selector H-50 («Por iniciales» y «Lista única»). Es un fragmento de vista previa para revisar diseños; no forma parte de los archivos públicos compilados. El selector real del bot está en `supabase/functions/prime-police-discord/evidence.ts` y usa la opción por iniciales elegida por el usuario.
