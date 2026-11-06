@@ -76,6 +76,7 @@ jobs:
           node --experimental-strip-types scripts/check-transfer-questionnaire.mjs
           node --experimental-strip-types scripts/check-external-ai-review.mjs
           node --experimental-strip-types scripts/check-evidence-records.mjs
+          node --experimental-strip-types scripts/check-evidence-form.mjs
           npm run build
           node scripts/check-public-build.mjs
       - name: Upload site
