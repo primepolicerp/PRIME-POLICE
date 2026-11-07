@@ -15,21 +15,21 @@ function shiftDayMode(){
  document.querySelectorAll('[name="shiftExitDay"]').forEach(r=>{r.checked=r.value===value;});
 }
 function shiftUpdateDuration(){
- try{const start=shiftInputDate('shiftEntryDate','shiftEntryTime'),end=shiftInputDate('shiftExitDate','shiftExitTime');$('shiftAdminDuration').textContent=end<start?'La salida debe ser posterior a la entrada.':'Duración que se registrará: '+duration(start,end)+' · Horario local';}
+ try{const start=shiftInputDate('shiftEntryDate','shiftEntryTime'),end=shiftInputDate('shiftExitDate','shiftExitTime');$('shiftAdminDuration').textContent=end<start?'La salida debe ser posterior a la entrada.':'Tiempo de servicio que se registrará: '+duration(start,end)+' · Horario de tu dispositivo';}
  catch(error){$('shiftAdminDuration').textContent=error.message;}
 }
 function shiftSetNow(){const now=new Date();$('shiftExitDate').value=shiftDateValue(now);$('shiftExitTime').value=shiftClockValue(now);shiftDayMode();shiftUpdateDuration();}
 function openShiftAdmin(item,mode){
  if(shiftAdminSaving)return;shiftAdminItem={...item};shiftAdminMode=mode;
  const removing=mode==='delete',start=new Date(item.started_at),direct=canAuthorizePromotions||canManageShiftsDirect;
- $('shiftAdminTitle').textContent=removing?'Eliminar bitácora':'Forzar cierre de bitácora';
+ $('shiftAdminTitle').textContent=removing?'Eliminar bitácora':'Ajustar y cerrar turno';
  $('shiftAdminAgent').textContent=item.full_name+' · Placa '+(item.plate||'—')+' · Entrada: '+shiftTime(item.started_at);
  $('shiftAdminPolicy').textContent=(direct?'Puedes aplicar este cambio directamente. Se registrará en la auditoría.':'Se creará una petición para Directiva. El registro solo cambiará cuando la apruebe.')+(removing?' Al eliminarla, sus horas dejarán de contar. Se conservará una copia en la auditoría.':'');
  $('shiftAdminTimes').hidden=removing;
  ['shiftEntryDate','shiftEntryTime','shiftExitDate','shiftExitTime'].forEach(id=>{$(id).disabled=removing;});
  $('shiftEntryDate').value=shiftDateValue(start);$('shiftEntryTime').value=shiftClockValue(start);shiftSetNow();
  $('shiftAdminReason').value='';$('shiftAdminFeedback').textContent='';
- $('shiftAdminSave').textContent=direct?(removing?'Eliminar bitácora':'Guardar cierre'):'Enviar petición';
+ $('shiftAdminSave').textContent=direct?(removing?'Eliminar bitácora':'Guardar horas y cerrar'):'Enviar petición';
  $('shiftAdminSave').className='btn '+(removing?'reject':'primary');
  $('shiftAdminDialog').showModal();
 }
