@@ -62,3 +62,12 @@ t=scenario({partialRoleFailure:true});assert.equal((await t.run()).status,502);a
 t=scenario();t.state.roles.add('integration-role');const automatic=await t.run();assert.equal(automatic.status,200);assert.deepEqual([...t.state.roles].sort(),['integration-role',DEPARTURE_ROLES.expelled.id].sort());assert((await automatic.json()).warning.includes('automático'));
 t=scenario();t.body.departure_role='none';assert.equal((await t.run()).status,409);assert.equal(t.state.calls,0);
 console.log('Full departure removal: staff and 80 other manual roles removed in one update; hierarchy blocks before writes; failed confirmation rolls back; automatic roles reported; marker required: PASS');
+
+// A departure keeps only the IC name; reentry restores the rank and plate.
+const nicknameWrites=state=>state.writes.filter(w=>w.method==='PATCH'&&w.body&&Object.hasOwn(JSON.parse(w.body),'nick')).map(w=>JSON.parse(w.body).nick);
+for(const role of ['voluntary','expelled','banned']){
+ t=scenario();t.body.departure_role=role;assert.equal((await t.run()).status,200);assert.deepEqual(nicknameWrites(t.state),['Agente Ejemplo']);
+}
+t=scenario({reentry:true});assert.equal((await t.run()).status,200);assert.deepEqual(nicknameWrites(t.state),[rankedNickname(t.state.person.full_name,t.state.person.plate,[...t.state.roles])]);
+t=scenario({dbFail:true});assert.equal((await t.run()).status,502);assert.deepEqual(nicknameWrites(t.state),[]);
+console.log('Departure nickname: name only for every departure marker, ranked name and plate on reentry, no nickname change after failed save: PASS');

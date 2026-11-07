@@ -93,7 +93,7 @@ export async function changePersonnelStatus(req:Request,action:string,actor:stri
    console.error('Personnel status change:',String(error));return c.json({error:rollbackFailed?'No se guardó el movimiento y falta restaurar algún rol. Revisa Discord antes de reintentar.':'No se guardó el movimiento. '+(String(error).includes('Discord')?'Comprueba que el bot pueda administrar los roles del agente.':String(error).replace(/^Error: /,''))},502);
   }
  }
- if(member)try{await c.discord(memberPath,{method:'PATCH',body:JSON.stringify({nick:rankedNickname(person.full_name,person.plate,[...desired])})});}catch{warning='Movimiento guardado; no se pudo actualizar el apodo de Discord.';}
+ if(member)try{await c.discord(memberPath,{method:'PATCH',body:JSON.stringify({nick:departure?rankedNickname(person.full_name,'',[]):rankedNickname(person.full_name,person.plate,[...desired])})});}catch{warning='Movimiento guardado; no se pudo actualizar el apodo de Discord.';}
  else warning='Baja guardada. La persona ya no está en el servidor de Discord.';
  if(automaticRoles.length)warning=[warning,'Discord conserva '+automaticRoles.length+' rol(es) automático(s) de integración; no se pueden retirar manualmente.'].filter(Boolean).join(' ');
  if(departure){const notice=await announceDeparture({eventId:body.operation_id,userId:target,name:person.full_name,plate:person.plate,rank:person.rank_name,type:DEPARTURE_TYPES[body.departure_type],role:departureRole==='none'?'Sin rol adicional':DEPARTURE_ROLES[departureRole].name,date:body.effective_date,approvedBy:c.actorName,timestamp:result.movement?.created_at||new Date().toISOString()},c.discord);notificationState=notice?'pending':'confirmed';warning=[warning,notice].filter(Boolean).join(' ');}
