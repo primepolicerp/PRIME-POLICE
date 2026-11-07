@@ -1,3 +1,4 @@
+import {startParticipantPicker,handleParticipantPicker} from './evidence-participants.ts';
 const GUILD='1539970134469378068',POLICE='1539970134482092038',EXPELLED='1539970134482092034',VETO='1564310246128619560';
 const BOT_ID='1540484542354428025';
 export const EVIDENCE_CHANNEL_ID='1539970136050499672';
@@ -9,9 +10,9 @@ function selectedId(i:any){return String(i.data?.custom_id||'').match(/^prime_ev
 function permitted(roles:string[]){return roles.includes(POLICE)&&!roles.includes(EXPELLED)&&!roles.includes(VETO);}
 function label(person:any){return text(person.full_name)+' · #'+(text(person.plate)||'Sin placa');}
 export function evidenceSearchModal(){return {custom_id:'prime_evidence_h50_search',title:'Buscar responsable H-50',components:[{type:18,label:'Nombre o placa del policía',description:'Escribe el nombre completo, una parte o la placa. Pulsa Enviar para ver las coincidencias.',component:input('evidence_h50_query','Ej.: Pedro, Martinez o 0002',100)}]};}
-export function evidenceForm(person:any){return {custom_id:'prime_evidence_submit:'+person.discord_user_id,title:'Registrar evidencia · PRIME POLICE',components:[
+export function evidenceForm(person:any,participants:any[]){if(!participants.length||participants.length>25)throw Error('Select 1–25 police participants before opening the form');return {custom_id:'prime_evidence_submit:'+person.discord_user_id,title:'Registrar evidencia · PRIME POLICE',components:[
  {type:18,label:'📌 Operativo',description:('H-50: '+(text(person.selectionLabel)||label(person))).slice(0,100),component:input('evidence_operation','Ej.: Robo a tienda, secuestro o control de tránsito',100)},
- {type:18,label:'🛡️ Policías participantes',description:'Selecciona a los policías involucrados, incluyéndote si participaste. Máximo 25.',component:{type:5,custom_id:'evidence_participants',placeholder:'Buscar y seleccionar compañeros',min_values:1,max_values:25,required:true}},
+ {type:18,label:'🛡️ Policías participantes',description:'Selecciona a los policías involucrados, incluyéndote si participaste. Máximo 25.',component:{type:3,custom_id:'evidence_participants',placeholder:'Policías seleccionados del operativo',min_values:1,max_values:participants.length,required:true,options:participants.map(p=>({...p,default:true}))}},
  {type:18,label:'🔒 Locker',description:'Indica el número de tu placa.',component:input('evidence_locker','Ej.: 0123',100)},
  {type:18,label:'📦 Objetos incautados',component:input('evidence_objects','Describe los objetos o indica: En la imagen',1500,2)},
  {type:18,label:'📷 Fotografía de la evidencia',description:'Adjunta la foto o envíala antes al canal mencionando a RH Police (máximo 10 minutos).',component:{type:19,custom_id:'evidence_photo',file_types:['image'],min_values:0,max_values:1,required:false}}
@@ -69,8 +70,9 @@ async function saveEvidence(i:any,userId:string,c:Context){
  await c.reply(i,{content:'✅ Evidencia registrada en Discord y en la web. H-50: '+clean(h50)+'. Mensaje: '+String(message.id)});
 }
 export async function handleEvidenceInteraction(i:any,userId:string,c:Context):Promise<Response|null>{
- const custom=String(i.data?.custom_id||'');if(!/^prime_evidence_submit:\d{17,20}$/.test(custom)&&!['prime_evidence_open','prime_evidence_h50_find','prime_evidence_h50_search','prime_evidence_h50_select','prime_evidence_submit'].includes(custom)&&!custom.startsWith('prime_evidence_h50_page:')&&!custom.startsWith('prime_evidence_h50_select:')&&!custom.startsWith('prime_evidence_h50_group:'))return null;
+ const custom=String(i.data?.custom_id||'');if(!/^prime_evidence_submit:\d{17,20}$/.test(custom)&&!['prime_evidence_open','prime_evidence_h50_find','prime_evidence_h50_search','prime_evidence_h50_select','prime_evidence_submit'].includes(custom)&&!/^prime_evidence_(people|pick|team|ready):/.test(custom)&&!custom.startsWith('prime_evidence_h50_page:')&&!custom.startsWith('prime_evidence_h50_select:')&&!custom.startsWith('prime_evidence_h50_group:'))return null;
  if(i.guild_id!==GUILD||!/^\d{17,20}$/.test(userId)||!permitted(i.member?.roles||[]))return c.ephemeral('Debes registrar evidencias desde el servidor con el rol Policía activo.');
+ const participantPicker=handleParticipantPicker(i,userId,c,evidenceForm);if(participantPicker)return participantPicker;
  if(i.type===3&&['prime_evidence_open','prime_evidence_h50_find'].includes(custom))return c.openModal?c.openModal(i,evidenceSearchModal()):c.response(9,evidenceSearchModal());
  if(i.type===3&&custom.startsWith('prime_evidence_h50_page:')){
   if(!/^prime_evidence_h50_page:\d{1,6}$/.test(custom))return c.ephemeral('Vuelve a abrir la plantilla.');
@@ -95,7 +97,7 @@ export async function handleEvidenceInteraction(i:any,userId:string,c:Context):P
   const values=i.data?.values,id=Array.isArray(values)&&values.length===1?String(values[0]):'';
   const option=(i.message?.components||[]).flatMap((row:any)=>row.components||[]).filter((node:any)=>node.custom_id===custom).flatMap((node:any)=>node.options||[]).find((item:any)=>item.value===id);
   if(!/^\d{17,20}$/.test(id)||!option)return c.ephemeral('Selecciona un H-50 válido o vuelve a buscar.');
-  const form=evidenceForm({discord_user_id:id,selectionLabel:text(option.label)});return c.openModal?c.openModal(i,form):c.response(9,form);
+  return startParticipantPicker(i,userId,c,id,text(option.label));
  }
  if(i.type===5&&custom==='prime_evidence_h50_search'){
   const query=text(component(i,'evidence_h50_query')?.value).replace(/^@/, '').trim();if(!query||query.length>100)return c.ephemeral('Escribe el usuario después de @, su nombre o su placa para buscar al H-50.');

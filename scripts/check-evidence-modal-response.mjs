@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {openEvidenceModal} from '../supabase/functions/prime-police-discord/evidence-modal-response.ts';
 import {evidenceForm} from '../supabase/functions/prime-police-discord/evidence.ts';
-const i={id:'123456789012345678',token:'private-test-token'},form=evidenceForm({discord_user_id:'222222222222222222',full_name:'Test Officer',plate:'0002'});
+const i={id:'123456789012345678',token:'private-test-token'},form=evidenceForm({discord_user_id:'222222222222222222',full_name:'Test Officer',plate:'0002'},[{label:'Test Officer',value:'222222222222222222'}]);
 const logs=[],info=console.info,error=console.error;
 console.info=(...a)=>logs.push(a);console.error=(...a)=>logs.push(a);
 try{
