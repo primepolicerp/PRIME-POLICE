@@ -47,7 +47,7 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 ## Horas H-50
 
 - Canal de control: `1539970136302288948`. Botones `prime_h50_start` y `prime_h50_end`; respuestas privadas.
-- Tabla independiente `police_h50_shifts`, RLS activa y acceso exclusivo por servicio. Un turno abierto por policía; RPC atómica e idempotente `police_h50_event`. No sumar ni copiar estas horas a `police_duty_shifts`.
+- Tabla independiente `police_h50_shifts`, RLS activa y acceso exclusivo por servicio. Máximo dos personas con H-50 abierto al mismo tiempo, con comprobación serializada en base de datos. Un turno abierto por policía; RPC atómica e idempotente `police_h50_event`. No sumar ni copiar estas horas a `police_duty_shifts`.
 - Web: apartado «Horas H-50», `h50-ui.js`, endpoint privado `h50-records`; filtros en hora Europa/París, historial, paginación y agregados completos por policía. Cierre `h50-close` solo para Directiva/UCOP autorizado, con control de concurrencia y auditoría atómica en `adjustments`.
 - El registro de evidencias de Discord continúa desactivado.
 
