@@ -5,7 +5,7 @@ import {transferIdentityModal,handleTransferSteps} from "./transfer-steps.ts";
 import {TRANSFER_QUESTIONS,validTransferAnswers} from "../_shared/transfer-questions.ts";
 import { handleAbsenceInteraction, absencePanel, ABSENCE_CHANNEL_ID } from "./absences.ts";
 import {openEvidenceModal} from './evidence-modal-response.ts';
-import {handleEvidenceInteraction,EVIDENCE_CHANNEL_ID} from './evidence.ts';
+import {handleEvidenceInteraction,EVIDENCE_PANEL_CHANNEL_ID} from './evidence.ts';
 const GUILD_ID = "1539970134469378068";
 const PRESELECTION_ROLE_ID = "1564685481457877012";
 const POLICE_ROLE_ID = "1539970134482092038";
@@ -144,7 +144,7 @@ async function handle(i:any){
   const name=i.data?.name;
   if(name==="publicar_evidencias"){
    if(!canManage(i))return ephemeral("Solo UCOP o Directiva puede publicar el panel de evidencias.");
-   EdgeRuntime.waitUntil((async()=>{try{await publishOrUpdatePanel(EVIDENCE_CHANNEL_ID,"prime_evidence_open",evidencePanel);await editInteractionReply(i,"Panel de evidencias publicado en el canal de evidencias.");}catch(e){console.error("Evidence panel publish:",String(e));await editInteractionReply(i,"No se pudo publicar el panel. Comprueba los permisos del bot.");}})());
+   EdgeRuntime.waitUntil((async()=>{try{await publishOrUpdatePanel(EVIDENCE_PANEL_CHANNEL_ID,"prime_evidence_open",evidencePanel);await editInteractionReply(i,"Panel de evidencias publicado en el canal de evidencias.");}catch(e){console.error("Evidence panel publish:",String(e));await editInteractionReply(i,"No se pudo publicar el panel. Comprueba los permisos del bot.");}})());
    return ephemeral("⏳ Publicando panel de evidencias…");
   }
   if(name==="publicar_postulaciones"){
@@ -159,7 +159,7 @@ async function handle(i:any){
      await publishOrUpdatePanel(TRANSFER_CHANNEL_ID,"prime_transfer",transferPanel);
      await publishOrUpdatePanel("1539970136302288946","prime_duty_start",{embeds:[{title:"◷ PRIME POLICE · Control de servicio",description:"Registra tu entrada al comenzar el servicio y tu salida al finalizar.",color:6593023,footer:{text:"PRIME POLICE · Bitácoras"}}],components:[{type:1,components:[{type:2,style:3,label:"Entrar en servicio",custom_id:"prime_duty_start"},{type:2,style:4,label:"Salir de servicio",custom_id:"prime_duty_end"}]}]});
      await publishOrUpdatePanel(ABSENCE_CHANNEL_ID,"prime_absence",absencePanel);
-     await publishOrUpdatePanel(EVIDENCE_CHANNEL_ID,"prime_evidence_open",evidencePanel);
+     await publishOrUpdatePanel(EVIDENCE_PANEL_CHANNEL_ID,"prime_evidence_open",evidencePanel);
      await editInteractionReply(i,"Paneles de postulaciones, ingreso, traslados, servicio, ausencias y evidencias actualizados.");
     }catch(error){
      console.error("Could not publish application announcement:",String(error));
@@ -217,7 +217,7 @@ async function handle(i:any){
 }
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:CORS});
- if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,evidence_form:"evidence-police-only-picker-v12",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
+ if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,evidence_form:"evidence-separated-channels-v13",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
  if(req.method!=="POST")return json({error:"Method not allowed"},405);
  const body=await req.text();if(!await validSignature(req,body))return json({error:"Invalid Discord signature or DISCORD_PUBLIC_KEY not configured"},401);
  let i:any;try{i=JSON.parse(body)}catch{return json({error:"Invalid JSON"},400)}

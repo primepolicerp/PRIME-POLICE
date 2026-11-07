@@ -40,7 +40,7 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - Guardar ID y usuario del H-50; el mensaje de Discord menciona únicamente al H-50 seleccionado mediante allowed_mentions explícito.
 - El historial de cada agente se abre en una ventana propia. Los enlaces principales intentan abrir la aplicación de Discord y conservan «Ver en web» como alternativa.
 - Los campos de texto de los formularios de Discord no tienen autocompletado en tiempo real. No prometer esa función; el usuario eligió mantener la búsqueda por nombre o placa al enviar el formulario.
-- Canal de evidencias: `1539970136050499672`; servidor: `1539970134469378068`.
+- Canal del panel/bot y capturas pegadas: `1539970136050499672`. Destino de las evidencias registradas: `1539970136050499671`. No publicar el panel en el destino. Los enlaces de cada registro usan su canal guardado, sin reescribir históricos automáticamente. Servidor: `1539970134469378068`.
 
 ## Reglas del proyecto
 
