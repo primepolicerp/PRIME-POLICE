@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {createDiscordMemberReader} from '../supabase/functions/prime-police-discord/discord-member-reader.ts';
+let clock=0,inFlight=0,maxInFlight=0;const calls=[],waits=[],attempts=new Map();
+const read=createDiscordMemberReader({now:()=>clock,sleep:async ms=>{waits.push(ms);clock+=ms;},fetch:async url=>{
+ inFlight++;maxInFlight=Math.max(maxInFlight,inFlight);await Promise.resolve();inFlight--;
+ const id=url.split('/').at(-1),attempt=(attempts.get(id)||0)+1;attempts.set(id,attempt);calls.push({id,clock});
+ if(id==='missing')return Response.json({message:'Unknown Member'},{status:404});
+ if(id==='forbidden')return Response.json({message:'Forbidden'},{status:403});
+ if(id==='limited')return Response.json({retry_after:60},{status:429});
+ if(id==='5'&&attempt===1)return Response.json({retry_after:.324},{status:429});
+ return Response.json({user:{id},roles:['police']},{headers:id==='0'?{'x-ratelimit-remaining':'0','x-ratelimit-reset-after':'.5'}:{}});
+}});
+const path=id=>'/guilds/1539970134469378068/members/'+id;
+const first=read(path('0'),'test-only'),duplicate=read(path('0'),'test-only');
+const results=await Promise.all([first,duplicate,...Array.from({length:25},(_,n)=>read(path(String(n+1)),'test-only'))]);
+assert.equal(results.length,27);assert.equal(maxInFlight,1);assert.equal(attempts.get('0'),1);assert.equal(attempts.get('5'),2);
+assert(waits.includes(550));assert(waits.includes(374));assert(calls.find(x=>x.id==='1').clock>=550);
+await read(path('0'),'test-only');assert.equal(attempts.get('0'),2,'No role cache after a completed read');
+for(const [id,status]of [['missing',404],['forbidden',403],['limited',429]])await assert.rejects(()=>read(path(id),'test-only'),e=>e.status===status);
+assert.equal(attempts.get('missing'),1);assert.equal(attempts.get('forbidden'),1);assert.equal(attempts.get('limited'),1);
+await assert.rejects(()=>read(path('1'),'test-only'),e=>e.status===429,'A long bucket cooldown is not bypassed');
+clock+=61000;assert.equal((await read(path('1'),'test-only')).user.id,'1','A failed read does not poison the queue');
+console.log('Discord member reads: serialized shared bucket, fractional retry_after, proactive reset wait, in-flight deduplication, fresh roles, bounded rate-limit failure and typed 404/403: PASS');

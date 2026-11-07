@@ -86,6 +86,7 @@ jobs:
           node --experimental-strip-types scripts/check-evidence-channel-move.mjs
           node scripts/check-evidence-participants-ui.mjs
           node --experimental-strip-types scripts/check-evidence-police-picker.mjs
+          node --experimental-strip-types scripts/check-discord-member-reader.mjs
           node --experimental-strip-types scripts/check-evidence-modal-response.mjs
           npm run build
           node scripts/check-public-build.mjs
