@@ -28,7 +28,7 @@ const search={type:5,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime
 assert.equal((await run(search)).type,5);let result=calls.find(x=>x.reply?.components)?.reply;const select=result.components[0].components[0];assert.equal(select.options[0].value,responsible);assert.equal(JSON.parse(calls.find(x=>x.db?.startsWith('rpc/')).init.body).p_search,'PEDRITO');
 const withAt=structuredClone(search);withAt.data.components[0].component.value='@PEDRITO';await run(withAt);assert.equal(JSON.parse(calls.find(x=>x.db?.startsWith('rpc/')).init.body).p_search,'PEDRITO');
 const justAt=structuredClone(search);justAt.data.components[0].component.value='@';assert.equal((await run(justAt)).type,4);assert.equal(calls.length,0);
-const selected={type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_h50_select',values:[responsible]},message:{components:result.components}};let opened=await run(selected);assert.equal(opened.type,6);let picker=calls.find(x=>x.reply?.components)?.reply;
+const selected={type:3,guild_id:guild,member:{roles:[role]},data:{custom_id:'prime_evidence_h50_select',values:[responsible]},message:{components:result.components}};let opened=await run(selected);assert.equal(opened.type,7);let picker=opened.data;await run({...selected,data:{custom_id:'prime_evidence_people:'+responsible+':0'},message:picker});picker=calls.find(x=>x.reply?.components)?.reply;
 const pickId=picker.components[0].components[0].custom_id;
 await run({...selected,data:{custom_id:pickId,values:[responsible]},message:picker});picker=calls.find(x=>x.reply?.components)?.reply;
 const ready={...selected,data:{custom_id:'prime_evidence_ready:'+responsible},message:picker};
@@ -53,7 +53,7 @@ roster=Array.from({length:173},(_,n)=>({...person,full_name:['Ana','John','Pedro
 const allIds=[];
 for(const group of ['AF','GL','MR','SZ'])for(let offset=0;;offset+=25){
  await run({...open,data:{custom_id:'prime_evidence_h50_group:'+group+':'+offset}});const payload=calls.find(x=>x.reply?.components)?.reply,menu=payload.components[0].components[0];assert.equal(menu.type,3);assert(menu.options.length<=25);assert(payload.components.length<=5);allIds.push(...menu.options.map(x=>x.value));
- const choice=menu.options.at(-1),chosen=await run({...open,data:{custom_id:menu.custom_id,values:[choice.value]},message:{components:payload.components}});assert.equal(chosen.type,6);assert.equal(calls.find(x=>x.reply?.embeds)?.reply.embeds[0].fields[0].value,choice.label);
+ const choice=menu.options.at(-1),chosen=await run({...open,data:{custom_id:menu.custom_id,values:[choice.value]},message:{components:payload.components}});assert.equal(chosen.type,7);assert.equal(chosen.data.embeds[0].fields[0].value,choice.label);
  if(payload.components.at(-1).components[1].disabled)break;
 }
 assert.equal(allIds.length,173);assert.equal(new Set(allIds).size,173);
