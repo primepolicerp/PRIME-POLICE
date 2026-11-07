@@ -1,4 +1,4 @@
-let shiftAdminItem=null,shiftAdminMode='close',shiftAdminSaving=false;
+let shiftAdminItem=null,shiftAdminMode='close',shiftAdminSaving=false,shiftAdminScope='duty';
 const shiftPad=n=>String(n).padStart(2,'0');
 const shiftDateValue=d=>d.getFullYear()+'-'+shiftPad(d.getMonth()+1)+'-'+shiftPad(d.getDate());
 const shiftClockValue=d=>[d.getHours(),d.getMinutes(),d.getSeconds()].map(shiftPad).join(':');
@@ -20,9 +20,9 @@ function shiftUpdateDuration(){
 }
 function shiftSetNow(){const now=new Date();$('shiftExitDate').value=shiftDateValue(now);$('shiftExitTime').value=shiftClockValue(now);shiftDayMode();shiftUpdateDuration();}
 function openShiftAdmin(item,mode){
- if(shiftAdminSaving)return;shiftAdminItem={...item};shiftAdminMode=mode;
+ if(shiftAdminSaving)return;shiftAdminItem={...item};shiftAdminMode=mode;shiftAdminScope=item.h50?'h50':'duty';
  const removing=mode==='delete',start=new Date(item.started_at),direct=canAuthorizePromotions||canManageShiftsDirect;
- $('shiftAdminTitle').textContent=removing?'Eliminar bitácora':'Ajustar y cerrar turno';
+ $('shiftAdminTitle').textContent=removing?'Eliminar bitácora':shiftAdminScope==='h50'?'Ajustar y cerrar H-50':'Ajustar y cerrar turno';
  $('shiftAdminAgent').textContent=item.full_name+' · Placa '+(item.plate||'—')+' · Entrada: '+shiftTime(item.started_at);
  $('shiftAdminPolicy').textContent=(direct?'Puedes aplicar este cambio directamente. Se registrará en la auditoría.':'Se creará una petición para Directiva. El registro solo cambiará cuando la apruebe.')+(removing?' Al eliminarla, sus horas dejarán de contar. Se conservará una copia en la auditoría.':'');
  $('shiftAdminTimes').hidden=removing;
@@ -55,9 +55,9 @@ $('shiftAdminForm').addEventListener('submit',async event=>{
  }catch(error){$('shiftAdminFeedback').textContent=error.message;return;}
  shiftAdminSaving=true;$('shiftAdminSave').disabled=true;$('shiftAdminFeedback').textContent='Procesando…';
  try{
-  const result=await request(shiftAdminMode==='delete'?'shift-delete':'shift-close',{method:'POST',body:payload});
-  $('shiftAdminDialog').close();shiftAdminItem=null;showToast(result.message);await loadShifts();
-  $('shiftNotice').textContent=result.message;
+  const result=await request(shiftAdminScope==='h50'?'h50-close':shiftAdminMode==='delete'?'shift-delete':'shift-close',{method:'POST',body:payload});
+  $('shiftAdminDialog').close();shiftAdminItem=null;showToast(result.message);if(shiftAdminScope==='h50')await loadH50();else await loadShifts();
+  $(shiftAdminScope==='h50'?'h50Notice':'shiftNotice').textContent=result.message;
  }catch(error){$('shiftAdminFeedback').textContent=error.message;}
  finally{shiftAdminSaving=false;$('shiftAdminSave').disabled=false;}
 });

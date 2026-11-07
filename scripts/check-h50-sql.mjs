@@ -1,0 +1,22 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {PGlite} from '@electric-sql/pglite';
+const db=new PGlite();
+try{
+ await db.exec("create role anon;create role authenticated;create role service_role bypassrls;create table police_personnel(discord_user_id text primary key,full_name text,plate text,unit text,status text);grant select on police_personnel to service_role;insert into police_personnel values('111111111111111111','Ana Ejemplo','0001','POLICIA','active'),('222222222222222222','Baja','0002','UCOP','inactive');");
+ await db.exec(fs.readFileSync('supabase/migrations/20261107222947_h50_time_control.sql','utf8'));
+ const event=async(user,start)=>(await db.query('select police_h50_event($1,$2) as r',[user,start])).rows[0].r;
+ let result=await event('111111111111111111',true);assert(result.ok&&!result.already_open);const first=result.id;assert((await event('111111111111111111',true)).already_open);assert.equal((await db.query('select count(*)::int n from police_h50_shifts')).rows[0].n,1);
+ assert.equal((await event('222222222222222222',true)).code,'inactive');assert((await event('222222222222222222',false)).no_open);assert((await event('111111111111111111',false)).seconds>=0);assert((await event('111111111111111111',false)).no_open);
+ result=await event('111111111111111111',true);assert.notEqual(result.id,first);const original=result.started_at;
+ const close=async(expected=original)=>(await db.query("select police_h50_admin_close($1,now()-interval '1 hour',now()-interval '10 minutes',$2,'999999999999999999','Olvidó registrar salida') as r",[result.id,expected])).rows[0].r;
+ assert.equal((await close('2020-01-01')).code,'conflict');assert((await close()).ok);assert.equal((await close()).code,'conflict');assert.equal((await db.query('select jsonb_array_length(adjustments)::int n from police_h50_shifts where id=$1',[result.id])).rows[0].n,1);
+ await db.exec("insert into police_h50_shifts(discord_user_id,full_name,plate,unit,started_at,ended_at) values('333333333333333333','Histórico','0003','CIC','2020-11-01T23:00Z','2020-11-02T02:00Z'),('333333333333333333','Histórico','0003','CIC','2020-11-02T03:00Z','2020-11-02T04:00Z');");
+ const register=async(from,to,state='history',offset=0,user=null)=>(await db.query('select police_h50_register($1,$2,$3,$4,$5,$6) as r',[from,to,'',user,state,offset])).rows[0].r;
+ let report=await register('2020-11-02','2020-11-03');assert.equal(report.summary.seconds,10800);assert.equal(report.officers[0].seconds,10800);assert.equal(report.summary.shifts,2);assert.equal(report.total,2);
+ await db.exec("insert into police_h50_shifts(discord_user_id,full_name,plate,unit,started_at,ended_at) select '444444444444444444','Paginación','0004','UCOP',timestamptz '2020-11-04'+i*interval '2 minutes',timestamptz '2020-11-04'+i*interval '2 minutes'+interval '1 minute' from generate_series(1,55)i;");
+ report=await register('2020-11-04','2020-11-05');assert.equal(report.records.length,50);assert.equal(report.total,55);assert.equal(report.summary.seconds,3300);assert.equal(report.officers[0].shifts,55);assert.equal(report.next_offset,50);const second=await register('2020-11-04','2020-11-05','history',50);assert.equal(second.records.length,5);assert.equal(new Set([...report.records,...second.records].map(x=>x.id)).size,55);
+ await assert.rejects(()=>register('2020-11-03','2020-11-02'));await assert.rejects(()=>register('2020-11-02','2020-11-03','invalid'));await assert.rejects(()=>event('bad',true));
+ await db.exec('set role anon');await assert.rejects(()=>register('2020-11-02','2020-11-03'));await assert.rejects(()=>db.query('select * from police_h50_shifts'));await db.exec('reset role;set role service_role');assert.equal((await register('2020-11-02','2020-11-03')).total,2);
+ console.log('H50 SQL: private access, idempotent start/stop, inactive denied, isolated history, clipped period hours, full totals with 50-row pagination, optimistic closure and atomic audit: PASS');
+}finally{await db.close();}

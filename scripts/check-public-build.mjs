@@ -15,4 +15,5 @@ assert(!html.includes("script-src 'self'"));assert(!html.includes("'unsafe-eval'
 assert(html.includes('id="evidenceView"')&&html.includes('data-view="evidence"'));
 const evidenceScript=await fs.readFile('dist/assets/'+assets.find(name=>name.endsWith('.js')),'utf8');
 assert(evidenceScript.includes('evidence-records')&&evidenceScript.includes('evidenceOfficerFilter'),'Evidence workspace must be included in the production bundle');
+assert(html.includes('id="h50View"')&&evidenceScript.includes('h50-records'),'H50 workspace must be present in the public build');
 console.log('Public artifact allowlist, single compact script, evidence workspace included, no backend credentials/names or source maps: PASS');

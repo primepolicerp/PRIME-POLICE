@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {handleH50,H50_CHANNEL_ID,h50Panel} from '../supabase/functions/prime-police-discord/h50.ts';
+import {h50Route} from '../supabase/functions/prime-police-panel/h50.ts';
+import {applicationScopeAllowed} from '../supabase/functions/prime-police-panel/application-permissions.ts';
+const user='111111111111111111',police='1539970134482092038',tasks=[],calls=[],replies=[];
+let roles=[police],result={ok:true,seconds:5400},bot=false;
+const c={db:async(path,init)=>{calls.push({path,body:JSON.parse(init.body)});return result;},discord:async()=>({roles,user:{bot}}),response:(type,data)=>Response.json({type,data}),ephemeral:content=>Response.json({type:4,data:{content}}),reply:async(i,text)=>replies.push(text),waitUntil:p=>tasks.push(p)};
+async function run(custom='prime_h50_start',changes={}){calls.length=0;replies.length=0;const r=handleH50({type:3,guild_id:'1539970134469378068',channel_id:H50_CHANNEL_ID,data:{custom_id:custom},...changes},user,c);await Promise.all(tasks.splice(0));return r?await r.json():null;}
+assert.equal((await run()).type,5);assert.deepEqual(calls[0].body,{p_user:user,p_start:true});assert(replies[0].includes('Entrada'));
+for(const disallowed of [[],[police,'1564310246128619560'],[police,'1539970134482092034']]){roles=disallowed;await run();assert.equal(calls.length,0);}roles=[police];bot=true;await run();assert.equal(calls.length,0);bot=false;
+assert.equal((await run('prime_h50_start',{channel_id:'other'})).type,4);assert.equal(calls.length,0);assert.equal((await run('prime_h50_start',{guild_id:'other'})).type,4);
+roles=[];await run('prime_h50_end');assert.equal(calls[0].body.p_start,false);assert(replies[0].includes('1 h 30 min'),'A member can stop their own timer after losing a role');roles=[police];result={ok:true,already_open:true};await run();assert(replies[0].includes('Ya tienes'));result={ok:true,no_open:true};await run('prime_h50_end');assert(replies[0].includes('No tienes'));assert.equal(await run('unrelated'),null);
+assert.equal(h50Panel.components[0].components.length,2);assert(!applicationScopeAllowed('h50-records',new URLSearchParams()));assert(!applicationScopeAllowed('h50-close',new URLSearchParams()));
+const reads=[];let closeResult={ok:true,message:'Cerrado'};
+const api={canManage:true,json:(body,status=200)=>Response.json(body,{status}),db:async(path,init)=>{reads.push({path,body:JSON.parse(init.body)});return path.includes('admin_close')?closeResult:{records:[],officers:[],summary:{open:0,shifts:0,seconds:0,officers:0},total:0,next_offset:null};}};
+const url='https://test/?from=2020-11-01&to=2020-11-08';assert.equal((await h50Route(new Request(url),'h50-records',user,api)).status,200);assert.equal(reads[0].path,'rpc/police_h50_register');
+for(const extra of ['&offset=-1','&state=bad','&discord_user_id=bad','&search='+'x'.repeat(101)])assert.equal((await h50Route(new Request(url+extra),'h50-records',user,api)).status,400);
+const body={id:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',started_at:'2020-11-01T10:00Z',ended_at:'2020-11-01T12:00Z',expected_started_at:'2020-11-01T09:00Z',reason:'Olvidó salir',actor:'forged'};
+const request=()=>new Request('https://test',{method:'POST',body:JSON.stringify(body)});
+assert.equal((await h50Route(request(),'h50-close',user,{...api,canManage:false})).status,403);assert.equal((await h50Route(request(),'h50-close',user,api)).status,200);assert.equal(reads.at(-1).body.p_actor,user);closeResult={ok:false,code:'conflict'};assert.equal((await h50Route(request(),'h50-close',user,api)).status,409);
+console.log('H50 bot/API: immediate private acknowledgement, correct server/channel and police checks, own start/stop only, duplicate handling, separate RPCs, strict filters, trainee exclusion and administrative close permissions: PASS');

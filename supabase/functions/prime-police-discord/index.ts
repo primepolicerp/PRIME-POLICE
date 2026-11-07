@@ -1,3 +1,4 @@
+import {handleH50,h50Panel,H50_CHANNEL_ID} from './h50.ts';
 import { parseApplicationIdentity } from "../_shared/application-identity.ts";
 import {isRecruitmentVetoed,RECRUITMENT_VETO_ROLE,RECRUITMENT_VETO_MESSAGE} from '../_shared/recruitment-restriction.ts';
 import { identityModal, handleApplicationSteps } from "./application-steps.ts";
@@ -136,6 +137,7 @@ async function handle(i:any){
  if((i.member?.roles||[]).includes(RECRUITMENT_VETO_ROLE)&&(/^(prime_apply|prime_application|prime_transfer|prime_rank_request)/.test(String(i.data?.custom_id||''))||['postulacion','traslado'].includes(i.data?.name)))return ephemeral(RECRUITMENT_VETO_MESSAGE);
  const applicationStep=await handleApplicationSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processApplicationSubmit});if(applicationStep)return applicationStep;
  const transferStep=await handleTransferSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processTransferSubmit});if(transferStep)return transferStep;
+ const h50=handleH50(i,userId,{db,discord,response,ephemeral,reply:editInteractionReply,waitUntil:task=>EdgeRuntime.waitUntil(task)});if(h50)return h50;
  const absence=await handleAbsenceInteraction(i,{db,discord,response,ephemeral,values,reply:editInteractionReply});if(absence)return absence;
  if(i.type===2){
   const name=i.data?.name;
@@ -150,8 +152,9 @@ async function handle(i:any){
      await publishOrUpdatePanel(RANK_REQUEST_CHANNEL_ID,"prime_rank_request",rankPanel);
      await publishOrUpdatePanel(TRANSFER_CHANNEL_ID,"prime_transfer",transferPanel);
      await publishOrUpdatePanel("1539970136302288946","prime_duty_start",{embeds:[{title:"◷ PRIME POLICE · Control de servicio",description:"Registra tu entrada al comenzar el servicio y tu salida al finalizar.",color:6593023,footer:{text:"PRIME POLICE · Bitácoras"}}],components:[{type:1,components:[{type:2,style:3,label:"Entrar en servicio",custom_id:"prime_duty_start"},{type:2,style:4,label:"Salir de servicio",custom_id:"prime_duty_end"}]}]});
+     await publishOrUpdatePanel(H50_CHANNEL_ID,"prime_h50_start",h50Panel);
      await publishOrUpdatePanel(ABSENCE_CHANNEL_ID,"prime_absence",absencePanel);
-     await editInteractionReply(i,"Paneles de postulaciones, ingreso, traslados, servicio, ausencias actualizados.");
+     await editInteractionReply(i,"Paneles de postulaciones, ingreso, traslados, servicio, ausencias y H-50 actualizados.");
     }catch(error){
      console.error("Could not publish application announcement:",String(error));
      try{await editInteractionReply(i,"No se pudo publicar el formulario. Comprueba los permisos del bot y vuelve a intentarlo.");}catch(replyError){console.error("Could not update deferred interaction:",String(replyError));}
@@ -208,7 +211,7 @@ async function handle(i:any){
 }
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:CORS});
- if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,evidence_registration:false,evidence_form:"disabled-web-history-preserved",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
+ if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,h50_service:true,evidence_registration:false,evidence_form:"disabled-web-history-preserved",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
  if(req.method!=="POST")return json({error:"Method not allowed"},405);
  const body=await req.text();if(!await validSignature(req,body))return json({error:"Invalid Discord signature or DISCORD_PUBLIC_KEY not configured"},401);
  let i:any;try{i=JSON.parse(body)}catch{return json({error:"Invalid JSON"},400)}
