@@ -3,6 +3,16 @@ function appendEvidenceMessageLinks(container,record,label='Abrir mensaje'){
  if(!/^\d{17,20}$/.test(record.channel_id||'')||!/^\d{17,20}$/.test(record.discord_message_id||''))return false;
  const path='1539970134469378068/'+record.channel_id+'/'+record.discord_message_id,group=document.createElement('span'),app=document.createElement('a'),web=document.createElement('a');group.className='evidence-message-links';app.className='evidence-link';app.href='discord://-/channels/'+path;app.textContent=label;app.title='Abrir este mensaje en la aplicación de Discord';web.className='evidence-link evidence-web-link';web.href='https://discord.com/channels/'+path;web.target='_blank';web.rel='noopener noreferrer';web.textContent='Ver en web';group.append(app,web);container.append(group);return true;
 }
+function appendEvidenceParticipants(container,record){
+ const participants=Array.isArray(record.participants)?record.participants:[];
+ if(!participants.length){container.textContent='No registrado';return;}
+ for(const [index,person]of participants.entries()){
+  if(index)container.append(document.createTextNode(', '));
+  const name=String(person.officer_name||person.discord_username||person.discord_user_id||'Policía');
+  if(!/^\d{17,20}$/.test(person.discord_user_id||'')){container.append(document.createTextNode(name));continue;}
+  const link=document.createElement('a');link.className='evidence-link';link.href='discord://-/users/'+person.discord_user_id;link.textContent=name+(person.plate?' · #'+person.plate:'');container.append(link);
+ }
+}
 function appendEvidenceH50(container,record){
  if(!/^\d{17,20}$/.test(record.h50_discord_user_id||'')){container.textContent=record.h50||'—';return;}
  const link=document.createElement('a');link.href='discord://-/users/'+record.h50_discord_user_id;link.className='evidence-link evidence-user-mention';link.textContent='@'+String(record.h50_discord_username||record.h50||record.h50_discord_user_id).replace(/^@/,'');link.title=(record.h50||'Responsable H-50')+' · ID '+record.h50_discord_user_id;container.append(link);
@@ -34,7 +44,7 @@ async function loadEvidenceHistory(reset){
    if(record.discord_user_id!==officer.discord_user_id||evidenceHistoryIds.has(record.id))continue;evidenceHistoryIds.add(record.id);
    const card=document.createElement('article'),head=document.createElement('div'),date=document.createElement('strong'),fields=document.createElement('dl');card.className='evidence-history-record';head.className='evidence-history-record-head';date.textContent=niceDate(record.created_at);head.append(date);
    appendEvidenceMessageLinks(head,record,'Abrir en Discord');
-   for(const [label,value]of [['Locker',record.locker],['Responsable H-50',record.h50],['Objetos incautados',record.objects_description]]){const group=document.createElement('div'),term=document.createElement('dt'),description=document.createElement('dd');term.textContent=label;if(label==='Responsable H-50')appendEvidenceH50(description,record);else description.textContent=String(value||'—');group.append(term,description);fields.append(group);}
+   for(const [label,value]of [['Operativo',record.operation||'No registrado'],['Policías participantes',null],['Locker',record.locker],['Responsable H-50',record.h50],['Objetos incautados',record.objects_description]]){const group=document.createElement('div'),term=document.createElement('dt'),description=document.createElement('dd');term.textContent=label;if(label==='Policías participantes')appendEvidenceParticipants(description,record);else if(label==='Responsable H-50')appendEvidenceH50(description,record);else description.textContent=String(value||'—');group.append(term,description);fields.append(group);}
    card.append(head,fields);batch.append(card);
   }
   $('evidenceHistoryRecords').append(batch);evidenceHistoryOffset=data.next_offset??0;button.hidden=!data.has_more;
@@ -67,12 +77,12 @@ function renderEvidenceOfficerOptions(selected){const select=$('evidenceOfficerF
 function renderEvidenceRecords(){
  const tbody=$('evidenceRows'),batch=document.createDocumentFragment();tbody.replaceChildren();
  for(const x of evidenceRecords){const tr=document.createElement('tr');
-  for(const [label,value]of [['Fecha y hora',niceDate(x.created_at)],['Policía',x.officer_name],['Placa',x.plate],['Locker',x.locker],['Objetos incautados',x.objects_description],['Responsable H-50',x.h50]]){const td=document.createElement('td');td.dataset.label=label;if(label==='Responsable H-50')appendEvidenceH50(td,x);else td.textContent=String(value??'—');tr.append(td);}
+  for(const [label,value]of [['Fecha y hora',niceDate(x.created_at)],['Policía',x.officer_name],['Placa',x.plate],['Operativo',x.operation||'No registrado'],['Policías participantes',null],['Locker',x.locker],['Objetos incautados',x.objects_description],['Responsable H-50',x.h50]]){const td=document.createElement('td');td.dataset.label=label;if(label==='Policías participantes')appendEvidenceParticipants(td,x);else if(label==='Responsable H-50')appendEvidenceH50(td,x);else td.textContent=String(value??'—');tr.append(td);}
   const td=document.createElement('td');td.dataset.label='Discord';
   if(!appendEvidenceMessageLinks(td,x))td.textContent='Enlace no disponible';
   tr.append(td);batch.append(tr);
  }
- if(!evidenceRecords.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.className='muted';td.textContent=evidenceSummary?'No hay evidencias que coincidan con estos filtros.':'Sin registros cargados.';tr.append(td);batch.append(tr);}tbody.append(batch);
+ if(!evidenceRecords.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=9;td.className='muted';td.textContent=evidenceSummary?'No hay evidencias que coincidan con estos filtros.':'Sin registros cargados.';tr.append(td);batch.append(tr);}tbody.append(batch);
  $('evidenceTotalCount').textContent=evidenceSummary?.records??'—';$('evidenceOfficerCount').textContent=evidenceSummary?.officers??'—';$('evidenceMatchCount').textContent=evidenceSummary?.total??'—';
 }
 function renderEvidenceTotals(){const panel=$('evidenceTotals'),batch=document.createDocumentFragment();panel.replaceChildren();for(const x of evidenceOfficerTotals){const row=document.createElement('article'),copy=document.createElement('div'),name=document.createElement('strong'),plate=document.createElement('small'),button=document.createElement('button');row.className='evidence-officer-total';name.textContent=x.officer_name;plate.textContent='Placa '+(x.plate||'—')+' · '+x.total+(Number(x.total)===1?' evidencia':' evidencias');copy.append(name,plate);button.type='button';button.className='btn ghost';button.textContent='Ver historial';button.setAttribute('aria-label','Ver historial de '+x.officer_name);button.onclick=()=>openEvidenceHistory(x);row.append(copy,button);batch.append(row);}if(!evidenceOfficerTotals.length){const p=document.createElement('p');p.className='muted';p.textContent=evidenceSummary?'Todavía no hay evidencias registradas.':'Totales no disponibles.';batch.append(p);}panel.append(batch);}

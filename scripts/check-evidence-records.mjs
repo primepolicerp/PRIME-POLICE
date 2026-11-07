@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {evidenceRecords} from '../supabase/functions/prime-police-panel/evidence-records.ts';
 import {applicationScopeAllowed} from '../supabase/functions/prime-police-panel/application-permissions.ts';
-const calls=[],sample={records:[{id:'test',officer_name:'Pedro',plate:'0002',locker:'29',objects_description:'Hhh',h50:'Pedro',discord_message_id:'1568137057602371697',channel_id:'1539970137455853693'}],total:1,summary:{records:106,officers:2},officer_totals:[{discord_user_id:'698630509143654541',total:105}],next_offset:null,has_more:false};
+const calls=[],sample={records:[{id:'test',officer_name:'Pedro',plate:'0002',operation:'Robo a tienda',participants:[{discord_user_id:'222222222222222222',officer_name:'Compañera',plate:'0200'}],locker:'29',objects_description:'Hhh',h50:'Pedro',discord_message_id:'1568137057602371697',channel_id:'1539970137455853693'}],total:1,summary:{records:106,officers:2},officer_totals:[{discord_user_id:'698630509143654541',total:105}],next_offset:null,has_more:false};
 const run=(query='',method='GET')=>evidenceRecords(new Request('https://test/?'+query,{method}),async body=>{calls.push(body);return sample;},(body,status=200)=>Response.json(body,{status}));
 let response=await run('search=Mart%C3%ADnez&discord_user_id=698630509143654541&offset=50&limit=50');assert.equal(response.status,200);assert.deepEqual(calls[0],{p_search:'Martínez',p_user:'698630509143654541',p_offset:50,p_limit:50});assert.deepEqual(await response.json(),sample);
 for(const query of ['offset=-1','offset=1.5','offset=NaN','offset=1000001','limit=101','limit=0','discord_user_id=bad','search='+('x'.repeat(101))])assert.equal((await run(query)).status,400,query);
