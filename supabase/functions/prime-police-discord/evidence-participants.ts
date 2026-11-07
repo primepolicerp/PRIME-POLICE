@@ -16,7 +16,7 @@ function selectedTeam(i:any,h50:string):Option[]{
  return options.map((p:any)=>({label:String(p.label).slice(0,100),value:p.value,description:String(p.description||'').slice(0,100)}));
 }
 const h50Label=(i:any)=>String(i.message?.embeds?.[0]?.fields?.find((f:any)=>f.name==='H-50')?.value||'Responsable seleccionado').slice(0,100);
-function participantActions(h50:string,count:number){return {type:1,components:[{type:2,style:1,label:count?'Añadir otro':'Buscar policía',custom_id:'prime_evidence_find_people:'+h50},...(count?[{type:2,style:3,label:'Continuar',custom_id:'prime_evidence_ready:'+h50},{type:2,style:2,label:'Corregir lista',custom_id:'prime_evidence_edit_team:'+h50}]:[{type:2,style:2,label:'Ver plantilla',custom_id:'prime_evidence_people:'+h50+':0'}])]};}
+function participantActions(h50:string,count:number,showRoster=true){return {type:1,components:[{type:2,style:1,label:count?'Añadir otro':'Buscar policía',custom_id:'prime_evidence_find_people:'+h50},...(count?[{type:2,style:3,label:'Continuar',custom_id:'prime_evidence_ready:'+h50},{type:2,style:2,label:'Corregir lista',custom_id:'prime_evidence_edit_team:'+h50}]:showRoster?[{type:2,style:2,label:'Ver plantilla',custom_id:'prime_evidence_people:'+h50+':0'}]:[])]};}
 function teamEmbed(h50Name:string,team:Option[]){return {title:'Policías añadidos',description:team.length?team.map(p=>'['+p.label.replace(/[\[\]\\()<>*_`@]/g,' ').slice(0,100)+'](https://discord.com/users/'+p.value+')').join('\n'):'Todavía no has añadido a nadie.',fields:[{name:'H-50',value:h50Name.replace(/@/g,'＠').slice(0,100)}]};}
 async function renderParticipants(i:any,userId:string,c:Context,h50:string,name:string,offset:number,team:Option[],query=''){
  const members=new Map<string,Promise<any>>();
@@ -39,7 +39,7 @@ async function renderParticipants(i:any,userId:string,c:Context,h50:string,name:
  const components:any[]=[];
  if(query&&options.length<=3){for(const p of options)components.push({type:1,components:[{type:2,style:1,label:p.label.slice(0,80),custom_id:'prime_evidence_add:'+h50+':'+p.value,disabled:ids.has(p.value)}]});}
  else if(options.length)components.push({type:1,components:[{type:3,custom_id:'prime_evidence_pick:'+h50+':'+offset,placeholder:'Selecciona a quienes participaron',min_values:0,max_values:options.length,options}]});
- components.push(participantActions(h50,team.length));
+ components.push(participantActions(h50,team.length,Boolean(query)||offset<0));
  if(!query&&offset>=0)components.push({type:1,components:[{type:2,style:2,label:'Anterior',custom_id:'prime_evidence_people:'+h50+':'+Math.max(0,offset-25),disabled:offset===0},{type:2,style:2,label:'Siguiente',custom_id:'prime_evidence_people:'+h50+':'+(offset+25),disabled:page.length<=25}]});
  await c.reply(i,{content:offset<0?'✅ Lista actualizada. Añade a otro policía o pulsa **Continuar**.':query&&options.length<=3?(options.length?'Pulsa el nombre del policía para añadirlo.':'No hay coincidencias. Prueba otro nombre o placa.'):'Selecciona a los policías que participaron.',embeds:[teamEmbed(name,team)],components,allowed_mentions:{parse:[]}});
 }
