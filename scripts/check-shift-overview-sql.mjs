@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const pg=new PGlite();
 await pg.exec(`create role anon;create role authenticated;create role service_role;create table public.police_duty_shifts(id uuid default gen_random_uuid(),discord_user_id text,full_name text,plate text,unit text,started_at timestamptz,ended_at timestamptz);`);
-await pg.exec(fs.readFileSync(new URL('../supabase/migrations/20261107140407_shift_workspace_overview.sql',import.meta.url),'utf8'));
+await pg.exec(fs.readFileSync(new URL('../supabase/migrations/20261107142456_shift_workspace_overview.sql',import.meta.url),'utf8'));
 const user='111111111111111111';
 await pg.query(`insert into public.police_duty_shifts(discord_user_id,full_name,plate,unit,started_at,ended_at) values
 ($1,'Agente de prueba','0012','POLICIA','2026-11-01T22:00Z','2026-11-02T02:00Z'),
