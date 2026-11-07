@@ -71,7 +71,7 @@ async function saveEvidence(i:any,userId:string,c:Context){
  await c.reply(i,{content:'✅ Evidencia registrada en Discord y en la web. H-50: '+clean(h50)+'. Mensaje: '+String(message.id)});
 }
 export async function handleEvidenceInteraction(i:any,userId:string,c:Context):Promise<Response|null>{
- const custom=String(i.data?.custom_id||'');if(!/^prime_evidence_submit:\d{17,20}$/.test(custom)&&!['prime_evidence_open','prime_evidence_h50_find','prime_evidence_h50_search','prime_evidence_h50_select','prime_evidence_submit'].includes(custom)&&!/^prime_evidence_(people|pick|team|ready|find_people|people_search):/.test(custom)&&!custom.startsWith('prime_evidence_h50_page:')&&!custom.startsWith('prime_evidence_h50_select:')&&!custom.startsWith('prime_evidence_h50_group:'))return null;
+ const custom=String(i.data?.custom_id||'');if(!/^prime_evidence_submit:\d{17,20}$/.test(custom)&&!['prime_evidence_open','prime_evidence_h50_find','prime_evidence_h50_search','prime_evidence_h50_select','prime_evidence_submit'].includes(custom)&&!/^prime_evidence_(people|pick|team|ready|find_people|people_search|add|edit_team):/.test(custom)&&!custom.startsWith('prime_evidence_h50_page:')&&!custom.startsWith('prime_evidence_h50_select:')&&!custom.startsWith('prime_evidence_h50_group:'))return null;
  if(i.guild_id!==GUILD||!/^\d{17,20}$/.test(userId)||!permitted(i.member?.roles||[]))return c.ephemeral('Debes registrar evidencias desde el servidor con el rol Policía activo.');
  const participantPicker=handleParticipantPicker(i,userId,c,evidenceForm);if(participantPicker)return participantPicker;
  if(i.type===3&&['prime_evidence_open','prime_evidence_h50_find'].includes(custom))return c.openModal?c.openModal(i,evidenceSearchModal()):c.response(9,evidenceSearchModal());
