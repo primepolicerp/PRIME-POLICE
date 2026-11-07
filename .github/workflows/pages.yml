@@ -82,6 +82,7 @@ jobs:
           node --experimental-strip-types scripts/check-transfer-questionnaire.mjs
           node --experimental-strip-types scripts/check-external-ai-review.mjs
           node --experimental-strip-types scripts/check-evidence-records.mjs
+          node scripts/check-evidence-disabled.mjs
           node --experimental-strip-types scripts/check-evidence-form.mjs
           node --experimental-strip-types scripts/check-evidence-channel-move.mjs
           node scripts/check-evidence-participants-ui.mjs
