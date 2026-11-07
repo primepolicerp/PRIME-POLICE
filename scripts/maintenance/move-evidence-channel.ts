@@ -25,7 +25,9 @@ export async function moveEvidenceChannel(recordId:string,dryRun:boolean,c:Conte
  if(dryRun)return {id:recordId,status:'ready',photo_bytes:photo.bytes.length};
  const nonce='evmove'+recordId.replaceAll('-','').slice(0,18);
  const recent=await c.discord('/channels/'+TARGET+'/messages?limit=100');
- let posted=recent.find((m:any)=>m.author?.id===BOT&&String(m.nonce)===nonce);
+ const matches=recent.filter((m:any)=>m.author?.id===BOT&&(String(m.nonce)===nonce||(String(m.content||'')===String(original.content||'')&&m.embeds?.[0]?.title===original.embeds[0]?.title&&Date.parse(m.embeds?.[0]?.timestamp||'')===Date.parse(original.embeds[0]?.timestamp||record.created_at)&&JSON.stringify(m.embeds?.[0]?.fields||[])===JSON.stringify(original.embeds[0]?.fields||[]))));
+ if(matches.length>1)throw Error('Ambiguous destination copies; original retained');
+ let posted=matches[0];
  if(!posted){
   const extension=photo.type.includes('jpeg')?'jpg':photo.type.includes('webp')?'webp':photo.type.includes('gif')?'gif':'png',filename='evidence.'+extension;
   const embeds=original.embeds.map((e:any,index:number)=>({...(e.title?{title:e.title}:{}),...(e.description?{description:e.description}:{}),...(e.url?{url:e.url}:{}),...(e.color!==undefined?{color:e.color}:{}),...(e.footer?{footer:{text:e.footer.text,...(e.footer.icon_url?{icon_url:e.footer.icon_url}:{})}}:{}),...(e.author?{author:{name:e.author.name,...(e.author.url?{url:e.author.url}:{}),...(e.author.icon_url?{icon_url:e.author.icon_url}:{})}}:{}),...(e.fields?{fields:e.fields}:{}),...(e.thumbnail?.url?{thumbnail:{url:e.thumbnail.url}}:{}),timestamp:e.timestamp||record.created_at,...(index===0||e.image?{image:{url:'attachment://'+filename}}:{})}));
@@ -34,8 +36,9 @@ export async function moveEvidenceChannel(recordId:string,dryRun:boolean,c:Conte
  }
  if(!/^\d{17,20}$/.test(posted?.id||''))throw Error('Discord did not confirm the destination message');
  const confirmed=await c.discord('/channels/'+TARGET+'/messages/'+posted.id);
- if(confirmed.author?.id!==BOT||confirmed.attachments?.length!==1)throw Error('Destination image not confirmed');
- const targetPhoto=await c.download(confirmed.attachments[0].url);
+ const destinationUrls=[...(confirmed.attachments||[]).map((a:any)=>a.url),...(confirmed.embeds||[]).map((e:any)=>e.image?.url)].filter((url:any)=>typeof url==='string'&&photoUrl(url)&&new URL(url).pathname.split('/')[2]===TARGET);
+ if(confirmed.author?.id!==BOT||!destinationUrls.length)throw Error('Destination image not confirmed');
+ const targetPhoto=await c.download(destinationUrls[0]);
  if(await sha(targetPhoto.bytes)!==await sha(photo.bytes))throw Error('Destination image differs from the source');
  const changed=await c.db('police_evidence_records?id=eq.'+recordId+'&channel_id=eq.'+record.channel_id+'&discord_message_id=eq.'+record.discord_message_id,{method:'PATCH',body:JSON.stringify({channel_id:TARGET,discord_message_id:posted.id})});
  if(changed?.length!==1)throw Error('Could not confirm the web link update; original message retained');
