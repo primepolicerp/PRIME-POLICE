@@ -11,12 +11,12 @@ let html=await fs.readFile('index.html','utf8');
 const inlineCss=[...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(m=>m[1]).join('\n');
 const source=(await Promise.all(scripts.map(f=>fs.readFile(f,'utf8')))).join('\n;\n');
 const js=await transform(source,{minify:true,format:'iife',target:'es2022',legalComments:'none',banner,sourcemap:false});
-const css=await transform(inlineCss+'\n'+await fs.readFile('admin.css','utf8')+'\n'+await fs.readFile('software.css','utf8')+'\n'+await fs.readFile('dashboard.css','utf8')+'\n'+await fs.readFile('personnel-profile.css','utf8')+'\n'+await fs.readFile('professional-workspace.css','utf8')+'\n'+await fs.readFile('clean-workspace.css','utf8')+'\n'+await fs.readFile('personnel-register.css','utf8')+'\n'+await fs.readFile('promotions-workspace.css','utf8'),{loader:'css',minify:true,target:'es2022',legalComments:'none'});
+const css=await transform(inlineCss+'\n'+await fs.readFile('shift-workspace.css','utf8')+'\n'+await fs.readFile('admin.css','utf8')+'\n'+await fs.readFile('software.css','utf8')+'\n'+await fs.readFile('dashboard.css','utf8')+'\n'+await fs.readFile('personnel-profile.css','utf8')+'\n'+await fs.readFile('professional-workspace.css','utf8')+'\n'+await fs.readFile('clean-workspace.css','utf8')+'\n'+await fs.readFile('personnel-register.css','utf8')+'\n'+await fs.readFile('promotions-workspace.css','utf8'),{loader:'css',minify:true,target:'es2022',legalComments:'none'});
 const hash=value=>createHash('sha256').update(value).digest('hex').slice(0,12);
 const jsFile='app.'+hash(js.code)+'.js',cssFile='app.'+hash(css.code)+'.css';
 const integrity=value=>'sha384-'+createHash('sha384').update(value).digest('base64');
 const jsIntegrity=integrity(js.code),cssIntegrity=integrity(css.code);
-html=html.replace(/<style>[\s\S]*?<\/style>/g,'').replace(/<link rel="stylesheet" href="(?:admin|software|dashboard|personnel-profile|professional-workspace|clean-workspace|personnel-register|promotions-workspace)\.css[^\"]*">/g,'').replace(/<script src="[^\"]+" defer><\/script>/g,'');
+html=html.replace(/<style>[\s\S]*?<\/style>/g,'').replace(/<link rel="stylesheet" href="(?:shift-workspace|admin|software|dashboard|personnel-profile|professional-workspace|clean-workspace|personnel-register|promotions-workspace)\.css[^\"]*">/g,'').replace(/<script src="[^\"]+" defer><\/script>/g,'');
 // External script hashes require matching SRI. Do not authorize other same-origin scripts.
 if(!html.includes("script-src 'self';"))throw Error('Expected source CSP was not found');
 html=html.replace("script-src 'self';", "script-src '"+jsIntegrity+"'; script-src-attr 'none';");

@@ -57,3 +57,11 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 ## Vista previa conservada
 
 `docs/previews/prime-police-h50-formatos.html` conserva las propuestas interactivas del selector H-50 («Por iniciales» y «Lista única»). Es un fragmento de vista previa para revisar diseños; no forma parte de los archivos públicos compilados. El selector real del bot está en `supabase/functions/prime-police-discord/evidence.ts` y usa la opción por iniciales elegida por el usuario.
+
+## Bitácoras: diseño propio sin H-50
+
+- `shifts.js` y `shift-workspace.css` contienen un espacio propio de PRIME POLICE: indicadores del período completo, historial ordenable, calendario individual por mes y detalle diario. Mantener los cuatro apartados y los controles administrativos existentes.
+- `shift-overview` es una lectura autenticada con los mismos permisos de gestión que `shifts`; usa `police_shift_overview`, definida en la migración `20261107142456_shift_workspace_overview.sql`. No publica lecturas a anon/authenticated.
+- Las horas del calendario se reparten por día en Europe/Paris, incluidos cambios de horario y turnos que cruzan medianoche. Los totales no se calculan a partir de las 50 filas de una página. «Turnos breves» significa completados de menos de 30 minutos y es solo un indicador.
+- La columna «Rango actual» usa la ficha actual disponible; no inventar un rango histórico. No existe aún registro de horas/aprobación H-50: no mostrar aprobaciones o tiempos simulados en producción. Cierre forzado y eliminación mantienen sus permisos, peticiones de Directiva y auditoría.
+- `docs/previews/prime-police-bitacoras.html` es una vista previa interactiva con datos ficticios, sin acceso a producción. Se conserva fuera de los archivos públicos. Al publicar cambios, coordinar la migración y el despliegue de prime-police-panel con el frontend. El propietario ha elegido mantener esta versión sin H-50.

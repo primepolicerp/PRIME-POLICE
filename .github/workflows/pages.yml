@@ -54,6 +54,9 @@ jobs:
           node scripts/check-application-identity.mjs
           node scripts/check-session-persistence.mjs
           node scripts/check-private-error-notices.mjs
+          node scripts/check-shift-workspace.mjs
+          node --experimental-strip-types scripts/check-shift-overview.mjs
+          node scripts/check-shift-overview-sql.mjs
           node --experimental-strip-types scripts/check-panel-origins.mjs
           node --experimental-strip-types scripts/check-rejection-roles.mjs
           node --experimental-strip-types scripts/check-application-tools.mjs

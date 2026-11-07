@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {shiftOverview} from '../supabase/functions/prime-police-panel/shift-overview.ts';
+const result={total:65,open:2,completed:63,incomplete:4,officers:8,service_seconds:123456,days:[]},calls=[];
+const run=(query,method='GET',read=async body=>{calls.push(body);return result;})=>shiftOverview(new Request('https://test/?'+query,{method}),read,(body,status=200)=>Response.json(body,{status}));
+const base='from=2026-11-01T00:00:00Z&to=2026-11-08T00:00:00Z';
+let r=await run(base+'&search=Molina&unit=UCOP&discord_user_id=111111111111111111');assert.equal(r.status,200);assert.equal((await r.json()).overview.completed,63);assert.deepEqual(calls[0],{p_from:'2026-11-01T00:00:00.000Z',p_to:'2026-11-08T00:00:00.000Z',p_search:'Molina',p_unit:'UCOP',p_user:'111111111111111111'});
+for(const query of ['',base+'&unit=FAKE',base+'&discord_user_id=bad',base+'&search='+('a'.repeat(101)),'from=2026-11-08&to=2026-11-01','from=2025-01-01&to=2027-01-01'])assert.equal((await run(query)).status,400,query);
+assert.equal((await run(base,'POST')).status,405);assert.equal(calls.length,1);
+await assert.rejects(()=>run(base,'GET',async()=>({})),/Invalid shift overview/);
+console.log('Shift overview API: filters, complete-period aggregate, bounded dates, read-only method and malformed response rejection: PASS');
