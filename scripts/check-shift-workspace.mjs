@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const elements=new Map(),events=new Map();
+const $=id=>{if(!elements.has(id))elements.set(id,{value:'',innerHTML:'',textContent:'',hidden:false,addEventListener(){},setAttribute(){},removeAttribute(){},replaceChildren(){this.innerHTML='';},append(){},querySelectorAll(){return[];}});return elements.get(id);};
+const node=()=>({className:'',textContent:'',append(){},addEventListener(){}});
+const stats={total:63,completed:60,open:3,incomplete:2,officers:4,service_seconds:10000,days:[]};
+const c=vm.createContext({$,Intl,Date,Map,Set,Number,String,Math,JSON,Error,Array,Promise,setTimeout,clearTimeout,token:'session',rankRoles:[],unitLabel:u=>u,document:{querySelectorAll:()=>[],createElement:node},window:{addEventListener:(type,fn)=>events.set(type,fn)},request:async action=>action==='shifts'?{shifts:[],next_offset:null}:action==='duty-summary'?{summary:[]}:{overview:stats}});
+vm.runInContext(fs.readFileSync('shifts.js','utf8'),c);
+assert.equal(c.shiftDayStart('2026-03-29').toISOString(),'2026-03-28T23:00:00.000Z');assert.equal(c.shiftDayStart('2026-03-30').toISOString(),'2026-03-29T22:00:00.000Z');
+assert.equal(c.shiftDayStart('2026-10-25').toISOString(),'2026-10-24T22:00:00.000Z');assert.equal(c.shiftDayStart('2026-10-26').toISOString(),'2026-10-25T23:00:00.000Z');
+const shift={id:'test',discord_user_id:'111111111111111111',full_name:'<img src=x onerror=alert(1)>',plate:'0012',unit:'POLICIA',started_at:'2026-11-01T22:00Z',ended_at:'2026-11-02T02:00Z'};
+assert.equal(c.shiftDailySeconds(shift,'2026-11-01'),3600);assert.equal(c.shiftDailySeconds(shift,'2026-11-02'),10800);assert.equal(vm.runInContext('shiftHours(3660)',c),'1 h 1 min');assert.equal(c.shiftMoveDay('2026-12-31',1),'2027-01-01');
+c.sample=shift;c.aggregate=stats;vm.runInContext("dutyShifts=[sample];dutyPeople=[];shiftOverviewData=aggregate;shiftTab='history';",c);c.renderShifts();
+assert($('shiftContent').innerHTML.includes('&lt;img'));assert(!$('shiftContent').innerHTML.includes('<img src=x'));assert($('shiftSummary').innerHTML.includes('60'));assert($('shiftContent').innerHTML.includes('data-shift-agent'));assert($('shiftContent').innerHTML.includes('aria-sort='));
+vm.runInContext("shiftTab='calendar';shiftCalendarMonth='2026-11';shiftCalendarOfficer=sample.discord_user_id;shiftCalendarName='Demo';",c);c.renderShifts();assert.equal(($('shiftContent').innerHTML.match(/data-shift-day=/g)||[]).length,30);
+// An in-flight response must not repopulate private shift state after logout.
+let release;const pending=new Promise(resolve=>{release=resolve;});c.request=async action=>{await pending;return action==='shifts'?{shifts:[shift]}:action==='duty-summary'?{summary:[]}:{overview:stats};};
+const load=c.loadShifts();events.get('panel-session-ended')();c.token='';release();await load;assert.equal(vm.runInContext('dutyShifts.length',c),0);assert.equal($('shiftContent').innerHTML,'');
+console.log('Shift workspace: server-zone/DST boundaries, overnight daily hours, full aggregate vs page totals, safe names, monthly grid and session isolation: PASS');

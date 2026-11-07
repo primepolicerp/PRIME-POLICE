@@ -1,3 +1,4 @@
+import {shiftOverview} from './shift-overview.ts';
 import { authenticatePanelSession } from "./panel-sessions.ts";
 import {applyRecruitmentVeto} from './recruitment-veto.ts';
 import { discordRequest, discordFailure } from "./discord-client.ts";
@@ -693,6 +694,10 @@ export async function handleHr(req: Request, action: string): Promise<Response |
    const auth=await allowed(req);if(auth.error)return auth.error;
    try{return json({ok:true,events:await db("police_audit_events?select=*&order=created_at.desc&limit=30")});}catch{return json({error:"No se pudo cargar el historial administrativo."},502);}
   }
+  if(action==='shift-overview'){
+   const auth=await allowed(req);if(auth.error)return auth.error;
+   try{return await shiftOverview(req,body=>db('rpc/police_shift_overview',{method:'POST',body:JSON.stringify(body)}),json);}catch(error){console.error('Shift overview:',String(error));return json({error:'No se pudieron consultar las bitácoras.'},502);}
+  }
   if(action==="duty-summary"&&req.method==="GET"){
    const auth=await allowed(req);if(auth.error)return auth.error;
    const params=new URL(req.url).searchParams,from=new Date(params.get("from")||Date.now()-7*86400000),to=new Date(params.get("to")||Date.now());
@@ -728,11 +733,13 @@ export async function handleHr(req: Request, action: string): Promise<Response |
     const auth = await allowed(req); if (auth.error) return auth.error;
     try { const params=new URL(req.url).searchParams,offset=Number(params.get("offset")||0);if(!Number.isSafeInteger(offset)||offset<0)return json({error:"Página inválida."},400);
       const from=new Date(params.get("from")||Date.now()-7*86400000),to=new Date(params.get("to")||Date.now());if(!Number.isFinite(from.getTime())||!Number.isFinite(to.getTime())||from>=to)return json({error:"Rango de fechas inválido."},400);
-      let filter="&started_at=lt."+enc(to.toISOString())+"&or=(ended_at.is.null,ended_at.gte."+enc(from.toISOString())+")";
+      let filter="&started_at=lt."+enc(to.toISOString())+"&or=(ended_at.is.null,ended_at.gt."+enc(from.toISOString())+",and(ended_at.eq."+enc(from.toISOString())+",started_at.eq."+enc(from.toISOString())+"))";
       if(params.get("state")==="open")filter+="&ended_at=is.null";if(params.get("state")==="history")filter+="&ended_at=not.is.null";
       const unit=params.get("unit");if(unit&&["POLICIA","UCOP","CIC"].includes(unit))filter+="&unit=eq."+unit;
       const search=(params.get("search")||"").trim().replace(/[^\p{L}\p{N}\s]/gu,"").slice(0,100);if(search)filter+="&and=(or(full_name.ilike.*"+enc(search)+"*,plate.ilike.*"+enc(search)+"*))";
-      const shifts=await db("police_duty_shifts?select=*&order=started_at.desc,id.desc&limit=51&offset="+offset+filter);return json({ok:true,shifts:shifts.slice(0,50),next_offset:shifts.length>50?offset+50:null}); }
+      const target=params.get('discord_user_id');if(target){if(!validDiscordId(target))return json({error:'Agente inválido.'},400);filter+='&discord_user_id=eq.'+target;}
+      const sort=params.get('sort')||'started_at',direction=params.get('direction')||'desc';if(!['started_at','full_name','plate'].includes(sort)||!['asc','desc'].includes(direction))return json({error:'Orden inválido.'},400);
+      const shifts=await db("police_duty_shifts?select=*&order="+sort+'.'+direction+",id.desc&limit=51&offset="+offset+filter);return json({ok:true,shifts:shifts.slice(0,50),next_offset:shifts.length>50?offset+50:null}); }
     catch (error) { console.error("Shifts read:",String(error)); return json({ error: "No se pudieron cargar las bitácoras. Comprueba la migración de turnos." },502); }
   }
   if ((action === "shift-close" || action === "shift-delete") && req.method === "POST") {
