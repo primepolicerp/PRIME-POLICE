@@ -32,6 +32,8 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 
 - Discord → `public.police_evidence_records` → endpoint autenticado `evidence-records` → `evidence-ui.js`.
 - Las fotografías permanecen en Discord. No copiar imágenes a Storage, al repositorio o a los datos del panel. La API de lectura no devuelve photo_url.
+- Operativo, policías participantes (1–25), locker, objetos, H-50 y fotografía son obligatorios. Los participantes se seleccionan con un selector de usuarios y se revalidan contra ficha activa y roles actuales; no se aceptan bots, expulsados ni vetados. Se guardan sus IDs, nombres, placas y usuarios como metadatos en `participants`; `operation` guarda el operativo. Los contadores siguen atribuidos al autor que sube la evidencia. Los registros anteriores conservan su historial y muestran «No registrado» para los datos nuevos.
+- El formulario conserva el H-50 elegido en el custom_id firmado de la interacción para dejar espacio a los cinco campos de Discord. El H-50 se vuelve a validar antes de guardar.
 - Locker, objetos, H-50 y fotografía son obligatorios. La fotografía puede adjuntarse o recuperarse de una captura reciente (máximo 10 minutos) enviada por el autor al canal de evidencias mencionando al bot. Se puede pegar con Ctrl+V o compartir a Discord desde móvil, sin guardar primero un archivo en el PC.
 - El H-50 se elige de `police_personnel` activo. Validar de nuevo su ficha y rol Policía al guardar; bloquear bots, expulsados y vetados.
 - El botón «Buscar en plantilla» ofrece grupos por iniciales A–F, G–L, M–R y S–Z/Otros. `police_evidence_h50_initials` consulta la plantilla actual en cada petición; no mantener listas manuales. Paginación si un grupo supera las 25 opciones permitidas por Discord.

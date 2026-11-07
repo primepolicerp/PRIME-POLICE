@@ -80,6 +80,7 @@ jobs:
           node --experimental-strip-types scripts/check-external-ai-review.mjs
           node --experimental-strip-types scripts/check-evidence-records.mjs
           node --experimental-strip-types scripts/check-evidence-form.mjs
+          node scripts/check-evidence-participants-ui.mjs
           node --experimental-strip-types scripts/check-evidence-modal-response.mjs
           npm run build
           node scripts/check-public-build.mjs
