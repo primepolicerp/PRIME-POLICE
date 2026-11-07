@@ -8,7 +8,7 @@ for(const status of [400,401,403,409,429,500,502,503,504]){
  const context=vm.createContext({token:'session',API_BASE:'https://test',URLSearchParams,AbortSignal,Event,window:{dispatchEvent(){}},showLogin(){logouts++;},fetch:async()=>{calls++;return{ok:false,status,headers:new Headers({'X-Request-ID':'ab458bf2-1c70-4719-9684-f4a29aab01f3'}),json:async()=>({error:'Supabase: migraciones, SQL, DISCORD_BOT_TOKEN. Sin permiso autorizado.'})};}});
  vm.runInContext(requestSource,context);
  await assert.rejects(()=>context.performApiRequest('approve',{},'POST','session'),error=>{
-  assert.equal(error.message,'No se pudo completar la operación. Comunica esta referencia a Pedro Martínez. · Ref. ab458bf2');
+  assert.equal(error.message,'Error · Ref. ab458bf2');
   return true;
  });
  assert.equal(calls,1,'Write requests must never be retried');

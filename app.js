@@ -105,7 +105,7 @@ async function performApiRequest(action,options,method,sessionAtStart){
   if(!response.ok){
    if(method==='GET'&&attempt===0&&[429,502,503,504].includes(response.status)){await new Promise(r=>setTimeout(r,600));continue;}
    if(token===sessionAtStart&&action!=='login'&&(response.status===401||(response.status===403&&/sesión|permiso|autorizado/i.test(result.error||''))))showLogin();
-   throw Error('No se pudo completar la operación. Comunica esta referencia a Pedro Martínez.'+(reference?' · Ref. '+reference.slice(0,8):' · Referencia no disponible.'));
+   throw Error('Error'+(reference?' · Ref. '+reference.slice(0,8):' · Referencia no disponible.'));
   }
   if(result.pending_approval)window.dispatchEvent(new Event('pending-change-created'));
   return result;
