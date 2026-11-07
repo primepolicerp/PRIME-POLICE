@@ -8,7 +8,7 @@ export function handleH50(i:any,userId:string,c:Context):Response|null{
  c.waitUntil((async()=>{try{
   if(start){const member=await c.discord('/guilds/1539970134469378068/members/'+userId),roles=member.roles||[];if(member.user?.bot||!roles.includes('1539970134482092038')||roles.includes('1539970134482092034')||roles.includes('1564310246128619560')){await c.reply(i,'Necesitas el rol Policía activo, sin expulsión ni veto, para entrar en H-50.');return;}}
   const result=await c.db('rpc/police_h50_event',{method:'POST',body:JSON.stringify({p_user:userId,p_start:start})});
-  if(result?.code==='capacity_full'){await c.reply(i,'Ya hay 2 personas en H-50. Espera a que una registre su salida para poder entrar.');return;}
+  if(result?.code==='capacity_full'){const clean=(value:any,max:number)=>String(value||'').replace(/[@<>`*_~\[\]()\\]/g,'').trim().slice(0,max);const names=(Array.isArray(result.active)?result.active:[]).slice(0,2).map((person:any)=>'• '+(clean(person?.full_name,80)||'Policía')+(clean(person?.plate,20)?' · #'+clean(person.plate,20):''));await c.reply(i,'Central está ocupada (2/2).'+(names.length?'\nAhora están de H-50:\n'+names.join('\n'):'')+'\nEspera a que una persona registre su salida para entrar.');return;}
   if(!result?.ok){await c.reply(i,'No se pudo registrar H-50. Comprueba que tu ficha policial esté activa.');return;}
   if(start){await c.reply(i,result.already_open?'Ya tienes un turno H-50 abierto. Pulsa Salir de H-50 cuando termines.':'🟢 Entrada en H-50 registrada. Tu tiempo en central está contando.');return;}
   if(result.no_open){await c.reply(i,'No tienes ningún turno H-50 abierto.');return;}
