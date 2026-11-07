@@ -80,6 +80,7 @@ jobs:
           node --experimental-strip-types scripts/check-external-ai-review.mjs
           node --experimental-strip-types scripts/check-evidence-records.mjs
           node --experimental-strip-types scripts/check-evidence-form.mjs
+          node --experimental-strip-types scripts/check-evidence-channel-move.mjs
           node scripts/check-evidence-participants-ui.mjs
           node --experimental-strip-types scripts/check-evidence-police-picker.mjs
           node --experimental-strip-types scripts/check-evidence-modal-response.mjs
