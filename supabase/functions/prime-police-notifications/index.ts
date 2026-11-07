@@ -16,11 +16,13 @@ Deno.serve(async req=>{
    const channel=await weeklyReportChannelCheck(),period=await jobsDb('rpc/police_weekly_period',{method:'POST',body:JSON.stringify({p_at:new Date().toISOString()})}),report=await jobsDb('rpc/build_police_weekly_report',{method:'POST',body:JSON.stringify({p_start:period.week_start})});
    return Response.json({ok:true,channel,period,card:weeklyReportCard(report)});
   }
+  if(body.operation==='h50-refresh'){const closed=await jobsDb('rpc/police_h50_expire',{method:'POST',body:'{}'});await syncH50Status();return Response.json({ok:true,h50_closed:closed});}
   if(body.operation)return Response.json({error:'Unknown operation'},{status:400});
   // The existing two-minute scheduler also checks the weekly deadline, in local
   // time with DST. A unique week key makes this safe across concurrent runs.
   let weeklyId:any=null;try{weeklyId=await jobsDb('rpc/enqueue_due_police_weekly_report',{method:'POST',body:'{}'});}catch(error){console.error('Weekly report enqueue:',String(error));}
   try{await jobsDb('rpc/enqueue_due_police_shift_reminders',{method:'POST',body:'{}'});}catch(error){console.error('Shift reminder enqueue:',String(error));}
+  try{await jobsDb('rpc/police_h50_expire',{method:'POST',body:'{}'});}catch(error){console.error('H50 auto close:',String(error));}
   try{await syncH50Status();}catch(error){console.error('H50 status retry:',String(error));}
   let processed=0;const deadline=Date.now()+40000;
   while(processed<3&&Date.now()<deadline){

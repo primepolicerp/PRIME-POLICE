@@ -7,6 +7,7 @@ try{
  await db.exec(fs.readFileSync('supabase/migrations/20261107222947_h50_time_control.sql','utf8'));
  await db.exec(fs.readFileSync('supabase/migrations/20261107225035_h50_two_active_limit.sql','utf8'));
  await db.exec(fs.readFileSync('supabase/migrations/20261107231316_h50_show_current_operators.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261107233936_h50_auto_close_two_hours.sql','utf8').split('-- Scheduled maintenance')[0]);
  const event=async(user,start)=>(await db.query('select police_h50_event($1,$2) as r',[user,start])).rows[0].r;
  let result=await event('111111111111111111',true);assert(result.ok&&!result.already_open);const first=result.id;assert((await event('111111111111111111',true)).already_open);assert.equal((await db.query('select count(*)::int n from police_h50_shifts')).rows[0].n,1);
  assert.equal((await event('222222222222222222',true)).code,'inactive');assert((await event('222222222222222222',false)).no_open);assert((await event('111111111111111111',false)).seconds>=0);assert((await event('111111111111111111',false)).no_open);
@@ -20,7 +21,20 @@ try{
  report=await register('2020-11-04','2020-11-05');assert.equal(report.records.length,50);assert.equal(report.total,55);assert.equal(report.summary.seconds,3300);assert.equal(report.officers[0].shifts,55);assert.equal(report.next_offset,50);const second=await register('2020-11-04','2020-11-05','history',50);assert.equal(second.records.length,5);assert.equal(new Set([...report.records,...second.records].map(x=>x.id)).size,55);
  await db.exec("insert into police_personnel values('555555555555555555','Segundo','0005','POLICIA','active'),('666666666666666666','Tercero','0006','POLICIA','active');");
  assert((await event('111111111111111111',true)).ok);assert((await event('555555555555555555',true)).ok);const full=await event('666666666666666666',true);assert.equal(full.code,'capacity_full');assert.equal(full.active.length,2);assert.deepEqual(full.active.map(p=>p.full_name).sort(),['Ana Ejemplo','Segundo']);assert((await event('111111111111111111',true)).already_open);await event('555555555555555555',false);assert((await event('666666666666666666',true)).ok);
+ // Exact two-hour boundary, repeat-safe expiry and automatic slot recovery.
+ await db.exec("begin;update police_h50_shifts set started_at=now()-interval '2 hours' where ended_at is null;");
+ assert.equal((await db.query('select police_h50_expire() n')).rows[0].n,2);
+ assert.equal((await db.query('select police_h50_expire() n')).rows[0].n,0);
+ assert.equal((await db.query("select count(*)::int n from police_h50_shifts where close_reason='Cierre automático al cumplir 2 horas en H-50' and ended_at-started_at=interval '2 hours'")).rows[0].n,2);
+ await db.exec("rollback;begin;update police_h50_shifts set started_at=now()-interval '119 minutes' where ended_at is null;");
+ assert.equal((await db.query('select police_h50_expire() n')).rows[0].n,0);
+ await db.exec("update police_h50_shifts set started_at=now()-interval '3 hours' where ended_at is null;");
+ assert((await event('555555555555555555',true)).ok);
+ assert.equal((await db.query('select count(*)::int n from police_h50_shifts where ended_at is null')).rows[0].n,1);
+ await db.exec("update police_h50_shifts set started_at=now()-interval '3 hours' where ended_at is null;");
+ assert.equal((await event('555555555555555555',false)).seconds,7200);
+ await db.exec('rollback;');
  await assert.rejects(()=>register('2020-11-03','2020-11-02'));await assert.rejects(()=>register('2020-11-02','2020-11-03','invalid'));await assert.rejects(()=>event('bad',true));
- await db.exec('set role anon');await assert.rejects(()=>register('2020-11-02','2020-11-03'));await assert.rejects(()=>db.query('select * from police_h50_shifts'));await db.exec('reset role;set role service_role');assert.equal((await register('2020-11-02','2020-11-03')).total,2);assert((await event('111111111111111111',true)).already_open);
- console.log('H50 SQL: private access, idempotent start/stop, inactive denied, isolated history, clipped period hours, full totals with 50-row pagination, optimistic closure and atomic audit: PASS');
+ await db.exec('set role anon');await assert.rejects(()=>db.query('select police_h50_expire()'));await assert.rejects(()=>register('2020-11-02','2020-11-03'));await assert.rejects(()=>db.query('select * from police_h50_shifts'));await db.exec('reset role;set role service_role');assert.equal((await register('2020-11-02','2020-11-03')).total,2);assert((await event('111111111111111111',true)).already_open);
+ console.log('H50 SQL: two-hour boundary, retry-safe auto close, expired slot recovery, capped late exit, private access, idempotent start/stop, inactive denied, isolated history, clipped period hours, full totals with 50-row pagination, optimistic closure and atomic audit: PASS');
 }finally{await db.close();}
