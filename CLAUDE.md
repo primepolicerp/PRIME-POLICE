@@ -49,6 +49,7 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - Canal de control: `1539970136302288948`. Botones `prime_h50_start` y `prime_h50_end`; respuestas privadas.
 - Tabla independiente `police_h50_shifts`, RLS activa y acceso exclusivo por servicio. Máximo dos personas con H-50 abierto al mismo tiempo, con comprobación serializada en base de datos. Cuando no quedan plazas, la respuesta privada del botón muestra los nombres y placas de las dos personas que están en central, sin mencionarlas ni avisarles. Un turno abierto por policía; RPC atómica e idempotente `police_h50_event`. No sumar ni copiar estas horas a `police_duty_shifts`.
 - Web: apartado «Horas H-50», `h50-ui.js`, endpoint privado `h50-records`; filtros en hora Europa/París, historial, paginación y agregados completos por policía. Cierre `h50-close` solo para Directiva/UCOP autorizado, con control de concurrencia y auditoría atómica en `adjustments`.
+- Estado público de central en `1568766177524719776`: un único mensaje que se edita, sin duraciones ni avisos por mención. `police_h50_status` conserva el ID del mensaje, revisiones y una concesión de 45 s; el trigger registra los cambios de ocupación. Bot y cierre administrativo solicitan la sincronización; el trabajador de notificaciones reintenta los pendientes. Nunca crear mensajes nuevos desde la sincronización normal.
 - El registro de evidencias de Discord continúa desactivado.
 
 ## Reglas del proyecto

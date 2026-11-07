@@ -1,3 +1,4 @@
+import {syncH50Status} from '../_shared/h50-status.ts';
 import {handleH50,h50Panel,H50_CHANNEL_ID} from './h50.ts';
 import { parseApplicationIdentity } from "../_shared/application-identity.ts";
 import {isRecruitmentVetoed,RECRUITMENT_VETO_ROLE,RECRUITMENT_VETO_MESSAGE} from '../_shared/recruitment-restriction.ts';
@@ -137,7 +138,7 @@ async function handle(i:any){
  if((i.member?.roles||[]).includes(RECRUITMENT_VETO_ROLE)&&(/^(prime_apply|prime_application|prime_transfer|prime_rank_request)/.test(String(i.data?.custom_id||''))||['postulacion','traslado'].includes(i.data?.name)))return ephemeral(RECRUITMENT_VETO_MESSAGE);
  const applicationStep=await handleApplicationSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processApplicationSubmit});if(applicationStep)return applicationStep;
  const transferStep=await handleTransferSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processTransferSubmit});if(transferStep)return transferStep;
- const h50=handleH50(i,userId,{db,discord,response,ephemeral,reply:editInteractionReply,waitUntil:task=>EdgeRuntime.waitUntil(task)});if(h50)return h50;
+ const h50=handleH50(i,userId,{db,discord,response,ephemeral,reply:editInteractionReply,waitUntil:task=>EdgeRuntime.waitUntil(task),status:()=>EdgeRuntime.waitUntil(syncH50Status().catch(error=>console.error('H50 public status:',String(error))))});if(h50)return h50;
  const absence=await handleAbsenceInteraction(i,{db,discord,response,ephemeral,values,reply:editInteractionReply});if(absence)return absence;
  if(i.type===2){
   const name=i.data?.name;

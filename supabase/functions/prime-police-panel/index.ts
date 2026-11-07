@@ -1,3 +1,4 @@
+import {syncH50Status} from '../_shared/h50-status.ts';
 import {h50Route} from './h50.ts';
 import { parseApplicationIdentity } from "../_shared/application-identity.ts";
 import { administrationRoute } from './administration.ts';
@@ -609,7 +610,7 @@ async function routePanel(req: Request): Promise<Response> {
    const member=await accessMember(actor);return managePersonnelProfile(req,action,actor,{db,discord,json,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});
   }
   if(['absence-summary','absence-review','absence-roster','absence-register'].includes(action||'')){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);return manageAbsences(req,action,actor,{db,json,notify:sendPrivateDiscordMessage,audit:postAuditLog});}
-  if(action==='h50-records'||action==='h50-close'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);if(applicationPermissions(member.roles||[]).applicationsOnly)return json({error:'Sin permiso para consultar H-50.'},403);return h50Route(req,action,actor,{db,json,canManage:(member.roles||[]).some((id:string)=>['1539970134565982313','1539970134544748562','1539970134519578774','1539970134519578773'].includes(id))});}
+  if(action==='h50-records'||action==='h50-close'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);if(applicationPermissions(member.roles||[]).applicationsOnly)return json({error:'Sin permiso para consultar H-50.'},403);return h50Route(req,action,actor,{db,json,status:()=>EdgeRuntime.waitUntil(syncH50Status().catch(error=>console.error('H50 public status:',String(error)))),canManage:(member.roles||[]).some((id:string)=>['1539970134565982313','1539970134544748562','1539970134519578774','1539970134519578773'].includes(id))});}
   if (action === "evidence-records") {
    const actor=await authorizedUser(req);
    if(!actor)return json({error:"Sesión caducada o sin permisos de gestión."},403);

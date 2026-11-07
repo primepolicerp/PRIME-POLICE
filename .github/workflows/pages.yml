@@ -86,6 +86,7 @@ jobs:
           node scripts/check-evidence-disabled.mjs
           node --experimental-strip-types scripts/check-h50.mjs
           node scripts/check-h50-sql.mjs
+          node --experimental-strip-types scripts/check-h50-status.mjs
           node --experimental-strip-types scripts/check-evidence-form.mjs
           node --experimental-strip-types scripts/check-evidence-channel-move.mjs
           node scripts/check-evidence-participants-ui.mjs

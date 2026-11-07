@@ -1,3 +1,4 @@
+import {syncH50Status} from '../_shared/h50-status.ts';
 import {deliverPrivateNotice} from '../prime-police-panel/private-notices.ts';
 import {deliverShiftReminder} from '../prime-police-panel/shift-reminders.ts';
 import {jobsDb,deliverClaimedNotice} from '../prime-police-panel/discord-jobs.ts';
@@ -20,6 +21,7 @@ Deno.serve(async req=>{
   // time with DST. A unique week key makes this safe across concurrent runs.
   let weeklyId:any=null;try{weeklyId=await jobsDb('rpc/enqueue_due_police_weekly_report',{method:'POST',body:'{}'});}catch(error){console.error('Weekly report enqueue:',String(error));}
   try{await jobsDb('rpc/enqueue_due_police_shift_reminders',{method:'POST',body:'{}'});}catch(error){console.error('Shift reminder enqueue:',String(error));}
+  try{await syncH50Status();}catch(error){console.error('H50 status retry:',String(error));}
   let processed=0;const deadline=Date.now()+40000;
   while(processed<3&&Date.now()<deadline){
    const preferred=weeklyId;weeklyId=null;
