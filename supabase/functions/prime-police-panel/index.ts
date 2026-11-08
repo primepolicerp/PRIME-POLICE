@@ -821,7 +821,6 @@ async function createSanction(req: Request) {
         { name: "Oficial sancionado", value: "<@" + targetId + ">" + (targetName ? " · " + targetName : "") + (plate ? " · Placa " + plate : ""), inline: false },
         { name: "Registrado por", value: "<@" + issuerId + ">", inline: true },
         { name: "Motivo", value: reason, inline: false },
-        ...(evidenceUrl ? [{ name: "Evidencia", value: "[Abrir evidencia](" + evidenceUrl + ")", inline: false }] : []),
         { name: "Tipo de acción", value: label + " " + level, inline: true },
         { name: "Amonestaciones activas", value: String(warnings), inline: true },
         { name: "Strikes activos", value: String(strikes), inline: true },

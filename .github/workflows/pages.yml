@@ -83,6 +83,7 @@ jobs:
           node --experimental-strip-types scripts/check-transfer-questionnaire.mjs
           node --experimental-strip-types scripts/check-external-ai-review.mjs
           node --experimental-strip-types scripts/check-evidence-records.mjs
+          node scripts/check-sanction-notice-privacy.mjs
           node scripts/check-evidence-disabled.mjs
           node --experimental-strip-types scripts/check-h50.mjs
           node scripts/check-h50-sql.mjs
