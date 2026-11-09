@@ -1,4 +1,4 @@
-const departureRoleLabels={none:'Sin rol adicional',voluntary:'Baja Voluntaria',expelled:'Expulsado',banned:'Vetado'};
+const departureRoleLabels={discharged:'Baja',none:'Sin rol adicional',voluntary:'Baja Voluntaria',expelled:'Expulsado',banned:'Vetado'};
 function suggestedDepartureRole(type){return ['renuncia','jubilacion'].includes(type)?'voluntary':['despido','corrupcion'].includes(type)?'expelled':'';}
 const departureLabels={pkt:'PKT',ck:'Muerte (CK)',despido:'Despido',corrupcion:'Corrupción',renuncia:'Renuncia',jubilacion:'Jubilación',transferencia:'Transferencia',inactividad:'Inactividad',otro:'Otro'};
 let statusPerson=null,statusBusy=false,statusOperation='',profileMovementOffset=0,profileMovementNext=null;
