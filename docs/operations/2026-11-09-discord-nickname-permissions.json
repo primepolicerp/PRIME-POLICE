@@ -1,0 +1,93 @@
+{
+  "date": "2026-11-09",
+  "guild_id": "1539970134469378068",
+  "policy": "Explicit CHANGE_NICKNAME and MANAGE_NICKNAMES only for Directiva and Gobierno; bot-managed roles preserved. Administrator implicit privileges remain.",
+  "verified_roles": 71,
+  "changed_roles": 13,
+  "changes": [
+    {
+      "id": "1539970134469378068",
+      "name": "@everyone",
+      "before": "2222085186637377",
+      "after": "2222085119528513"
+    },
+    {
+      "id": "1539970134469378072",
+      "name": "WEB",
+      "before": "1720708421373505",
+      "after": "1720708354264641"
+    },
+    {
+      "id": "1539970134519578773",
+      "name": "UCOP",
+      "before": "562950154880000",
+      "after": "562949953553408"
+    },
+    {
+      "id": "1539970134519578774",
+      "name": "DIRECTIVA",
+      "before": "1032",
+      "after": "201327624"
+    },
+    {
+      "id": "1539970134544748555",
+      "name": "Admin Staff Policial",
+      "before": "8864262743130111",
+      "after": "8864262541803519"
+    },
+    {
+      "id": "1539970134544748557",
+      "name": "Dev. Discord",
+      "before": "8864262743130111",
+      "after": "8864262541803519"
+    },
+    {
+      "id": "1539970134544748559",
+      "name": "Jefe de Division",
+      "before": "7737808785506295",
+      "after": "7737808584179703"
+    },
+    {
+      "id": "1539970134544748561",
+      "name": "Comisionado",
+      "before": "67108864",
+      "after": "0"
+    },
+    {
+      "id": "1539970134544748562",
+      "name": "[----Alta Directiva----]",
+      "before": "0",
+      "after": "201326592"
+    },
+    {
+      "id": "1539970134565982311",
+      "name": "VICE PRESIDENTE",
+      "before": "0",
+      "after": "201326592"
+    },
+    {
+      "id": "1539970134565982313",
+      "name": "[----Gobierno----]",
+      "before": "0",
+      "after": "201326592"
+    },
+    {
+      "id": "1564296837236531331",
+      "name": "Server Booster",
+      "before": "2222085186637377",
+      "after": "2222085119528513"
+    },
+    {
+      "id": "1564685481457877012",
+      "name": "👨‍🎓 PRESELECCION",
+      "before": "67108864",
+      "after": "0"
+    }
+  ],
+  "administrator_exceptions": [
+    "1539970134544748555",
+    "1539970134544748557",
+    "1539970134565982314"
+  ],
+  "verification": "All other permission bits, role names, colors, positions, hoist, mentionability and bot-managed permissions unchanged. No nicknames or members changed."
+}
