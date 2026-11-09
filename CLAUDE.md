@@ -81,3 +81,9 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - La opción «Baja» usa el rol Discord `1569323526610092234` y el valor `discharged`. Se añade junto a Baja Voluntaria, Expulsado y Vetado, conservando sus IDs y las sugerencias actuales por motivo.
 - Al reingresar se retiran Baja y Baja Voluntaria. Expulsado y Vetado siguen bloqueando el reingreso y no se pueden rebajar usando Baja. La sincronización de accesos no debe reactivar por sí sola a quien tenga un rol de baja.
 - El valor adicional requiere la migración `20261109122410_general_departure_role.sql` antes de activar la opción y desplegar las funciones afectadas. No se aplican bajas ni asignaciones retroactivas.
+
+## Jefaturas de división
+
+- Jefe (`1539970134544748559`) y Subjefe (`1539970134544748558`) comparten los roles existentes de Discord entre CIC y UCOP. No inventar nuevos IDs ni conceder acceso a toda la rama CIC.
+- Al asignar estos cargos es obligatorio elegir CIC o UCOP; se conserva la división en `unit` y el nombre del cargo en la ficha. Ambos roles permiten entrar al panel y a Personal, conservando las autorizaciones de Directiva y las protecciones de roles elevados.
+- Los apodos de estos cargos usan CIC cuando llevan esa rama. No se cambian fichas ni roles de personas de forma retroactiva al desplegar.

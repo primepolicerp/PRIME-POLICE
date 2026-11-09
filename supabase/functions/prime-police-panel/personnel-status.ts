@@ -1,4 +1,4 @@
-import {REAL_RANKS,realRank,rankedNickname,shouldAssignUcopBranch} from '../_shared/real-ranks.ts';
+import {isDivisionLeader,divisionRankName,REAL_RANKS,realRank,rankedNickname,shouldAssignUcopBranch} from '../_shared/real-ranks.ts';
 import {writeAudit} from './audit-events.ts';
 import {announceDeparture} from './departure-announcements.ts';
 import {DEPARTURE_ROLES,departureRoleChoice,hasPersonnelRestriction} from '../_shared/departure-roles.ts';
@@ -15,6 +15,7 @@ export function validatePersonnelMovement(body:any,person:any,action:string){
  if(person.status!=='inactive')return 'El agente ya está activo.';
  if(['banned','expelled'].includes(person.departure_role))return 'El agente tiene una expulsión o veto registrado. Debe resolverse antes de permitir su reingreso.';
  if(person.departure_date&&date<person.departure_date)return 'El reingreso no puede ser anterior a la baja.';
+ if(isDivisionLeader(body.rank_role_id)&&!['CIC','UCOP'].includes(body.unit))return 'Selecciona CIC o UCOP para el cargo de división.';
  return !realRank(body.rank_role_id)||!['POLICIA','UCOP','CIC'].includes(body.unit)?'Selecciona rango y división para el reingreso.':'';
 }
 export async function changePersonnelStatus(req:Request,action:string,actor:string,c:Context){
@@ -73,7 +74,7 @@ export async function changePersonnelStatus(req:Request,action:string,actor:stri
    for(const role of [...desired].filter(r=>!original.includes(r))){await c.discord(memberPath+'/roles/'+role,{method:'PUT',body:'{}'});changed.push([role,'DELETE']);}
   }
   committing=true;
-  result=await c.db('rpc/change_police_personnel_status',{method:'POST',body:JSON.stringify({p_operation:body.operation_id,p_user:target,p_kind:kind,p_departure_role:departureRole,p_type:departure?body.departure_type:null,p_date:body.effective_date,p_reason:String(body.reason).trim(),p_actor:actor,p_actor_name:c.actorName,p_expected_updated_at:body.expected_updated_at,p_rank_id:departure?null:body.rank_role_id,p_rank_name:departure?null:realRank(body.rank_role_id)!.name,p_unit:departure?null:body.unit})});
+  result=await c.db('rpc/change_police_personnel_status',{method:'POST',body:JSON.stringify({p_operation:body.operation_id,p_user:target,p_kind:kind,p_departure_role:departureRole,p_type:departure?body.departure_type:null,p_date:body.effective_date,p_reason:String(body.reason).trim(),p_actor:actor,p_actor_name:c.actorName,p_expected_updated_at:body.expected_updated_at,p_rank_id:departure?null:body.rank_role_id,p_rank_name:departure?null:divisionRankName(body.rank_role_id,body.unit),p_unit:departure?null:body.unit})});
   if(!result?.ok){committing=false;throw Error(result?.error||'No se pudo guardar el movimiento.');}
  }catch(error){
   if(committing){
