@@ -17,8 +17,8 @@ export const REAL_RANKS=[
  {id:'1564308664557506691',name:'Pasante UCOP',short:'Pasante UCOP',track:'ucop',order:101},
  {id:'1539970134519578769',name:'Oficial UCOP',short:'Oficial UCOP',track:'ucop',order:102},
  {id:'1539970134519578770',name:'RH UCOP',short:'RH',track:'ucop',order:103},
- {id:'1539970134544748558',name:'Sub-Jefe UCOP',short:'Sub-Jefe UCOP',track:'ucop',order:104},
- {id:'1539970134544748559',name:'Jefe UCOP',short:'Jefe UCOP',track:'ucop',order:105},
+ {id:'1539970134544748558',name:'Subjefe de División',short:'Sub-Jefe UCOP',track:'ucop',order:104},
+ {id:'1539970134544748559',name:'Jefe de División',short:'Jefe UCOP',track:'ucop',order:105},
 ] as const;
 export const realRank=(id:unknown)=>REAL_RANKS.find(rank=>rank.id===String(id));
 export function realRankRows(rows:any[]){return (rows||[]).filter(row=>realRank(row.role_id)).map(row=>({...row,role_name:realRank(row.role_id)!.name,rank_order:realRank(row.role_id)!.order,rank_track:realRank(row.role_id)!.track}));}
@@ -33,9 +33,19 @@ export function rankedNickname(name:string,plate:string,roles:string[]){
  const suffix=cleanPlate?' #'+cleanPlate:'';
  const points=(s:string)=>Array.from(s);
  let label=rank?(rank.track==='ucop'?rank.short:rank.name):'';
- if(rank&&points(label+' | '+cleanName+suffix).length>32)label=rank.short;
+ if(rank&&['1539970134544748558','1539970134544748559'].includes(rank.id)&&roles.includes('1539970134519578772'))label=rank.id==='1539970134544748558'?'Sub-Jefe CIC':'Jefe CIC';
+ if(rank&&points(label+' | '+cleanName+suffix).length>32&&!label.endsWith(' CIC'))label=rank.short;
  const prefix=label?label+' | ':'';
  const room=32-points(prefix+suffix).length;
  if(room<1)throw Error('La placa es demasiado larga para incluir rango, nombre y placa en el apodo.');
  return prefix+points(cleanName).slice(0,room).join('').trimEnd()+suffix;
+}
+
+// Division leaders share their existing Discord role; the personnel unit identifies CIC/UCOP.
+export const DIVISION_LEADER_IDS=['1539970134544748558','1539970134544748559'];
+export const isDivisionLeader=(id:unknown)=>DIVISION_LEADER_IDS.includes(String(id));
+export function divisionRankName(id:unknown,unit:unknown){
+ if(!isDivisionLeader(id))return realRank(id)?.name||'';
+ const title=String(id)===DIVISION_LEADER_IDS[0]?'Subjefe de División':'Jefe de División';
+ return title+(['CIC','UCOP'].includes(String(unit))?' '+String(unit):'');
 }

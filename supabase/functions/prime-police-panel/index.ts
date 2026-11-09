@@ -699,8 +699,8 @@ const MANAGER_ROLE_LABELS = new Map([
   [UCOP_TRAINEE_ROLE, 'Pasante UCOP'],
   ['1539970134519578769','Oficial UCOP'],
   ['1539970134519578770','RH UCOP'],
-  ['1539970134544748558','Sub-Jefe UCOP'],
-  ['1539970134544748559','Jefe UCOP'],
+  ['1539970134544748558','Subjefe de División'],
+  ['1539970134544748559','Jefe de División'],
 ]);
 const authorizedRequests = new WeakMap<Request,string|null>();
 async function authorizedUser(req: Request): Promise<string | null> {

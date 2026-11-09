@@ -4,13 +4,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {stripTypeScriptTypes} from 'node:module';
 import vm from 'node:vm';
-import {REAL_RANKS,realRank,rankedNickname,shouldAssignUcopBranch} from '../supabase/functions/_shared/real-ranks.ts';
+import {isDivisionLeader,divisionRankName,REAL_RANKS,realRank,rankedNickname,shouldAssignUcopBranch} from '../supabase/functions/_shared/real-ranks.ts';
 const source=stripTypeScriptTypes(readFileSync(new URL('../supabase/functions/prime-police-panel/personnel-status.ts',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('export ',''));
 const target='222222222222222222',actor='111111111111111111',police='1539970134482092038',ucop='1539970134519578773',rank='1564309793802428567',pasante='1564308664557506691',staff='1539970134544748556';
 const stamp='2026-11-01T12:00:00Z',today=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'});
 function scenario(options={}){
  const state={person:{discord_user_id:target,full_name:'Agente Ejemplo',plate:'0123',rank_name:options.chief?'Jefe UCOP':'Raso',rank_role_id:options.chief?'1539970134544748559':rank,unit:'POLICIA',status:options.reentry?'inactive':'active',updated_at:stamp},roles:new Set([police,rank,ucop,staff]),writes:[],events:[],announcements:[],calls:0,failed:false};
- const context=vm.createContext({Request,Response,Date,BigInt,Set,console:{error(){}},REAL_RANKS,realRank,rankedNickname,shouldAssignUcopBranch,DEPARTURE_ROLES,departureRoleChoice,hasPersonnelRestriction,writeAudit:async()=>{},announceDeparture:async notice=>{assert.equal(state.person.status,'inactive');assert.equal(notice.approvedBy,'Directiva de prueba');state.announcements.push(notice);return '';}});vm.runInContext(source,context);
+ const context=vm.createContext({isDivisionLeader,divisionRankName,Request,Response,Date,BigInt,Set,console:{error(){}},REAL_RANKS,realRank,rankedNickname,shouldAssignUcopBranch,DEPARTURE_ROLES,departureRoleChoice,hasPersonnelRestriction,writeAudit:async()=>{},announceDeparture:async notice=>{assert.equal(state.person.status,'inactive');assert.equal(notice.approvedBy,'Directiva de prueba');state.announcements.push(notice);return '';}});vm.runInContext(source,context);
  const c={actorName:'Directiva de prueba',actorIsDirector:options.director!==false,json:(body,status=200)=>Response.json(body,{status}),
   discord:async(path,init)=>{
    state.calls++;if(path==='/users/@me')return{id:'999999999999999999'};if(path.endsWith('/members/999999999999999999'))return{roles:['bot-role']};

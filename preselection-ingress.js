@@ -21,7 +21,7 @@ async function openPreselectionAdmission(person,source='preselection'){
  $('preselectionAdmissionFeedback').textContent='';suggestNextPlate($('admissionPlate'),admissionOperation);
  $('preselectionAdmissionPolicy').textContent=(canAuthorizePromotions?'El ingreso se aplicará al confirmar.':'UCOP puede preparar el ingreso; Directiva lo aprobará desde Pendientes.')+' Se asignarán Policía, la división y el rango elegidos, junto al apodo Rango · Nombre IC #placa cuando tenga rango asignado.';
  $('savePreselectionAdmission').textContent=canAuthorizePromotions?'Ingresar a la base':'Enviar ingreso a Directiva';$('preselectionAdmissionDialog').showModal();
- const operation=admissionOperation,select=$('admissionRank');select.replaceChildren(new Option('Sin rango por ahora',''));select.disabled=true;
+ const operation=admissionOperation,select=$('admissionRank');select.replaceChildren(new Option('Sin rango por ahora',''));select.disabled=true;updateDivisionChoice('admissionRank','admissionUnit');
  try{const result=await request('rank-config',{method:'GET'});if(operation!==admissionOperation)return;(result.ranks||[]).forEach(rank=>select.add(rankChoice(rank)));}
  catch(error){if(operation===admissionOperation)$('preselectionAdmissionFeedback').textContent='No se cargaron los rangos. Puedes reabrir el formulario para reintentar. '+error.message;}
  finally{if(operation===admissionOperation)select.disabled=false;}
