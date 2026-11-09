@@ -1,0 +1,1449 @@
+{
+  "date": "2026-11-09",
+  "guild_id": "1539970134469378068",
+  "scope": "Channel and category names only; threads and posts unchanged",
+  "verified": true,
+  "permissions_order_and_ids_preserved": true,
+  "channels": [
+    {
+      "id": "1539970135375478855",
+      "name": "📍┇𝐏𝐔𝐍𝐓𝐎",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 9,
+      "permission_hash": "4db8aceab0f8dd8c304f368dd0c975322d3cf5290aefe77895436ae6de842d3c",
+      "old_name": "📍┇𝐏𝐔𝐍𝐓𝐎",
+      "new_name": "📍┇𝐏𝐮𝐧𝐭𝐨"
+    },
+    {
+      "id": "1539970135375478858",
+      "name": "🏛️┇𝐋𝐎𝐁𝐁𝐘",
+      "type": 4,
+      "parent_id": null,
+      "position": 0,
+      "permission_hash": "1a101bcc4cfe3aa03716ce7dcb2b769af78205d8b220f16713b38297deb149e4",
+      "old_name": "🏛️┇𝐋𝐎𝐁𝐁𝐘",
+      "new_name": "🏛️┇𝐋𝐨𝐛𝐛𝐲"
+    },
+    {
+      "id": "1539970135375478859",
+      "name": "🥇┇𝐒𝐎𝐋𝐈𝐂𝐈𝐓𝐀𝐑-𝐑𝐀𝐍𝐆𝐎",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 2,
+      "permission_hash": "b12dd8bf4973be8565eb377fa15a0e6ae180094ee1f2080aca05e5f624bf0322",
+      "old_name": "🥇┇𝐒𝐎𝐋𝐈𝐂𝐈𝐓𝐀𝐑-𝐑𝐀𝐍𝐆𝐎",
+      "new_name": "🥇┇𝐒𝐨𝐥𝐢𝐜𝐢𝐭𝐚𝐫-𝐫𝐚𝐧𝐠𝐨"
+    },
+    {
+      "id": "1539970135375478860",
+      "name": "👮┇𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎𝐍",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 3,
+      "permission_hash": "3364fb78c381671af947885a0eb9762d8f4bd2151c4c7cad2ff0b2a2af8edb1f",
+      "old_name": "👮┇𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎𝐍",
+      "new_name": "👮┇𝐏𝐨𝐬𝐭𝐮𝐥𝐚𝐜𝐢𝐨𝐧"
+    },
+    {
+      "id": "1539970135375478862",
+      "name": "📥┇𝐃𝐔𝐃𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 6,
+      "permission_hash": "7e12da7549342a655771170b5e1a66be5667eb0e0c82a89052d18274552d28c0",
+      "old_name": "📥┇𝐃𝐔𝐃𝐀𝐒",
+      "new_name": "📥┇𝐃𝐮𝐝𝐚𝐬"
+    },
+    {
+      "id": "1539970135375478863",
+      "name": "🔊┇𝐒𝐀𝐋𝐀-𝐃𝐄-𝐄𝐒𝐏𝐄𝐑𝐀",
+      "type": 2,
+      "parent_id": "1539970135375478858",
+      "position": 0,
+      "permission_hash": "ec1e9a0da7527a35d39ed7c7b5a9ff3694ffc16dff46f2ff39a8296ff93451be",
+      "old_name": "🔊┇𝐒𝐀𝐋𝐀-𝐃𝐄-𝐄𝐒𝐏𝐄𝐑𝐀",
+      "new_name": "🔊┇𝐒𝐚𝐥𝐚-𝐝𝐞-𝐞𝐬𝐩𝐞𝐫𝐚"
+    },
+    {
+      "id": "1539970135375478864",
+      "name": "📚┇𝐃𝐎𝐂𝐔𝐌𝐄𝐍𝐓𝐎𝐒",
+      "type": 4,
+      "parent_id": null,
+      "position": 2,
+      "permission_hash": "85bd984e8476292d7bd707c16d94e9b223a2ad5eb7eb6883771728ccc07eb0ca",
+      "old_name": "📚┇𝐃𝐎𝐂𝐔𝐌𝐄𝐍𝐓𝐎𝐒",
+      "new_name": "📚┇𝐃𝐨𝐜𝐮𝐦𝐞𝐧𝐭𝐨𝐬"
+    },
+    {
+      "id": "1539970135731871754",
+      "name": "👗┇𝐕𝐄𝐒𝐓𝐈𝐌𝐄𝐍𝐓𝐀-𝐅",
+      "type": 0,
+      "parent_id": "1539970135375478864",
+      "position": 17,
+      "permission_hash": "ed9c921827fd797e865807ab9d6bb55372a7552a4e3b121145b38d36cda4a672",
+      "old_name": "👗┇𝐕𝐄𝐒𝐓𝐈𝐌𝐄𝐍𝐓𝐀-𝐅",
+      "new_name": "👗┇𝐕𝐞𝐬𝐭𝐢𝐦𝐞𝐧𝐭𝐚-𝐅"
+    },
+    {
+      "id": "1539970135731871755",
+      "name": "👖┇𝐕𝐄𝐒𝐓𝐈𝐌𝐄𝐍𝐓𝐀-𝐌",
+      "type": 0,
+      "parent_id": "1539970135375478864",
+      "position": 18,
+      "permission_hash": "0cff82c776c5225dd848d483baa193c167eccc68446a872d34827d4f8b711235",
+      "old_name": "👖┇𝐕𝐄𝐒𝐓𝐈𝐌𝐄𝐍𝐓𝐀-𝐌",
+      "new_name": "👖┇𝐕𝐞𝐬𝐭𝐢𝐦𝐞𝐧𝐭𝐚-𝐌"
+    },
+    {
+      "id": "1539970135731871756",
+      "name": "📕┇𝐍𝐎𝐑𝐌𝐀𝐓𝐈𝐕𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970135375478864",
+      "position": 12,
+      "permission_hash": "ed9c921827fd797e865807ab9d6bb55372a7552a4e3b121145b38d36cda4a672",
+      "old_name": "📕┇𝐍𝐎𝐑𝐌𝐀𝐓𝐈𝐕𝐀𝐒",
+      "new_name": "📕┇𝐍𝐨𝐫𝐦𝐚𝐭𝐢𝐯𝐚𝐬"
+    },
+    {
+      "id": "1539970135731871757",
+      "name": "📔┇𝐂𝐎𝐌𝐔𝐍𝐈𝐂𝐀𝐂𝐈𝐎𝐍",
+      "type": 0,
+      "parent_id": "1539970135375478864",
+      "position": 14,
+      "permission_hash": "dba35a6e71ce9b3afd8606fb3fe4263aa3eb9998345da3b01c9834f3d6bea089",
+      "old_name": "📔┇𝐂𝐎𝐌𝐔𝐍𝐈𝐂𝐀𝐂𝐈𝐎𝐍",
+      "new_name": "📔┇𝐂𝐨𝐦𝐮𝐧𝐢𝐜𝐚𝐜𝐢𝐨𝐧"
+    },
+    {
+      "id": "1539970135731871758",
+      "name": "🎖️┇𝐉𝐄𝐑𝐀𝐑𝐐𝐔𝐈𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970135375478864",
+      "position": 13,
+      "permission_hash": "e1eec09660ba53a0a65636c4e16b6a08bd386b65803b77912837f782f5ee7fa0",
+      "old_name": "🎖️┇𝐉𝐄𝐑𝐀𝐑𝐐𝐔𝐈𝐀𝐒",
+      "new_name": "🎖️┇𝐉𝐞𝐫𝐚𝐫𝐪𝐮𝐢𝐚𝐬"
+    },
+    {
+      "id": "1539970135731871759",
+      "name": "📈┇𝐀𝐒𝐂𝐄𝐍𝐒𝐎-𝐃𝐄-𝐑𝐀𝐍𝐆𝐎",
+      "type": 0,
+      "parent_id": "1539970136839163959",
+      "position": 72,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "📈┇𝐀𝐒𝐂𝐄𝐍𝐒𝐎-𝐃𝐄-𝐑𝐀𝐍𝐆𝐎",
+      "new_name": "📈┇𝐀𝐬𝐜𝐞𝐧𝐬𝐨-𝐝𝐞-𝐫𝐚𝐧𝐠𝐨"
+    },
+    {
+      "id": "1539970135731871760",
+      "name": "📈┇𝐀𝐒𝐂𝐄𝐍𝐒𝐎𝐒-𝐑𝐀𝐍𝐆𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970135375478864",
+      "position": 15,
+      "permission_hash": "5d973f91954fcf9268e1095ff690473ebebffb60d0e8aec20ba257a553e2bfcb",
+      "old_name": "📈┇𝐀𝐒𝐂𝐄𝐍𝐒𝐎𝐒-𝐑𝐀𝐍𝐆𝐎𝐒",
+      "new_name": "📈┇𝐀𝐬𝐜𝐞𝐧𝐬𝐨𝐬-𝐫𝐚𝐧𝐠𝐨𝐬"
+    },
+    {
+      "id": "1539970135731871761",
+      "name": "⚖️┇𝐈𝐍𝐅𝐎𝐑𝐌𝐄-𝐃𝐄-𝐂𝐎𝐍𝐃𝐔𝐂𝐓𝐀-𝐏𝐎𝐋𝐈𝐂𝐈𝐀",
+      "type": 0,
+      "parent_id": "1539970135375478864",
+      "position": 16,
+      "permission_hash": "a1401e76185bebb20a87692b194ee4d2ec6d266c81cc15f4d00f95c9f6575b59",
+      "old_name": "⚖️┇𝐈𝐍𝐅𝐎𝐑𝐌𝐄-𝐃𝐄-𝐂𝐎𝐍𝐃𝐔𝐂𝐓𝐀-𝐏𝐎𝐋𝐈𝐂𝐈𝐀",
+      "new_name": "⚖️┇𝐈𝐧𝐟𝐨𝐫𝐦𝐞-𝐝𝐞-𝐜𝐨𝐧𝐝𝐮𝐜𝐭𝐚-𝐩𝐨𝐥𝐢𝐜𝐢𝐚"
+    },
+    {
+      "id": "1539970135731871762",
+      "name": "📘┇𝐈𝐍𝐒𝐓𝐑𝐔𝐂𝐂𝐈𝐎𝐍𝐄𝐒",
+      "type": 4,
+      "parent_id": null,
+      "position": 3,
+      "permission_hash": "24cb83c7f21270cc5cbdacde5a6711803714b7aea9eccd784a67d66b9b2e8096",
+      "old_name": "📘┇𝐈𝐍𝐒𝐓𝐑𝐔𝐂𝐂𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "📘┇𝐈𝐧𝐬𝐭𝐫𝐮𝐜𝐜𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1539970135731871763",
+      "name": "🗒️┇𝐃𝐄𝐍𝐔𝐍𝐂𝐈𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970135731871762",
+      "position": 20,
+      "permission_hash": "111f43461249c928cb4018caf8dc96c0d1910703faba46a0f8eecb4cdae0130c",
+      "old_name": "🗒️┇𝐃𝐄𝐍𝐔𝐍𝐂𝐈𝐀𝐒",
+      "new_name": "🗒️┇𝐃𝐞𝐧𝐮𝐧𝐜𝐢𝐚𝐬"
+    },
+    {
+      "id": "1539970136050499664",
+      "name": "🏢┇𝐎𝐅𝐈𝐂𝐈𝐍𝐀𝐒",
+      "type": 4,
+      "parent_id": null,
+      "position": 4,
+      "permission_hash": "8238719804d8c32179ce6efc81e7bc65ae330f36d7b018dc59defd3711abc7fa",
+      "old_name": "🏢┇𝐎𝐅𝐈𝐂𝐈𝐍𝐀𝐒",
+      "new_name": "🏢┇𝐎𝐟𝐢𝐜𝐢𝐧𝐚𝐬"
+    },
+    {
+      "id": "1539970136050499665",
+      "name": "📢┇𝐀𝐍𝐔𝐍𝐂𝐈𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 23,
+      "permission_hash": "5a1f066ebd4f03a4952ab089bb0598a1abc934d14f239a2d03e1177dc7185810",
+      "old_name": "📢┇𝐀𝐍𝐔𝐍𝐂𝐈𝐎𝐒",
+      "new_name": "📢┇𝐀𝐧𝐮𝐧𝐜𝐢𝐨𝐬"
+    },
+    {
+      "id": "1539970136050499666",
+      "name": "📢┇𝐂𝐎𝐌𝐔𝐍𝐈𝐂𝐀𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 24,
+      "permission_hash": "fcfdcfd06d154c506ad312b0539746a00e83d7da088c0b4361012eb49e17cd99",
+      "old_name": "📢┇𝐂𝐎𝐌𝐔𝐍𝐈𝐂𝐀𝐃𝐎𝐒",
+      "new_name": "📢┇𝐂𝐨𝐦𝐮𝐧𝐢𝐜𝐚𝐝𝐨𝐬"
+    },
+    {
+      "id": "1539970136050499667",
+      "name": "🗨️┇𝐂𝐇𝐀𝐓-𝐎𝐎𝐂",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 26,
+      "permission_hash": "fb7b02cd26cf09f970a31e7ae4e36eeb74fa8d96ac622a2dc5620e520fbbbec5",
+      "old_name": "🗨️┇𝐂𝐇𝐀𝐓-𝐎𝐎𝐂",
+      "new_name": "🗨️┇𝐂𝐡𝐚𝐭-𝐎𝐎𝐂"
+    },
+    {
+      "id": "1539970136050499668",
+      "name": "🛑┇𝐀𝐔𝐒𝐄𝐍𝐂𝐈𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 28,
+      "permission_hash": "95a676cc76402f41aa1c0db7f486d2b9f55682256b56f305b61cc3704c9e1a0a",
+      "old_name": "🛑┇𝐀𝐔𝐒𝐄𝐍𝐂𝐈𝐀𝐒",
+      "new_name": "🛑┇𝐀𝐮𝐬𝐞𝐧𝐜𝐢𝐚𝐬"
+    },
+    {
+      "id": "1539970136050499669",
+      "name": "📸┇𝐏𝐄𝐑𝐒𝐏𝐄𝐂𝐓𝐈𝐕𝐀",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 29,
+      "permission_hash": "8238719804d8c32179ce6efc81e7bc65ae330f36d7b018dc59defd3711abc7fa",
+      "old_name": "📸┇𝐏𝐄𝐑𝐒𝐏𝐄𝐂𝐓𝐈𝐕𝐀",
+      "new_name": "📸┇𝐏𝐞𝐫𝐬𝐩𝐞𝐜𝐭𝐢𝐯𝐚"
+    },
+    {
+      "id": "1539970136050499670",
+      "name": "📸┇𝐌𝐔𝐋𝐓𝐈𝐌𝐄𝐃𝐈𝐀",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 30,
+      "permission_hash": "3f366673b2f31834e2b834fa07b4d40a8401cfb09baaa9c12d448e05ffb776ce",
+      "old_name": "📸┇𝐌𝐔𝐋𝐓𝐈𝐌𝐄𝐃𝐈𝐀",
+      "new_name": "📸┇𝐌𝐮𝐥𝐭𝐢𝐦𝐞𝐝𝐢𝐚"
+    },
+    {
+      "id": "1539970136050499671",
+      "name": "✅┇𝐑𝐄𝐏𝐎𝐑𝐓𝐄𝐒-𝐃𝐄-𝐄𝐕𝐈𝐃𝐄𝐍𝐂𝐈𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970137455853696",
+      "position": 100,
+      "permission_hash": "6cdc254a66b6c2f79da55fbe6e6e32d92adf83c6dff2ee5577745d6b4edee14b",
+      "old_name": "✅┇𝐑𝐄𝐏𝐎𝐑𝐓𝐄𝐒-𝐃𝐄-𝐄𝐕𝐈𝐃𝐄𝐍𝐂𝐈𝐀𝐒",
+      "new_name": "✅┇𝐑𝐞𝐩𝐨𝐫𝐭𝐞𝐬-𝐝𝐞-𝐞𝐯𝐢𝐝𝐞𝐧𝐜𝐢𝐚𝐬"
+    },
+    {
+      "id": "1539970136050499672",
+      "name": "🔬┇𝐄𝐕𝐈𝐃𝐄𝐍𝐂𝐈𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 31,
+      "permission_hash": "6449c0985befd540dec850cf447c196c92011b990efa7307cde1c53b9546be90",
+      "old_name": "🔬┇𝐄𝐕𝐈𝐃𝐄𝐍𝐂𝐈𝐀𝐒",
+      "new_name": "🔬┇𝐄𝐯𝐢𝐝𝐞𝐧𝐜𝐢𝐚𝐬"
+    },
+    {
+      "id": "1539970136050499673",
+      "name": "💵┇𝐅𝐈𝐀𝐍𝐙𝐀𝐒-𝐏𝐀𝐆𝐀𝐃𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 32,
+      "permission_hash": "8238719804d8c32179ce6efc81e7bc65ae330f36d7b018dc59defd3711abc7fa",
+      "old_name": "💵┇𝐅𝐈𝐀𝐍𝐙𝐀𝐒-𝐏𝐀𝐆𝐀𝐃𝐀𝐒",
+      "new_name": "💵┇𝐅𝐢𝐚𝐧𝐳𝐚𝐬-𝐩𝐚𝐠𝐚𝐝𝐚𝐬"
+    },
+    {
+      "id": "1539970136302288946",
+      "name": "📔┇𝐁𝐈𝐓𝐀𝐂𝐎𝐑𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 36,
+      "permission_hash": "5ff5e12653faf170d64c22410e07688bbe2dae4c8d3b19687d4756110f5ecd65",
+      "old_name": "📔┇𝐁𝐈𝐓𝐀𝐂𝐎𝐑𝐀𝐒",
+      "new_name": "📔┇𝐁𝐢𝐭𝐚𝐜𝐨𝐫𝐚𝐬"
+    },
+    {
+      "id": "1539970136302288947",
+      "name": "📍┇𝐈𝐍𝐂𝐎𝐍𝐅𝐎𝐑𝐌𝐈𝐃𝐀𝐃𝐄𝐒-𝐘-𝐒𝐔𝐆𝐄𝐑𝐄𝐍𝐂𝐈𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 33,
+      "permission_hash": "1c38dd2211f4da8b22ddc67f2d0bfc532093b4692135e2fa116ed210618a02a4",
+      "old_name": "📍┇𝐈𝐍𝐂𝐎𝐍𝐅𝐎𝐑𝐌𝐈𝐃𝐀𝐃𝐄𝐒-𝐘-𝐒𝐔𝐆𝐄𝐑𝐄𝐍𝐂𝐈𝐀𝐒",
+      "new_name": "📍┇𝐈𝐧𝐜𝐨𝐧𝐟𝐨𝐫𝐦𝐢𝐝𝐚𝐝𝐞𝐬-𝐲-𝐬𝐮𝐠𝐞𝐫𝐞𝐧𝐜𝐢𝐚𝐬"
+    },
+    {
+      "id": "1539970136302288948",
+      "name": "📔┇𝐁𝐈𝐓𝐀𝐂𝐎𝐑𝐀𝐒-𝐃𝐄-𝐇50",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 35,
+      "permission_hash": "8238719804d8c32179ce6efc81e7bc65ae330f36d7b018dc59defd3711abc7fa",
+      "old_name": "📔┇𝐁𝐈𝐓𝐀𝐂𝐎𝐑𝐀𝐒-𝐃𝐄-𝐇50",
+      "new_name": "📔┇𝐁𝐢𝐭𝐚𝐜𝐨𝐫𝐚𝐬-𝐝𝐞-𝐇-50"
+    },
+    {
+      "id": "1539970136302288949",
+      "name": "📊┇𝐅𝐄𝐄𝐃𝐁𝐀𝐂𝐊-𝐏𝐎𝐋𝐈𝐂𝐈𝐀𝐋",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 37,
+      "permission_hash": "40be0a098e437ef23d5d350c7e09876706d36cb0bf86fe041fdccb94ac084297",
+      "old_name": "📊┇𝐅𝐄𝐄𝐃𝐁𝐀𝐂𝐊-𝐏𝐎𝐋𝐈𝐂𝐈𝐀𝐋",
+      "new_name": "📊┇𝐅𝐞𝐞𝐝𝐛𝐚𝐜𝐤-𝐩𝐨𝐥𝐢𝐜𝐢𝐚𝐥"
+    },
+    {
+      "id": "1539970136302288950",
+      "name": "📝┇𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎𝐍𝐄𝐒",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 38,
+      "permission_hash": "1b97618ab4890ae282f1345bb42cdd3c785701c78957c0c2460d074b13913876",
+      "old_name": "📝┇𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "📝┇𝐏𝐨𝐬𝐭𝐮𝐥𝐚𝐜𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1539970136302288951",
+      "name": "📸┇𝐄𝐕𝐈𝐃𝐄𝐍𝐂𝐈𝐀-𝐃𝐄-𝐌𝐈𝐒𝐈𝐎𝐍𝐄𝐒",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 39,
+      "permission_hash": "535d1aed8ed9b52fe58ade6dbf20728f662899f2ddcb6ea0eb2fdf4ecd7d6b95",
+      "old_name": "📸┇𝐄𝐕𝐈𝐃𝐄𝐍𝐂𝐈𝐀-𝐃𝐄-𝐌𝐈𝐒𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "📸┇𝐄𝐯𝐢𝐝𝐞𝐧𝐜𝐢𝐚-𝐝𝐞-𝐦𝐢𝐬𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1539970136302288952",
+      "name": "🎮┇𝐆𝐄𝐍𝐄𝐑𝐀𝐋",
+      "type": 2,
+      "parent_id": "1539970136050499664",
+      "position": 3,
+      "permission_hash": "c3cd338e27f2a4a6e7491ff72061246a5dd06b05e89dbd8842f32516d244708e",
+      "old_name": "🎮┇𝐆𝐄𝐍𝐄𝐑𝐀𝐋",
+      "new_name": "🎮┇𝐆𝐞𝐧𝐞𝐫𝐚𝐥"
+    },
+    {
+      "id": "1539970136302288953",
+      "name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒",
+      "type": 2,
+      "parent_id": "1539970136050499664",
+      "position": 5,
+      "permission_hash": "d8884cf03d7b73ebf51edf49be1fef38f37faf85c0009f5fcaff82956efd9de3",
+      "old_name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "🔊┇𝐑𝐞𝐮𝐧𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1539970136302288954",
+      "name": "⚖️┇𝐒𝐀𝐍𝐂𝐈𝐎𝐍𝐄𝐒",
+      "type": 4,
+      "parent_id": null,
+      "position": 5,
+      "permission_hash": "336e76a1f529a092dba28b3b18eecb5fe1b6a0b54723e16815708a3064ebee30",
+      "old_name": "⚖️┇𝐒𝐀𝐍𝐂𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "⚖️┇𝐒𝐚𝐧𝐜𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1539970136302288955",
+      "name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 7,
+      "permission_hash": "3fa8cab04c389dc2a52bdc102b2eb28a634ede254bd44adb688cdf9be62ede35",
+      "old_name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓",
+      "new_name": "🎫┇𝐓𝐢𝐜𝐤𝐞𝐭"
+    },
+    {
+      "id": "1539970136512143481",
+      "name": "🟥┇𝐒𝐓𝐑𝐈𝐊𝐄-𝐀-𝐅𝐔𝐍𝐂𝐈𝐎𝐍𝐀𝐑𝐈𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136302288954",
+      "position": 41,
+      "permission_hash": "cec0cfeb6b9472537844f9aee2f035502d9f463187a8556f72f984d78643cf80",
+      "old_name": "🟥┇𝐒𝐓𝐑𝐈𝐊𝐄-𝐀-𝐅𝐔𝐍𝐂𝐈𝐎𝐍𝐀𝐑𝐈𝐎𝐒",
+      "new_name": "🟥┇𝐒𝐭𝐫𝐢𝐤𝐞-𝐚-𝐟𝐮𝐧𝐜𝐢𝐨𝐧𝐚𝐫𝐢𝐨𝐬"
+    },
+    {
+      "id": "1539970136512143482",
+      "name": "🟨┇𝐖𝐀𝐑𝐍𝐈𝐍𝐆-𝐀-𝐅𝐔𝐍𝐂𝐈𝐎𝐍𝐀𝐑𝐈𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136302288954",
+      "position": 42,
+      "permission_hash": "9f053569114505d6446ff7b6754f64846962c847c2cd2ec7bd74dc58e0b3468a",
+      "old_name": "🟨┇𝐖𝐀𝐑𝐍𝐈𝐍𝐆-𝐀-𝐅𝐔𝐍𝐂𝐈𝐎𝐍𝐀𝐑𝐈𝐎𝐒",
+      "new_name": "🟨┇𝐖𝐚𝐫𝐧𝐢𝐧𝐠-𝐚-𝐟𝐮𝐧𝐜𝐢𝐨𝐧𝐚𝐫𝐢𝐨𝐬"
+    },
+    {
+      "id": "1539970136512143483",
+      "name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓𝐒 𝐋𝐎𝐆𝐒",
+      "type": 4,
+      "parent_id": null,
+      "position": 6,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓𝐒 𝐋𝐎𝐆𝐒",
+      "new_name": "🎫┇𝐓𝐢𝐜𝐤𝐞𝐭𝐬 𝐥𝐨𝐠𝐬"
+    },
+    {
+      "id": "1539970136512143484",
+      "name": "🎫┇𝐀𝐁𝐈𝐄𝐑𝐓𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136512143483",
+      "position": 44,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "🎫┇𝐀𝐁𝐈𝐄𝐑𝐓𝐎𝐒",
+      "new_name": "🎫┇𝐀𝐛𝐢𝐞𝐫𝐭𝐨𝐬"
+    },
+    {
+      "id": "1539970136512143485",
+      "name": "🎫┇𝐂𝐄𝐑𝐑𝐀𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136512143483",
+      "position": 45,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "🎫┇𝐂𝐄𝐑𝐑𝐀𝐃𝐎𝐒",
+      "new_name": "🎫┇𝐂𝐞𝐫𝐫𝐚𝐝𝐨𝐬"
+    },
+    {
+      "id": "1539970136512143486",
+      "name": "🎫┇𝐀𝐆𝐑𝐄𝐆𝐀𝐃𝐎𝐒-𝐑𝐄𝐌𝐎𝐕𝐈𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136512143483",
+      "position": 46,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "🎫┇𝐀𝐆𝐑𝐄𝐆𝐀𝐃𝐎𝐒-𝐑𝐄𝐌𝐎𝐕𝐈𝐃𝐎𝐒",
+      "new_name": "🎫┇𝐀𝐠𝐫𝐞𝐠𝐚𝐝𝐨𝐬-𝐫𝐞𝐦𝐨𝐯𝐢𝐝𝐨𝐬"
+    },
+    {
+      "id": "1539970136512143487",
+      "name": "💬┇𝐂𝐎𝐍𝐒𝐔𝐋𝐓𝐀𝐒",
+      "type": 4,
+      "parent_id": null,
+      "position": 1,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "💬┇𝐂𝐎𝐍𝐒𝐔𝐋𝐓𝐀𝐒",
+      "new_name": "💬┇𝐂𝐨𝐧𝐬𝐮𝐥𝐭𝐚𝐬"
+    },
+    {
+      "id": "1539970136512143488",
+      "name": "📋┇𝐑𝐄𝐏𝐎𝐑𝐓𝐄𝐒",
+      "type": 4,
+      "parent_id": null,
+      "position": 7,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "📋┇𝐑𝐄𝐏𝐎𝐑𝐓𝐄𝐒",
+      "new_name": "📋┇𝐑𝐞𝐩𝐨𝐫𝐭𝐞𝐬"
+    },
+    {
+      "id": "1539970136512143489",
+      "name": "🎖️┇𝐑𝐀𝐍𝐆𝐎",
+      "type": 4,
+      "parent_id": null,
+      "position": 8,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "🎖️┇𝐑𝐀𝐍𝐆𝐎",
+      "new_name": "🎖️┇𝐑𝐚𝐧𝐠𝐨"
+    },
+    {
+      "id": "1539970136683847852",
+      "name": "🛡️┇𝐃𝐈𝐕𝐈𝐒𝐈𝐎𝐍 𝐔𝐂𝐎𝐏",
+      "type": 4,
+      "parent_id": null,
+      "position": 9,
+      "permission_hash": "3fd7c654fe2d67cefc554fa977bbef06df4bcfb3c86155007aea51b909079aef",
+      "old_name": "🛡️┇𝐃𝐈𝐕𝐈𝐒𝐈𝐎𝐍 𝐔𝐂𝐎𝐏",
+      "new_name": "🛡️┇𝐃𝐢𝐯𝐢𝐬𝐢𝐨𝐧 𝐔𝐂𝐎𝐏"
+    },
+    {
+      "id": "1539970136683847853",
+      "name": "🚨┇𝐔𝐂𝐎𝐏",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 53,
+      "permission_hash": "49cc4ffb0e24762b653911c4a064a1bf0f1bc75012ab34fd31996b3f71b9505b",
+      "old_name": "🚨┇𝐔𝐂𝐎𝐏",
+      "new_name": "🚨┇𝐔𝐂𝐎𝐏"
+    },
+    {
+      "id": "1539970136683847854",
+      "name": "💬┇𝐂𝐇𝐀𝐓-𝐔𝐂𝐎𝐏",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 55,
+      "permission_hash": "a091ac8a5faeae231c335bddd42bdebd21f0891ac04e12d0514f28930dcffe6a",
+      "old_name": "💬┇𝐂𝐇𝐀𝐓-𝐔𝐂𝐎𝐏",
+      "new_name": "💬┇𝐂𝐡𝐚𝐭-𝐔𝐂𝐎𝐏"
+    },
+    {
+      "id": "1539970136683847855",
+      "name": "🚫┇𝐕𝐄𝐓𝐀𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 56,
+      "permission_hash": "1f145e513860d67003f7e2bb6a0540fe3827d68d6406f4a52e96b836048c3c24",
+      "old_name": "🚫┇𝐕𝐄𝐓𝐀𝐃𝐎𝐒",
+      "new_name": "🚫┇𝐕𝐞𝐭𝐚𝐝𝐨𝐬"
+    },
+    {
+      "id": "1539970136683847856",
+      "name": "🔎┇𝐑𝐄𝐕𝐈𝐒𝐈𝐎𝐍-𝐃𝐄-𝐄𝐕𝐈𝐃𝐄𝐍𝐂𝐈𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 57,
+      "permission_hash": "53dd0fe8d7d3aa36fb819a13961a570d3ef8abcda854dfb52882bfc9cf25f71a",
+      "old_name": "🔎┇𝐑𝐄𝐕𝐈𝐒𝐈𝐎𝐍-𝐃𝐄-𝐄𝐕𝐈𝐃𝐄𝐍𝐂𝐈𝐀𝐒",
+      "new_name": "🔎┇𝐑𝐞𝐯𝐢𝐬𝐢𝐨𝐧-𝐝𝐞-𝐞𝐯𝐢𝐝𝐞𝐧𝐜𝐢𝐚𝐬"
+    },
+    {
+      "id": "1539970136683847857",
+      "name": "🎙️┇𝐄𝐍𝐓𝐑𝐄𝐕𝐈𝐒𝐓𝐀-𝐃𝐄-𝐈𝐍𝐆𝐑𝐄𝐒𝐎",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 58,
+      "permission_hash": "1e4716b3c71fb4ce7d25d02d8cbff571e7de7a63c675510b8d18e3b9859a3db6",
+      "old_name": "🎙️┇𝐄𝐍𝐓𝐑𝐄𝐕𝐈𝐒𝐓𝐀-𝐃𝐄-𝐈𝐍𝐆𝐑𝐄𝐒𝐎",
+      "new_name": "🎙️┇𝐄𝐧𝐭𝐫𝐞𝐯𝐢𝐬𝐭𝐚-𝐝𝐞-𝐢𝐧𝐠𝐫𝐞𝐬𝐨"
+    },
+    {
+      "id": "1539970136683847858",
+      "name": "🔫┇𝐏𝐎𝐑𝐓𝐄-𝐃𝐄-𝐀𝐑𝐌𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 59,
+      "permission_hash": "0506cdbb72dc0997b81a71ea7259deea67a9c6862657ea2425149ca301874df9",
+      "old_name": "🔫┇𝐏𝐎𝐑𝐓𝐄-𝐃𝐄-𝐀𝐑𝐌𝐀𝐒",
+      "new_name": "🔫┇𝐏𝐨𝐫𝐭𝐞-𝐝𝐞-𝐚𝐫𝐦𝐚𝐬"
+    },
+    {
+      "id": "1539970136683847859",
+      "name": "📋┇𝐑𝐄𝐕𝐈𝐒𝐈𝐎𝐍𝐄𝐒",
+      "type": 15,
+      "parent_id": "1539970136683847852",
+      "position": 60,
+      "permission_hash": "4d2cd6102f512ae7557ca0981bca3bd073972f854553f09a5133abe8450d5291",
+      "old_name": "📋┇𝐑𝐄𝐕𝐈𝐒𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "📋┇𝐑𝐞𝐯𝐢𝐬𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1539970136683847860",
+      "name": "👤┇𝐑𝐄𝐂𝐎𝐑𝐃-𝐏𝐄𝐑𝐒𝐎𝐍𝐀𝐋",
+      "type": 15,
+      "parent_id": "1539970136683847852",
+      "position": 61,
+      "permission_hash": "67d6713e6ea8c663f16915f52edb313654f8fbd85930ac36f2d8b490133a268c",
+      "old_name": "👤┇𝐑𝐄𝐂𝐎𝐑𝐃-𝐏𝐄𝐑𝐒𝐎𝐍𝐀𝐋",
+      "new_name": "👤┇𝐑𝐞𝐜𝐨𝐫𝐝-𝐩𝐞𝐫𝐬𝐨𝐧𝐚𝐥"
+    },
+    {
+      "id": "1539970136839163956",
+      "name": "🧰┇𝐇𝐄𝐑𝐑𝐀𝐌𝐈𝐄𝐍𝐓𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 62,
+      "permission_hash": "ef51b62c8138ee66b3cdcb2b0ae0ff19829e8bf9af6f702e4849f56dc3a1ebc7",
+      "old_name": "🧰┇𝐇𝐄𝐑𝐑𝐀𝐌𝐈𝐄𝐍𝐓𝐀𝐒",
+      "new_name": "🧰┇𝐇𝐞𝐫𝐫𝐚𝐦𝐢𝐞𝐧𝐭𝐚𝐬"
+    },
+    {
+      "id": "1539970136839163957",
+      "name": "📚┇𝐈𝐍𝐒𝐓𝐑𝐔𝐂𝐂𝐈𝐎𝐍𝐄𝐒",
+      "type": 15,
+      "parent_id": "1539970136683847852",
+      "position": 63,
+      "permission_hash": "6093b66e72e28dcb799c6d952edb5b84a61e0043428c928f0f5c1fa152719a50",
+      "old_name": "📚┇𝐈𝐍𝐒𝐓𝐑𝐔𝐂𝐂𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "📚┇𝐈𝐧𝐬𝐭𝐫𝐮𝐜𝐜𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1539970136839163958",
+      "name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒-𝐔𝐂𝐎𝐏",
+      "type": 2,
+      "parent_id": "1539970136683847852",
+      "position": 8,
+      "permission_hash": "cc76cd85599a3ff847f3a829a4164c20083ab59a64aecba19d533aaa603156dd",
+      "old_name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒-𝐔𝐂𝐎𝐏",
+      "new_name": "🔊┇𝐑𝐞𝐮𝐧𝐢𝐨𝐧𝐞𝐬-𝐔𝐂𝐎𝐏"
+    },
+    {
+      "id": "1539970136839163959",
+      "name": "📑┇𝐋𝐎𝐆𝐒 𝐔𝐂𝐎𝐏",
+      "type": 4,
+      "parent_id": null,
+      "position": 10,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "📑┇𝐋𝐎𝐆𝐒 𝐔𝐂𝐎𝐏",
+      "new_name": "📑┇𝐋𝐨𝐠𝐬 𝐔𝐂𝐎𝐏"
+    },
+    {
+      "id": "1539970136839163960",
+      "name": "⬆️┇𝐀𝐒𝐂𝐄𝐍𝐒𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136839163959",
+      "position": 71,
+      "permission_hash": "fe511b3e588610755a89e3dce2ff121f2bb9a6e251b33649490fd840ca003dc3",
+      "old_name": "⬆️┇𝐀𝐒𝐂𝐄𝐍𝐒𝐎𝐒",
+      "new_name": "⬆️┇𝐀𝐬𝐜𝐞𝐧𝐬𝐨𝐬"
+    },
+    {
+      "id": "1539970136839163961",
+      "name": "⬇️┇𝐃𝐄𝐒𝐂𝐄𝐍𝐒𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136839163959",
+      "position": 73,
+      "permission_hash": "fe511b3e588610755a89e3dce2ff121f2bb9a6e251b33649490fd840ca003dc3",
+      "old_name": "⬇️┇𝐃𝐄𝐒𝐂𝐄𝐍𝐒𝐎𝐒",
+      "new_name": "⬇️┇𝐃𝐞𝐬𝐜𝐞𝐧𝐬𝐨𝐬"
+    },
+    {
+      "id": "1539970136839163962",
+      "name": "⬇️┇𝐌𝐄𝐍𝐒𝐀𝐉𝐄𝐒-𝐁𝐎𝐑𝐑𝐀𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136839163959",
+      "position": 74,
+      "permission_hash": "fe511b3e588610755a89e3dce2ff121f2bb9a6e251b33649490fd840ca003dc3",
+      "old_name": "⬇️┇𝐌𝐄𝐍𝐒𝐀𝐉𝐄𝐒-𝐁𝐎𝐑𝐑𝐀𝐃𝐎𝐒",
+      "new_name": "⬇️┇𝐌𝐞𝐧𝐬𝐚𝐣𝐞𝐬-𝐛𝐨𝐫𝐫𝐚𝐝𝐨𝐬"
+    },
+    {
+      "id": "1539970136839163963",
+      "name": "🔗┇𝐈𝐍𝐕𝐈𝐓𝐀𝐂𝐈𝐎𝐍𝐄𝐒",
+      "type": 0,
+      "parent_id": "1539970136839163959",
+      "position": 75,
+      "permission_hash": "fe511b3e588610755a89e3dce2ff121f2bb9a6e251b33649490fd840ca003dc3",
+      "old_name": "🔗┇𝐈𝐍𝐕𝐈𝐓𝐀𝐂𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "🔗┇𝐈𝐧𝐯𝐢𝐭𝐚𝐜𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1539970137015193641",
+      "name": "🤝┇𝐃𝐈𝐕𝐈𝐂𝐈𝐎𝐍𝐄𝐒",
+      "type": 4,
+      "parent_id": null,
+      "position": 11,
+      "permission_hash": "d5601caed024876a2742507a504369ccfa23b8ae69c6fda5ed2d0b08e5e48c03",
+      "old_name": "🤝┇𝐃𝐈𝐕𝐈𝐂𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "🤝┇𝐃𝐢𝐯𝐢𝐜𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1539970137015193642",
+      "name": "📸┇𝐌𝐔𝐋𝐓𝐈𝐌𝐄𝐃𝐈𝐀-𝐔𝐂𝐎𝐏-𝐘-𝐂𝐈𝐂",
+      "type": 0,
+      "parent_id": "1539970137015193641",
+      "position": 76,
+      "permission_hash": "3459627550756105ef51ff7b0a35c0eeffb4dc8c1741a582dad2190fb87ef5e5",
+      "old_name": "📸┇𝐌𝐔𝐋𝐓𝐈𝐌𝐄𝐃𝐈𝐀-𝐔𝐂𝐎𝐏-𝐘-𝐂𝐈𝐂",
+      "new_name": "📸┇𝐌𝐮𝐥𝐭𝐢𝐦𝐞𝐝𝐢𝐚-𝐔𝐂𝐎𝐏-𝐲-𝐂𝐈𝐂"
+    },
+    {
+      "id": "1539970137015193643",
+      "name": "📨┇𝐂𝐇𝐀𝐓-𝐔𝐂𝐎𝐏-𝐘-𝐂𝐈𝐂",
+      "type": 0,
+      "parent_id": "1539970137015193641",
+      "position": 77,
+      "permission_hash": "3459627550756105ef51ff7b0a35c0eeffb4dc8c1741a582dad2190fb87ef5e5",
+      "old_name": "📨┇𝐂𝐇𝐀𝐓-𝐔𝐂𝐎𝐏-𝐘-𝐂𝐈𝐂",
+      "new_name": "📨┇𝐂𝐡𝐚𝐭-𝐔𝐂𝐎𝐏-𝐲-𝐂𝐈𝐂"
+    },
+    {
+      "id": "1539970137015193644",
+      "name": "🕵️┇𝐃𝐈𝐕𝐈𝐂𝐈𝐎𝐍 𝐂𝐈𝐂",
+      "type": 4,
+      "parent_id": null,
+      "position": 12,
+      "permission_hash": "5c1008694831f7fa0d64cec413884862c1dde8c54288b806ddabee10d74ec0f6",
+      "old_name": "🕵️┇𝐃𝐈𝐕𝐈𝐂𝐈𝐎𝐍 𝐂𝐈𝐂",
+      "new_name": "🕵️┇𝐃𝐢𝐯𝐢𝐜𝐢𝐨𝐧 𝐂𝐈𝐂"
+    },
+    {
+      "id": "1539970137015193645",
+      "name": "🚨┇𝐂𝐈𝐂",
+      "type": 0,
+      "parent_id": "1539970137015193644",
+      "position": 79,
+      "permission_hash": "12ae24c5184a68c2dcee80a96d25690e815115fbb0753921141ce0bbb1267bc2",
+      "old_name": "🚨┇𝐂𝐈𝐂",
+      "new_name": "🚨┇𝐂𝐈𝐂"
+    },
+    {
+      "id": "1539970137015193646",
+      "name": "✅┇𝐒𝐎𝐋𝐈𝐂𝐈𝐓𝐔𝐃-𝐃𝐄-𝐈𝐍𝐕𝐄𝐒𝐓𝐈𝐆𝐀𝐂𝐈𝐎𝐍",
+      "type": 0,
+      "parent_id": "1539970137015193644",
+      "position": 80,
+      "permission_hash": "5c1008694831f7fa0d64cec413884862c1dde8c54288b806ddabee10d74ec0f6",
+      "old_name": "✅┇𝐒𝐎𝐋𝐈𝐂𝐈𝐓𝐔𝐃-𝐃𝐄-𝐈𝐍𝐕𝐄𝐒𝐓𝐈𝐆𝐀𝐂𝐈𝐎𝐍",
+      "new_name": "✅┇𝐒𝐨𝐥𝐢𝐜𝐢𝐭𝐮𝐝-𝐝𝐞-𝐢𝐧𝐯𝐞𝐬𝐭𝐢𝐠𝐚𝐜𝐢𝐨𝐧"
+    },
+    {
+      "id": "1539970137015193647",
+      "name": "✉️┇𝐂𝐇𝐀𝐓-𝐂𝐈𝐂",
+      "type": 0,
+      "parent_id": "1539970137015193644",
+      "position": 81,
+      "permission_hash": "12ae24c5184a68c2dcee80a96d25690e815115fbb0753921141ce0bbb1267bc2",
+      "old_name": "✉️┇𝐂𝐇𝐀𝐓-𝐂𝐈𝐂",
+      "new_name": "✉️┇𝐂𝐡𝐚𝐭-𝐂𝐈𝐂"
+    },
+    {
+      "id": "1539970137015193648",
+      "name": "🕵️┇𝐆𝐔𝐈𝐀-𝐈𝐍𝐕𝐄𝐒𝐓𝐈𝐆𝐀𝐂𝐈𝐎𝐍𝐄𝐒",
+      "type": 15,
+      "parent_id": "1539970137015193644",
+      "position": 82,
+      "permission_hash": "7f4e0baa7c34c1dbf0e52626c6d5368d0ab9621aff8110ea54afe1243f6f0032",
+      "old_name": "🕵️┇𝐆𝐔𝐈𝐀-𝐈𝐍𝐕𝐄𝐒𝐓𝐈𝐆𝐀𝐂𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "🕵️┇𝐆𝐮𝐢𝐚-𝐢𝐧𝐯𝐞𝐬𝐭𝐢𝐠𝐚𝐜𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1539970137015193649",
+      "name": "⁉️┇𝐈𝐍𝐕𝐄𝐒𝐓-𝐏𝐔𝐍𝐓𝐎𝐒",
+      "type": 15,
+      "parent_id": "1539970137015193644",
+      "position": 83,
+      "permission_hash": "7f4e0baa7c34c1dbf0e52626c6d5368d0ab9621aff8110ea54afe1243f6f0032",
+      "old_name": "⁉️┇𝐈𝐍𝐕𝐄𝐒𝐓-𝐏𝐔𝐍𝐓𝐎𝐒",
+      "new_name": "⁉️┇𝐈𝐧𝐯𝐞𝐬𝐭-𝐩𝐮𝐧𝐭𝐨𝐬"
+    },
+    {
+      "id": "1539970137015193650",
+      "name": "⁉️┇𝐈𝐍𝐕𝐄𝐒𝐓-𝐏𝐄𝐑𝐒𝐎𝐍𝐀𝐒",
+      "type": 15,
+      "parent_id": "1539970137015193644",
+      "position": 84,
+      "permission_hash": "7f4e0baa7c34c1dbf0e52626c6d5368d0ab9621aff8110ea54afe1243f6f0032",
+      "old_name": "⁉️┇𝐈𝐍𝐕𝐄𝐒𝐓-𝐏𝐄𝐑𝐒𝐎𝐍𝐀𝐒",
+      "new_name": "⁉️┇𝐈𝐧𝐯𝐞𝐬𝐭-𝐩𝐞𝐫𝐬𝐨𝐧𝐚𝐬"
+    },
+    {
+      "id": "1539970137246142597",
+      "name": "⁉️┇𝐈𝐍𝐕𝐄𝐒𝐓-𝐁𝐀𝐍𝐃𝐀𝐒-𝐂𝐑𝐈𝐌𝐈𝐍𝐀𝐋𝐄𝐒",
+      "type": 15,
+      "parent_id": "1539970137015193644",
+      "position": 85,
+      "permission_hash": "7f4e0baa7c34c1dbf0e52626c6d5368d0ab9621aff8110ea54afe1243f6f0032",
+      "old_name": "⁉️┇𝐈𝐍𝐕𝐄𝐒𝐓-𝐁𝐀𝐍𝐃𝐀𝐒-𝐂𝐑𝐈𝐌𝐈𝐍𝐀𝐋𝐄𝐒",
+      "new_name": "⁉️┇𝐈𝐧𝐯𝐞𝐬𝐭-𝐛𝐚𝐧𝐝𝐚𝐬-𝐜𝐫𝐢𝐦𝐢𝐧𝐚𝐥𝐞𝐬"
+    },
+    {
+      "id": "1539970137246142598",
+      "name": "⛓️┇𝐆𝐑𝐈𝐋𝐋𝐄𝐓𝐄",
+      "type": 0,
+      "parent_id": "1539970137015193644",
+      "position": 86,
+      "permission_hash": "7add990f8db774113e508c890ef645fb758bd1a8752acd0e81839d25442374d6",
+      "old_name": "⛓️┇𝐆𝐑𝐈𝐋𝐋𝐄𝐓𝐄",
+      "new_name": "⛓️┇𝐆𝐫𝐢𝐥𝐥𝐞𝐭𝐞"
+    },
+    {
+      "id": "1539970137246142599",
+      "name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒-𝐂𝐈𝐂",
+      "type": 2,
+      "parent_id": "1539970137015193644",
+      "position": 10,
+      "permission_hash": "cb5cc99cd09896ee54c26deb429264be6644747691ce937827c1322811125af1",
+      "old_name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒-𝐂𝐈𝐂",
+      "new_name": "🔊┇𝐑𝐞𝐮𝐧𝐢𝐨𝐧𝐞𝐬-𝐂𝐈𝐂"
+    },
+    {
+      "id": "1539970137246142600",
+      "name": "⭐┇𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐒𝐓𝐀𝐅𝐅",
+      "type": 4,
+      "parent_id": null,
+      "position": 13,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "⭐┇𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐒𝐓𝐀𝐅𝐅",
+      "new_name": "⭐┇𝐂𝐨𝐦𝐦𝐚𝐧𝐝 𝐬𝐭𝐚𝐟𝐟"
+    },
+    {
+      "id": "1539970137246142601",
+      "name": "💎┇𝐂𝐇𝐀𝐓-𝐉𝐄𝐅𝐄𝐒",
+      "type": 0,
+      "parent_id": "1539970137246142600",
+      "position": 87,
+      "permission_hash": "fbf9314582407ec10485470576c7801fd6791346ebe261792808b2f28dfecdaa",
+      "old_name": "💎┇𝐂𝐇𝐀𝐓-𝐉𝐄𝐅𝐄𝐒",
+      "new_name": "💎┇𝐂𝐡𝐚𝐭-𝐣𝐞𝐟𝐞𝐬"
+    },
+    {
+      "id": "1539970137246142602",
+      "name": "🚫┇𝐕𝐄𝐓𝐀𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970137246142600",
+      "position": 88,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "🚫┇𝐕𝐄𝐓𝐀𝐃𝐎𝐒",
+      "new_name": "🚫┇𝐕𝐞𝐭𝐚𝐝𝐨𝐬"
+    },
+    {
+      "id": "1539970137246142603",
+      "name": "✅┇𝐒𝐄𝐋𝐄𝐂𝐂𝐈𝐎𝐍𝐀𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970137246142600",
+      "position": 89,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "✅┇𝐒𝐄𝐋𝐄𝐂𝐂𝐈𝐎𝐍𝐀𝐃𝐎𝐒",
+      "new_name": "✅┇𝐒𝐞𝐥𝐞𝐜𝐜𝐢𝐨𝐧𝐚𝐝𝐨𝐬"
+    },
+    {
+      "id": "1539970137246142604",
+      "name": "📈┇𝐀𝐒𝐂𝐄𝐍𝐒𝐎𝐒-𝐑𝐄𝐐𝐔𝐒𝐈𝐓𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970137246142600",
+      "position": 90,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "📈┇𝐀𝐒𝐂𝐄𝐍𝐒𝐎𝐒-𝐑𝐄𝐐𝐔𝐒𝐈𝐓𝐎𝐒",
+      "new_name": "📈┇𝐀𝐬𝐜𝐞𝐧𝐬𝐨𝐬-𝐫𝐞𝐪𝐮𝐬𝐢𝐭𝐨𝐬"
+    },
+    {
+      "id": "1539970137246142605",
+      "name": "💵┇𝐏𝐀𝐆𝐎𝐒-𝐄𝐒𝐏𝐄𝐂𝐈𝐀𝐋𝐄𝐒",
+      "type": 0,
+      "parent_id": "1539970137246142600",
+      "position": 91,
+      "permission_hash": "b7801edc6ee566243bfed6faefdf43acd24b7e3ce47c78fad882b9573f5b89f6",
+      "old_name": "💵┇𝐏𝐀𝐆𝐎𝐒-𝐄𝐒𝐏𝐄𝐂𝐈𝐀𝐋𝐄𝐒",
+      "new_name": "💵┇𝐏𝐚𝐠𝐨𝐬-𝐞𝐬𝐩𝐞𝐜𝐢𝐚𝐥𝐞𝐬"
+    },
+    {
+      "id": "1539970137246142606",
+      "name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍-𝐉𝐄𝐅𝐄𝐒",
+      "type": 2,
+      "parent_id": "1539970137246142600",
+      "position": 11,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍-𝐉𝐄𝐅𝐄𝐒",
+      "new_name": "🔊┇𝐑𝐞𝐮𝐧𝐢𝐨𝐧-𝐣𝐞𝐟𝐞𝐬"
+    },
+    {
+      "id": "1539970137455853690",
+      "name": "🛠️┇𝐌𝐎𝐃𝐒",
+      "type": 4,
+      "parent_id": null,
+      "position": 14,
+      "permission_hash": "b7801edc6ee566243bfed6faefdf43acd24b7e3ce47c78fad882b9573f5b89f6",
+      "old_name": "🛠️┇𝐌𝐎𝐃𝐒",
+      "new_name": "🛠️┇𝐌𝐨𝐝𝐬"
+    },
+    {
+      "id": "1539970137455853691",
+      "name": "📥┇𝐄𝐍𝐓𝐑𝐀𝐃𝐀",
+      "type": 0,
+      "parent_id": "1539970137455853690",
+      "position": 95,
+      "permission_hash": "9b8e15a9cafdfd278ad19162b59f0f2afde63548cb30b8f12e93e337c95e38eb",
+      "old_name": "📥┇𝐄𝐍𝐓𝐑𝐀𝐃𝐀",
+      "new_name": "📥┇𝐄𝐧𝐭𝐫𝐚𝐝𝐚"
+    },
+    {
+      "id": "1539970137455853692",
+      "name": "⚙️┇𝐂𝐎𝐍𝐅𝐈𝐆",
+      "type": 0,
+      "parent_id": "1539970137455853690",
+      "position": 96,
+      "permission_hash": "b7801edc6ee566243bfed6faefdf43acd24b7e3ce47c78fad882b9573f5b89f6",
+      "old_name": "⚙️┇𝐂𝐎𝐍𝐅𝐈𝐆",
+      "new_name": "⚙️┇𝐂𝐨𝐧𝐟𝐢𝐠"
+    },
+    {
+      "id": "1539970137455853693",
+      "name": "🧪┇𝐓𝐄𝐒𝐓𝐄𝐄𝐍-𝐄𝐒𝐓𝐎",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 69,
+      "permission_hash": "fe511b3e588610755a89e3dce2ff121f2bb9a6e251b33649490fd840ca003dc3",
+      "old_name": "🧪┇𝐓𝐄𝐒𝐓𝐄𝐄𝐍-𝐄𝐒𝐓𝐎",
+      "new_name": "🧪┇𝐓𝐞𝐬𝐭𝐞𝐞𝐧-𝐞𝐬𝐭𝐨"
+    },
+    {
+      "id": "1539970137455853694",
+      "name": "🧹┇𝐂𝐋𝐄𝐀𝐑",
+      "type": 0,
+      "parent_id": "1539970137455853690",
+      "position": 97,
+      "permission_hash": "b7801edc6ee566243bfed6faefdf43acd24b7e3ce47c78fad882b9573f5b89f6",
+      "old_name": "🧹┇𝐂𝐋𝐄𝐀𝐑",
+      "new_name": "🧹┇𝐂𝐥𝐞𝐚𝐫"
+    },
+    {
+      "id": "1539970137455853695",
+      "name": "📔┇𝐁𝐈𝐓𝐀𝐂𝐎𝐑𝐀",
+      "type": 4,
+      "parent_id": null,
+      "position": 16,
+      "permission_hash": "3fd7c654fe2d67cefc554fa977bbef06df4bcfb3c86155007aea51b909079aef",
+      "old_name": "📔┇𝐁𝐈𝐓𝐀𝐂𝐎𝐑𝐀",
+      "new_name": "📔┇𝐁𝐢𝐭𝐚𝐜𝐨𝐫𝐚"
+    },
+    {
+      "id": "1539970137455853696",
+      "name": "🗄️┇𝐑𝐄𝐒𝐏𝐀𝐋𝐃𝐎",
+      "type": 4,
+      "parent_id": null,
+      "position": 15,
+      "permission_hash": "6cdc254a66b6c2f79da55fbe6e6e32d92adf83c6dff2ee5577745d6b4edee14b",
+      "old_name": "🗄️┇𝐑𝐄𝐒𝐏𝐀𝐋𝐃𝐎",
+      "new_name": "🗄️┇𝐑𝐞𝐬𝐩𝐚𝐥𝐝𝐨"
+    },
+    {
+      "id": "1539970137455853697",
+      "name": "📝┇𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎𝐍-𝐏𝐎𝐋𝐈𝐂𝐈𝐀",
+      "type": 0,
+      "parent_id": "1539970137455853696",
+      "position": 98,
+      "permission_hash": "55af53ad4d362c3d4bdbaefff5af18000ba8e8365519d15184e4dfb75488ccf9",
+      "old_name": "📝┇𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎𝐍-𝐏𝐎𝐋𝐈𝐂𝐈𝐀",
+      "new_name": "📝┇𝐏𝐨𝐬𝐭𝐮𝐥𝐚𝐜𝐢𝐨𝐧-𝐩𝐨𝐥𝐢𝐜𝐢𝐚"
+    },
+    {
+      "id": "1539970137455853698",
+      "name": "👖┇𝐕𝐄𝐒𝐓𝐈𝐌𝐄𝐍𝐓𝐀-𝐌",
+      "type": 0,
+      "parent_id": "1539970137455853696",
+      "position": 99,
+      "permission_hash": "06da9a4d8805b5d16ea34e0cf5203b834b3adba40832081da067a9a246726804",
+      "old_name": "👖┇𝐕𝐄𝐒𝐓𝐈𝐌𝐄𝐍𝐓𝐀-𝐌",
+      "new_name": "👖┇𝐕𝐞𝐬𝐭𝐢𝐦𝐞𝐧𝐭𝐚-𝐌"
+    },
+    {
+      "id": "1539970137455853699",
+      "name": "📔┇𝐏𝐄𝐑𝐌𝐈𝐒𝐎𝐒-𝐓𝐀𝐁𝐋𝐄𝐓-𝐃𝐄-𝐎𝐑𝐈𝐆𝐄𝐍",
+      "type": 0,
+      "parent_id": "1539970137455853696",
+      "position": 101,
+      "permission_hash": "6cdc254a66b6c2f79da55fbe6e6e32d92adf83c6dff2ee5577745d6b4edee14b",
+      "old_name": "📔┇𝐏𝐄𝐑𝐌𝐈𝐒𝐎𝐒-𝐓𝐀𝐁𝐋𝐄𝐓-𝐃𝐄-𝐎𝐑𝐈𝐆𝐄𝐍",
+      "new_name": "📔┇𝐏𝐞𝐫𝐦𝐢𝐬𝐨𝐬-𝐭𝐚𝐛𝐥𝐞𝐭-𝐝𝐞-𝐨𝐫𝐢𝐠𝐞𝐧"
+    },
+    {
+      "id": "1539970137686413404",
+      "name": "📝┇𝐂𝐎𝐃𝐈𝐆𝐎-𝐏𝐄𝐍𝐀𝐋",
+      "type": 0,
+      "parent_id": "1539970137455853696",
+      "position": 102,
+      "permission_hash": "418b827e301e8bcadf6cef21dd345606e71436a4061def253cf96b896cb37b7d",
+      "old_name": "📝┇𝐂𝐎𝐃𝐈𝐆𝐎-𝐏𝐄𝐍𝐀𝐋",
+      "new_name": "📝┇𝐂𝐨𝐝𝐢𝐠𝐨-𝐩𝐞𝐧𝐚𝐥"
+    },
+    {
+      "id": "1539970137686413405",
+      "name": "⚙️┇𝐀𝐃𝐌𝐈𝐍",
+      "type": 4,
+      "parent_id": null,
+      "position": 17,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "⚙️┇𝐀𝐃𝐌𝐈𝐍",
+      "new_name": "⚙️┇𝐀𝐝𝐦𝐢𝐧"
+    },
+    {
+      "id": "1539970137686413406",
+      "name": "🛡️┇𝐑𝐀𝐈𝐃𝐏𝐑𝐎𝐓𝐄𝐂𝐓-𝐋𝐎𝐆𝐒",
+      "type": 0,
+      "parent_id": "1539970137686413405",
+      "position": 104,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "🛡️┇𝐑𝐀𝐈𝐃𝐏𝐑𝐎𝐓𝐄𝐂𝐓-𝐋𝐎𝐆𝐒",
+      "new_name": "🛡️┇𝐑𝐚𝐢𝐝𝐩𝐫𝐨𝐭𝐞𝐜𝐭-𝐥𝐨𝐠𝐬"
+    },
+    {
+      "id": "1539970137686413407",
+      "name": "🔒┇𝐌𝐎𝐃𝐄𝐑𝐀𝐓𝐎𝐑-𝐎𝐍𝐋𝐘",
+      "type": 0,
+      "parent_id": "1539970137686413405",
+      "position": 105,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "🔒┇𝐌𝐎𝐃𝐄𝐑𝐀𝐓𝐎𝐑-𝐎𝐍𝐋𝐘",
+      "new_name": "🔒┇𝐌𝐨𝐝𝐞𝐫𝐚𝐭𝐨𝐫-𝐨𝐧𝐥𝐲"
+    },
+    {
+      "id": "1564328164514078932",
+      "name": "🗨️┇𝐂𝐇𝐀𝐓-𝐈𝐂",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 27,
+      "permission_hash": "fb7b02cd26cf09f970a31e7ae4e36eeb74fa8d96ac622a2dc5620e520fbbbec5",
+      "old_name": "🗨️┇𝐂𝐇𝐀𝐓-𝐈𝐂",
+      "new_name": "🗨️┇𝐂𝐡𝐚𝐭-𝐈𝐂"
+    },
+    {
+      "id": "1564333134600736838",
+      "name": "🌎┇𝐂𝐇𝐀𝐓-𝐂𝐈𝐕𝐈𝐋",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 8,
+      "permission_hash": "7d4303e15c0049174cfc473ec4c48e09a0f83532ae3e899c47c88bb9f1a89dc3",
+      "old_name": "🌎┇𝐂𝐇𝐀𝐓-𝐂𝐈𝐕𝐈𝐋",
+      "new_name": "🌎┇𝐂𝐡𝐚𝐭-𝐜𝐢𝐯𝐢𝐥"
+    },
+    {
+      "id": "1564350390294552696",
+      "name": "👮┇𝐑𝐄𝐒𝐔𝐋𝐓𝐀𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 10,
+      "permission_hash": "79204ed5a4b995a64f973442254e4c3ca2e95a32da1c182078f850ac7c69a878",
+      "old_name": "👮┇𝐑𝐄𝐒𝐔𝐋𝐓𝐀𝐃𝐎𝐒",
+      "new_name": "👮┇𝐑𝐞𝐬𝐮𝐥𝐭𝐚𝐝𝐨𝐬"
+    },
+    {
+      "id": "1564390381477564466",
+      "name": "🟧┇𝐑𝐄𝐆𝐋𝐀𝐒-𝐃𝐄-𝐒𝐓𝐑𝐈𝐊𝐄-𝐘-𝐖𝐀𝐑𝐍𝐒",
+      "type": 0,
+      "parent_id": "1539970136302288954",
+      "position": 40,
+      "permission_hash": "7b405e26fa54919b37c3f8a2b31b7351c1036b9559ce59e52d5d70db5241381f",
+      "old_name": "🟧┇𝐑𝐄𝐆𝐋𝐀𝐒-𝐃𝐄-𝐒𝐓𝐑𝐈𝐊𝐄-𝐘-𝐖𝐀𝐑𝐍𝐒",
+      "new_name": "🟧┇𝐑𝐞𝐠𝐥𝐚𝐬-𝐝𝐞-𝐬𝐭𝐫𝐢𝐤𝐞-𝐲-𝐰𝐚𝐫𝐧𝐬"
+    },
+    {
+      "id": "1564393096463126588",
+      "name": "📷┇𝐅𝐎𝐓𝐎𝐒-𝐏𝐑𝐈𝐌𝐄𝐏𝐎𝐋𝐈𝐂𝐄",
+      "type": 0,
+      "parent_id": "1539970137455853696",
+      "position": 103,
+      "permission_hash": "55af53ad4d362c3d4bdbaefff5af18000ba8e8365519d15184e4dfb75488ccf9",
+      "old_name": "📷┇𝐅𝐎𝐓𝐎𝐒-𝐏𝐑𝐈𝐌𝐄𝐏𝐎𝐋𝐈𝐂𝐄",
+      "new_name": "📷┇𝐅𝐨𝐭𝐨𝐬-𝐩𝐫𝐢𝐦𝐞𝐩𝐨𝐥𝐢𝐜𝐞"
+    },
+    {
+      "id": "1564404762965704724",
+      "name": "🌐┇𝐏𝐀𝐍𝐄𝐋-𝐃𝐄-𝐂𝐎𝐍𝐓𝐑𝐎𝐋-𝐔𝐂𝐎𝐏",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 54,
+      "permission_hash": "8799f1610c860c95ea0835e3d835990597d9fee0041b596e7dbb33c7d39f4d71",
+      "old_name": "🌐┇𝐏𝐀𝐍𝐄𝐋-𝐃𝐄-𝐂𝐎𝐍𝐓𝐑𝐎𝐋-𝐔𝐂𝐎𝐏",
+      "new_name": "🌐┇𝐏𝐚𝐧𝐞𝐥-𝐝𝐞-𝐜𝐨𝐧𝐭𝐫𝐨𝐥-𝐔𝐂𝐎𝐏"
+    },
+    {
+      "id": "1564419582209429604",
+      "name": "🛡️┇𝐖𝐈𝐂𝐊-𝐋𝐎𝐆𝐒",
+      "type": 0,
+      "parent_id": null,
+      "position": 0,
+      "permission_hash": "1a101bcc4cfe3aa03716ce7dcb2b769af78205d8b220f16713b38297deb149e4",
+      "old_name": "🛡️┇𝐖𝐈𝐂𝐊-𝐋𝐎𝐆𝐒",
+      "new_name": "🛡️┇𝐖𝐢𝐜𝐤-𝐥𝐨𝐠𝐬"
+    },
+    {
+      "id": "1564463107172995213",
+      "name": "⚠️┇𝐀𝐋𝐄𝐑𝐓𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970135731871762",
+      "position": 21,
+      "permission_hash": "111f43461249c928cb4018caf8dc96c0d1910703faba46a0f8eecb4cdae0130c",
+      "old_name": "⚠️┇𝐀𝐋𝐄𝐑𝐓𝐀𝐒",
+      "new_name": "⚠️┇𝐀𝐥𝐞𝐫𝐭𝐚𝐬"
+    },
+    {
+      "id": "1564843183706341528",
+      "name": "📥┇𝐀𝐍𝐔𝐍𝐂𝐈𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 1,
+      "permission_hash": "487b8758be61dd2e0d9e9da3b8da712e84a7b37e8a3e0342f2d21f57d60e9658",
+      "old_name": "📥┇𝐀𝐍𝐔𝐍𝐂𝐈𝐎𝐒",
+      "new_name": "📥┇𝐀𝐧𝐮𝐧𝐜𝐢𝐨𝐬"
+    },
+    {
+      "id": "1564900830077788190",
+      "name": "👮┇𝐓𝐑𝐀𝐒𝐋𝐀𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 5,
+      "permission_hash": "14cab94bacc96deec1df2cb5b5f124a6672b52c20a19fcedc5f2d59e0dd1d8a7",
+      "old_name": "👮┇𝐓𝐑𝐀𝐒𝐋𝐀𝐃𝐎𝐒",
+      "new_name": "👮┇𝐓𝐫𝐚𝐬𝐥𝐚𝐝𝐨𝐬"
+    },
+    {
+      "id": "1564912384697700352",
+      "name": "📈┇𝐀𝐒𝐂𝐄𝐍𝐒𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 25,
+      "permission_hash": "43f607fdccde3049d38cb77a12abaffc5192f68c627b118c6fa2215c48f3376c",
+      "old_name": "📈┇𝐀𝐒𝐂𝐄𝐍𝐒𝐎𝐒",
+      "new_name": "📈┇𝐀𝐬𝐜𝐞𝐧𝐬𝐨𝐬"
+    },
+    {
+      "id": "1565018332695109722",
+      "name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍-𝐒𝐎𝐏𝐎𝐑𝐓𝐄",
+      "type": 2,
+      "parent_id": "1539970136512143487",
+      "position": 1,
+      "permission_hash": "a3c88cfb6c61c5961239f7e6e7348015b2cfe48af2289dda397c9543e9de7569",
+      "old_name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍-𝐒𝐎𝐏𝐎𝐑𝐓𝐄",
+      "new_name": "🔊┇𝐑𝐞𝐮𝐧𝐢𝐨𝐧-𝐬𝐨𝐩𝐨𝐫𝐭𝐞"
+    },
+    {
+      "id": "1565104167406800906",
+      "name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍-𝐉𝐄𝐅𝐄𝐒.",
+      "type": 2,
+      "parent_id": "1539970137246142600",
+      "position": 12,
+      "permission_hash": "14a65f3bd2307c6667459caf0a4e7cb02895fa84621c9d8df9b3b66fe6e975e0",
+      "old_name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍-𝐉𝐄𝐅𝐄𝐒.",
+      "new_name": "🔊┇𝐑𝐞𝐮𝐧𝐢𝐨𝐧-𝐣𝐞𝐟𝐞𝐬."
+    },
+    {
+      "id": "1565192509963894944",
+      "name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍-𝐒𝐎𝐏𝐎𝐑𝐓𝐄2",
+      "type": 2,
+      "parent_id": "1539970136512143487",
+      "position": 2,
+      "permission_hash": "a3c88cfb6c61c5961239f7e6e7348015b2cfe48af2289dda397c9543e9de7569",
+      "old_name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍-𝐒𝐎𝐏𝐎𝐑𝐓𝐄2",
+      "new_name": "🔊┇𝐑𝐞𝐮𝐧𝐢𝐨𝐧-𝐬𝐨𝐩𝐨𝐫𝐭𝐞2"
+    },
+    {
+      "id": "1565407455138152510",
+      "name": "💎┇𝐂𝐇𝐀𝐓-𝐒𝐓𝐀𝐅𝐅",
+      "type": 0,
+      "parent_id": "1539970137246142600",
+      "position": 92,
+      "permission_hash": "c05beb2fb49ca8fa7f6232fc13fd91b47c06752342a3a7d80f325d8f7467ca64",
+      "old_name": "💎┇𝐂𝐇𝐀𝐓-𝐒𝐓𝐀𝐅𝐅",
+      "new_name": "💎┇𝐂𝐡𝐚𝐭-𝐬𝐭𝐚𝐟𝐟"
+    },
+    {
+      "id": "1565488992315506778",
+      "name": "👮┇𝐑𝐄𝐆𝐋𝐀𝐒-𝐓𝐑𝐀𝐒𝐋𝐀𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 4,
+      "permission_hash": "7750d667b768ea7e185495e71c5cc0d4e318a4c3f56fc5afde63303473775ae1",
+      "old_name": "👮┇𝐑𝐄𝐆𝐋𝐀𝐒-𝐓𝐑𝐀𝐒𝐋𝐀𝐃𝐎𝐒",
+      "new_name": "👮┇𝐑𝐞𝐠𝐥𝐚𝐬-𝐭𝐫𝐚𝐬𝐥𝐚𝐝𝐨𝐬"
+    },
+    {
+      "id": "1566158757094883518",
+      "name": "🎫┇𝐀𝐁𝐈𝐄𝐑𝐓𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136512143483",
+      "position": 43,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "🎫┇𝐀𝐁𝐈𝐄𝐑𝐓𝐎𝐒",
+      "new_name": "🎫┇𝐀𝐛𝐢𝐞𝐫𝐭𝐨𝐬"
+    },
+    {
+      "id": "1566261116974272632",
+      "name": "🔫┇𝐑𝐄𝐆𝐋𝐀𝐒-𝐄𝐍𝐅𝐑𝐄𝐍𝐓𝐀𝐌𝐈𝐄𝐍𝐓𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970135731871762",
+      "position": 22,
+      "permission_hash": "111f43461249c928cb4018caf8dc96c0d1910703faba46a0f8eecb4cdae0130c",
+      "old_name": "🔫┇𝐑𝐄𝐆𝐋𝐀𝐒-𝐄𝐍𝐅𝐑𝐄𝐍𝐓𝐀𝐌𝐈𝐄𝐍𝐓𝐎𝐒",
+      "new_name": "🔫┇𝐑𝐞𝐠𝐥𝐚𝐬-𝐞𝐧𝐟𝐫𝐞𝐧𝐭𝐚𝐦𝐢𝐞𝐧𝐭𝐨𝐬"
+    },
+    {
+      "id": "1566286322937888808",
+      "name": "⚖️┇𝐀𝐁𝐎𝐆𝐀𝐃𝐎𝐒-𝐄𝐍-𝐄𝐒𝐏𝐄𝐑𝐀",
+      "type": 0,
+      "parent_id": "1539970136512143488",
+      "position": 47,
+      "permission_hash": "1313609ceeeb98c613e42e2b5ff1f3405673157bb32cc1567c848fdf05a2a77f",
+      "old_name": "⚖️┇𝐀𝐁𝐎𝐆𝐀𝐃𝐎𝐒-𝐄𝐍-𝐄𝐒𝐏𝐄𝐑𝐀",
+      "new_name": "⚖️┇𝐀𝐛𝐨𝐠𝐚𝐝𝐨𝐬-𝐞𝐧-𝐞𝐬𝐩𝐞𝐫𝐚"
+    },
+    {
+      "id": "1566297302665269479",
+      "name": "👮┇𝐑𝐄𝐆𝐋𝐀𝐒-𝐑𝐄𝐂𝐇𝐀𝐙𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970135375478858",
+      "position": 11,
+      "permission_hash": "7750d667b768ea7e185495e71c5cc0d4e318a4c3f56fc5afde63303473775ae1",
+      "old_name": "👮┇𝐑𝐄𝐆𝐋𝐀𝐒-𝐑𝐄𝐂𝐇𝐀𝐙𝐎𝐒",
+      "new_name": "👮┇𝐑𝐞𝐠𝐥𝐚𝐬-𝐫𝐞𝐜𝐡𝐚𝐳𝐨𝐬"
+    },
+    {
+      "id": "1566481978197549186",
+      "name": "📡┇𝐂𝐎𝐃𝐈𝐆𝐎𝐒-𝐑𝐀𝐃𝐈𝐀𝐋𝐄𝐒",
+      "type": 0,
+      "parent_id": "1539970135375478864",
+      "position": 19,
+      "permission_hash": "dba35a6e71ce9b3afd8606fb3fe4263aa3eb9998345da3b01c9834f3d6bea089",
+      "old_name": "📡┇𝐂𝐎𝐃𝐈𝐆𝐎𝐒-𝐑𝐀𝐃𝐈𝐀𝐋𝐄𝐒",
+      "new_name": "📡┇𝐂𝐨𝐝𝐢𝐠𝐨𝐬-𝐫𝐚𝐝𝐢𝐚𝐥𝐞𝐬"
+    },
+    {
+      "id": "1566511966179172362",
+      "name": "👕┇𝐑𝐎𝐏𝐀-𝐅𝐔𝐓𝐔𝐑𝐀-𝐁𝐘-𝐘𝐀𝐍",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 64,
+      "permission_hash": "81853e58b9d832797d815a463790e20dffd6b56d7f49910f7714860e1c5d6f49",
+      "old_name": "👕┇𝐑𝐎𝐏𝐀-𝐅𝐔𝐓𝐔𝐑𝐀-𝐁𝐘-𝐘𝐀𝐍",
+      "new_name": "👕┇𝐑𝐨𝐩𝐚-𝐟𝐮𝐭𝐮𝐫𝐚-𝐛𝐲-𝐲𝐚𝐧"
+    },
+    {
+      "id": "1566519484251119839",
+      "name": "⚙️┇𝐏𝐄𝐑𝐒𝐎𝐍𝐀𝐋-𝐃𝐄-𝐋𝐀-𝐃𝐈𝐑𝐄𝐂𝐓𝐈𝐕𝐀",
+      "type": 0,
+      "parent_id": "1539970137246142600",
+      "position": 93,
+      "permission_hash": "c05beb2fb49ca8fa7f6232fc13fd91b47c06752342a3a7d80f325d8f7467ca64",
+      "old_name": "⚙️┇𝐏𝐄𝐑𝐒𝐎𝐍𝐀𝐋-𝐃𝐄-𝐋𝐀-𝐃𝐈𝐑𝐄𝐂𝐓𝐈𝐕𝐀",
+      "new_name": "⚙️┇𝐏𝐞𝐫𝐬𝐨𝐧𝐚𝐥-𝐝𝐞-𝐥𝐚-𝐝𝐢𝐫𝐞𝐜𝐭𝐢𝐯𝐚"
+    },
+    {
+      "id": "1566582640025272341",
+      "name": "🛠️┇𝐇𝐄𝐑𝐑𝐀𝐌𝐈𝐄𝐍𝐓𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 65,
+      "permission_hash": "0506cdbb72dc0997b81a71ea7259deea67a9c6862657ea2425149ca301874df9",
+      "old_name": "🛠️┇𝐇𝐄𝐑𝐑𝐀𝐌𝐈𝐄𝐍𝐓𝐀𝐒",
+      "new_name": "🛠️┇𝐇𝐞𝐫𝐫𝐚𝐦𝐢𝐞𝐧𝐭𝐚𝐬"
+    },
+    {
+      "id": "1566747692065890345",
+      "name": "📉┇𝐁𝐀𝐉𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 67,
+      "permission_hash": "53dd0fe8d7d3aa36fb819a13961a570d3ef8abcda854dfb52882bfc9cf25f71a",
+      "old_name": "📉┇𝐁𝐀𝐉𝐀𝐒",
+      "new_name": "📉┇𝐁𝐚𝐣𝐚𝐬"
+    },
+    {
+      "id": "1566871482695557260",
+      "name": "📈┇𝐑𝐄𝐆𝐋𝐀𝐒-𝐃𝐄-𝐀𝐒𝐂𝐄𝐍𝐒𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 70,
+      "permission_hash": "1f145e513860d67003f7e2bb6a0540fe3827d68d6406f4a52e96b836048c3c24",
+      "old_name": "📈┇𝐑𝐄𝐆𝐋𝐀𝐒-𝐃𝐄-𝐀𝐒𝐂𝐄𝐍𝐒𝐎𝐒",
+      "new_name": "📈┇𝐑𝐞𝐠𝐥𝐚𝐬-𝐝𝐞-𝐚𝐬𝐜𝐞𝐧𝐬𝐨𝐬"
+    },
+    {
+      "id": "1566878574072430702",
+      "name": "🔊┇𝐒𝐀𝐋𝐀-𝐃𝐄-𝐄𝐒𝐏𝐄𝐑𝐀",
+      "type": 2,
+      "parent_id": "1539970136050499664",
+      "position": 4,
+      "permission_hash": "24c8dcc3cbbb7d1898f0e478804c1e5580239e28dbd2789416bc62c58b8cb461",
+      "old_name": "🔊┇𝐒𝐀𝐋𝐀-𝐃𝐄-𝐄𝐒𝐏𝐄𝐑𝐀",
+      "new_name": "🔊┇𝐒𝐚𝐥𝐚-𝐝𝐞-𝐞𝐬𝐩𝐞𝐫𝐚"
+    },
+    {
+      "id": "1567049564916289596",
+      "name": "⚖️┇𝐓𝐑𝐈𝐁𝐔𝐍𝐀𝐋 𝐃𝐄 𝐉𝐔𝐒𝐓𝐈𝐂𝐈𝐀",
+      "type": 4,
+      "parent_id": null,
+      "position": 18,
+      "permission_hash": "8624f0b580dfbd89a037715e4fb8772e424b2eda7a324860096591e4b99454d4",
+      "old_name": "⚖️┇𝐓𝐑𝐈𝐁𝐔𝐍𝐀𝐋 𝐃𝐄 𝐉𝐔𝐒𝐓𝐈𝐂𝐈𝐀",
+      "new_name": "⚖️┇𝐓𝐫𝐢𝐛𝐮𝐧𝐚𝐥 𝐝𝐞 𝐣𝐮𝐬𝐭𝐢𝐜𝐢𝐚"
+    },
+    {
+      "id": "1567049911248101426",
+      "name": "⚖️┇𝐏𝐎𝐋𝐈𝐂𝐈𝐀-𝐘-𝐓𝐑𝐈𝐁𝐔𝐍𝐀𝐋",
+      "type": 0,
+      "parent_id": "1567049564916289596",
+      "position": 106,
+      "permission_hash": "8b79a75cd52e553dc14db97c50e6cf51b1775ea891caa6f26a948c7dd1987fb0",
+      "old_name": "⚖️┇𝐏𝐎𝐋𝐈𝐂𝐈𝐀-𝐘-𝐓𝐑𝐈𝐁𝐔𝐍𝐀𝐋",
+      "new_name": "⚖️┇𝐏𝐨𝐥𝐢𝐜𝐢𝐚-𝐲-𝐭𝐫𝐢𝐛𝐮𝐧𝐚𝐥"
+    },
+    {
+      "id": "1567050075715411969",
+      "name": "⚖️┇𝐀𝐋𝐓𝐎-𝐑𝐀𝐍𝐆𝐎-𝐘-𝐓𝐑𝐈𝐁𝐔𝐍𝐀𝐋",
+      "type": 0,
+      "parent_id": "1567049564916289596",
+      "position": 107,
+      "permission_hash": "c30f3e9f56961fb2c53db972f78f40244a35cfcd9da20b4adb52255a2c37bf69",
+      "old_name": "⚖️┇𝐀𝐋𝐓𝐎-𝐑𝐀𝐍𝐆𝐎-𝐘-𝐓𝐑𝐈𝐁𝐔𝐍𝐀𝐋",
+      "new_name": "⚖️┇𝐀𝐥𝐭𝐨-𝐫𝐚𝐧𝐠𝐨-𝐲-𝐭𝐫𝐢𝐛𝐮𝐧𝐚𝐥"
+    },
+    {
+      "id": "1567050457619111946",
+      "name": "💬┇𝐂𝐎𝐍𝐒𝐔𝐋𝐓𝐀𝐒",
+      "type": 2,
+      "parent_id": "1567049564916289596",
+      "position": 13,
+      "permission_hash": "e49725452688c54360eb4ebf5b99da52986f1cec1f8f920e0d5b1a7a7ba43ccf",
+      "old_name": "💬┇𝐂𝐎𝐍𝐒𝐔𝐋𝐓𝐀𝐒",
+      "new_name": "💬┇𝐂𝐨𝐧𝐬𝐮𝐥𝐭𝐚𝐬"
+    },
+    {
+      "id": "1567346568216973423",
+      "name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒-𝐔𝐂𝐎𝐏",
+      "type": 2,
+      "parent_id": "1539970136683847852",
+      "position": 9,
+      "permission_hash": "0b005805cf60b6c3036b7d7618ae8a6708649a8519571976861797cbabf5ffac",
+      "old_name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒-𝐔𝐂𝐎𝐏",
+      "new_name": "🔊┇𝐑𝐞𝐮𝐧𝐢𝐨𝐧𝐞𝐬-𝐔𝐂𝐎𝐏"
+    },
+    {
+      "id": "1567596633649184829",
+      "name": "📨┇𝐂𝐇𝐀𝐓-𝐔𝐂𝐎𝐏-𝐘-𝐂𝐈𝐂-𝐀𝐁𝐎𝐆𝐀𝐃𝐎𝐒",
+      "type": 0,
+      "parent_id": "1539970137015193641",
+      "position": 78,
+      "permission_hash": "8b18c342e5313df7468887cc2417156c2dde588c9fe28ba90ddba9c17b889ed0",
+      "old_name": "📨┇𝐂𝐇𝐀𝐓-𝐔𝐂𝐎𝐏-𝐘-𝐂𝐈𝐂-𝐀𝐁𝐎𝐆𝐀𝐃𝐎𝐒",
+      "new_name": "📨┇𝐂𝐡𝐚𝐭-𝐔𝐂𝐎𝐏-𝐲-𝐂𝐈𝐂-𝐚𝐛𝐨𝐠𝐚𝐝𝐨𝐬"
+    },
+    {
+      "id": "1567703631149666304",
+      "name": "🗂️┇𝐁𝐀𝐉𝐀𝐒",
+      "type": 15,
+      "parent_id": "1539970136683847852",
+      "position": 68,
+      "permission_hash": "6cb68dc8faa211fde657a7ea75bd99862a36bbe832ace5e54a2da890283e3b75",
+      "old_name": "🗂️┇𝐁𝐀𝐉𝐀𝐒",
+      "new_name": "🗂️┇𝐁𝐚𝐣𝐚𝐬"
+    },
+    {
+      "id": "1567719816574410832",
+      "name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-19",
+      "type": 0,
+      "parent_id": "1539970136512143488",
+      "position": 48,
+      "permission_hash": "40bf277edeb6c34c42dab2e28259a63ca65782cf64c3f9ce2ec8e659d99a5ab8",
+      "old_name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-19",
+      "new_name": "🎫┇𝐓𝐢𝐜𝐤𝐞𝐭-19"
+    },
+    {
+      "id": "1568368152533012583",
+      "name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-23",
+      "type": 0,
+      "parent_id": "1539970136512143488",
+      "position": 49,
+      "permission_hash": "fda2b5973b646fbe8da95ec492b8dd480603c576ee3b43b221682cdc4b5b1149",
+      "old_name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-23",
+      "new_name": "🎫┇𝐓𝐢𝐜𝐤𝐞𝐭-23"
+    },
+    {
+      "id": "1568541131279433799",
+      "name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-26",
+      "type": 0,
+      "parent_id": "1539970136512143488",
+      "position": 50,
+      "permission_hash": "b1914835164abb443b548512534b503a3f0d26c7e83b84572520b9bcb019e48e",
+      "old_name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-26",
+      "new_name": "🎫┇𝐓𝐢𝐜𝐤𝐞𝐭-26"
+    },
+    {
+      "id": "1568726094776115200",
+      "name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒",
+      "type": 2,
+      "parent_id": "1539970136050499664",
+      "position": 7,
+      "permission_hash": "71a67a4e35a86d65c2db78d410d84867ae42147ef4a353d1f47492502ff0af6a",
+      "old_name": "🔊┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "🔊┇𝐑𝐞𝐮𝐧𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1568751020266225734",
+      "name": "🎙️┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒",
+      "type": 13,
+      "parent_id": "1539970136050499664",
+      "position": 6,
+      "permission_hash": "84638705e1eeef814eb907082aeb1fb300ba43911d66b07fc92158b8dd194307",
+      "old_name": "🎙️┇𝐑𝐄𝐔𝐍𝐈𝐎𝐍𝐄𝐒",
+      "new_name": "🎙️┇𝐑𝐞𝐮𝐧𝐢𝐨𝐧𝐞𝐬"
+    },
+    {
+      "id": "1568766177524719776",
+      "name": "📔┇𝐁𝐈𝐓𝐀𝐂𝐎𝐑𝐀𝐒-𝐃𝐄-𝐇50-𝐄𝐍-𝐄𝐋-𝐌𝐎𝐌𝐄𝐍𝐓𝐎",
+      "type": 0,
+      "parent_id": "1539970136050499664",
+      "position": 34,
+      "permission_hash": "6912674b0c1599060cdcf3b1be2349a2a5624f3f96d42531d61d5ca85017fff5",
+      "old_name": "📔┇𝐁𝐈𝐓𝐀𝐂𝐎𝐑𝐀𝐒-𝐃𝐄-𝐇50-𝐄𝐍-𝐄𝐋-𝐌𝐎𝐌𝐄𝐍𝐓𝐎",
+      "new_name": "📔┇𝐁𝐢𝐭𝐚𝐜𝐨𝐫𝐚𝐬-𝐝𝐞-𝐇-50-𝐞𝐧-𝐞𝐥-𝐦𝐨𝐦𝐞𝐧𝐭𝐨"
+    },
+    {
+      "id": "1568773057709875310",
+      "name": "⚙️┇𝐂𝐎𝐍𝐅𝐈𝐆𝐔𝐑𝐀𝐂𝐈𝐎𝐍",
+      "type": 0,
+      "parent_id": "1539970137246142600",
+      "position": 94,
+      "permission_hash": "7528edeca04ef755191cce656a8e76c77de4cf0881b4d3c40147d70bce15388c",
+      "old_name": "⚙️┇𝐂𝐎𝐍𝐅𝐈𝐆𝐔𝐑𝐀𝐂𝐈𝐎𝐍",
+      "new_name": "⚙️┇𝐂𝐨𝐧𝐟𝐢𝐠𝐮𝐫𝐚𝐜𝐢𝐨𝐧"
+    },
+    {
+      "id": "1568780231701954581",
+      "name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-27",
+      "type": 0,
+      "parent_id": "1539970136512143488",
+      "position": 51,
+      "permission_hash": "e988a448c8006fb4e9866f50c5810b48e2e7742182491ff64a2e92d4b093fbb9",
+      "old_name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-27",
+      "new_name": "🎫┇𝐓𝐢𝐜𝐤𝐞𝐭-27"
+    },
+    {
+      "id": "1568788502920040489",
+      "name": "🔫┇𝐏𝐎𝐑𝐓𝐄𝐒-𝐃𝐄-𝐀𝐑𝐌𝐀𝐒",
+      "type": 0,
+      "parent_id": "1567049564916289596",
+      "position": 108,
+      "permission_hash": "c30f3e9f56961fb2c53db972f78f40244a35cfcd9da20b4adb52255a2c37bf69",
+      "old_name": "🔫┇𝐏𝐎𝐑𝐓𝐄𝐒-𝐃𝐄-𝐀𝐑𝐌𝐀𝐒",
+      "new_name": "🔫┇𝐏𝐨𝐫𝐭𝐞𝐬-𝐝𝐞-𝐚𝐫𝐦𝐚𝐬"
+    },
+    {
+      "id": "1569135089592311878",
+      "name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-28",
+      "type": 0,
+      "parent_id": "1539970136512143488",
+      "position": 52,
+      "permission_hash": "840b133cbdb8619e1216d6a103c86e8eb39d67cc13f1c4c42c10aeea9a901d5d",
+      "old_name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-28",
+      "new_name": "🎫┇𝐓𝐢𝐜𝐤𝐞𝐭-28"
+    },
+    {
+      "id": "1569162869491237045",
+      "name": "🎓┇𝐏𝐀𝐒𝐀𝐍𝐓𝐈𝐀𝐒",
+      "type": 0,
+      "parent_id": "1539970136683847852",
+      "position": 66,
+      "permission_hash": "f379cc1abc5e60def7cce06657ce023ff2a7e5eb26365e72b3d537143d6fd4aa",
+      "old_name": "🎓┇𝐏𝐀𝐒𝐀𝐍𝐓𝐈𝐀𝐒",
+      "new_name": "🎓┇𝐏𝐚𝐬𝐚𝐧𝐭𝐢𝐚𝐬"
+    },
+    {
+      "id": "1569183946086944778",
+      "name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-29",
+      "type": 0,
+      "parent_id": "1539970136512143488",
+      "position": 109,
+      "permission_hash": "1c79e362247a8d82930f2a3373c95bcac625b87f8486004aca591b898c632f50",
+      "old_name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-29",
+      "new_name": "🎫┇𝐓𝐢𝐜𝐤𝐞𝐭-29"
+    },
+    {
+      "id": "1569444939807465505",
+      "name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-30",
+      "type": 0,
+      "parent_id": "1539970136512143488",
+      "position": 110,
+      "permission_hash": "17aad3d02ebbbb8446da8bb0c258df133efbfe385fb7e0a5794f5f73cfc1b61b",
+      "old_name": "🎫┇𝐓𝐈𝐂𝐊𝐄𝐓-30",
+      "new_name": "🎫┇𝐓𝐢𝐜𝐤𝐞𝐭-30"
+    }
+  ]
+}
