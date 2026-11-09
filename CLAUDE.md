@@ -80,4 +80,4 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 
 - La opción «Baja» usa el rol Discord `1569323526610092234` y el valor `discharged`. Se añade junto a Baja Voluntaria, Expulsado y Vetado, conservando sus IDs y las sugerencias actuales por motivo.
 - Al reingresar se retiran Baja y Baja Voluntaria. Expulsado y Vetado siguen bloqueando el reingreso y no se pueden rebajar usando Baja. La sincronización de accesos no debe reactivar por sí sola a quien tenga un rol de baja.
-- El valor adicional requiere la migración `20261109121953_general_departure_role.sql` antes de activar la opción y desplegar las funciones afectadas. No se aplican bajas ni asignaciones retroactivas.
+- El valor adicional requiere la migración `20261109122410_general_departure_role.sql` antes de activar la opción y desplegar las funciones afectadas. No se aplican bajas ni asignaciones retroactivas.

@@ -15,7 +15,7 @@ create table public.police_duty_shifts(discord_user_id text,started_at timestamp
 await pg.query("insert into public.police_personnel(discord_user_id,full_name,status,departure_role,updated_at,rank_role_id,rank_name,unit)values($1,'Agente local','active','voluntary',$2,$3,'Raso','POLICIA')",[user,stamp,rank]);
 await pg.query('insert into public.police_rank_roles values($1)',[rank]);
 await pg.query("insert into public.police_duty_shifts(discord_user_id,started_at)values($1,now()-interval '1 hour')",[user]);
-await pg.exec(fs.readFileSync(new URL('../supabase/migrations/20261109121953_general_departure_role.sql',import.meta.url),'utf8'));
+await pg.exec(fs.readFileSync(new URL('../supabase/migrations/20261109122410_general_departure_role.sql',import.meta.url),'utf8'));
 assert.equal((await pg.query('select departure_role from public.police_personnel')).rows[0].departure_role,'voluntary','Migration preserves old markers');
 const operation=crypto.randomUUID();
 const depart=()=>pg.query("select public.change_police_personnel_status($1,$2,'departure','otro',current_date,'Salida comprobada',$3,'Directiva de prueba',$4,null,null,null,'discharged') as data",[operation,user,actor,stamp]);
