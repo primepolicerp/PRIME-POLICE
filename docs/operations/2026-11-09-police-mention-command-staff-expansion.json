@@ -1,0 +1,115 @@
+{
+  "guild_id": "1539970134469378068",
+  "verified_at": "2026-11-09T22:11:02.272Z",
+  "scope": "Owner requested adding Directiva, Alta Directiva, Alto Mando Policial, Gobierno and Staff Policial to the existing Captain-and-above Police mention rule.",
+  "rule": {
+    "id": "1569472668506259560",
+    "guild_id": "1539970134469378068",
+    "creator_id": "1540484542354428025",
+    "name": "PRIME POLICE · Mención Policía desde Capitán",
+    "event_type": 1,
+    "actions": [
+      {
+        "type": 1,
+        "metadata": {
+          "custom_message": "Solo Capitán y superiores, jefaturas, Directiva, Alto Mando, Gobierno y Staff Policial pueden mencionar a Policía."
+        }
+      }
+    ],
+    "trigger_type": 1,
+    "enabled": true,
+    "exempt_roles": [
+      "1539970134544748555",
+      "1539970134544748556",
+      "1539970134544748558",
+      "1539970134544748559",
+      "1539970134519578768",
+      "1539970134544748560",
+      "1539970134544748561",
+      "1539970134519578766",
+      "1539970134519578767",
+      "1539970134544748562",
+      "1539970134519578774",
+      "1539970134519578771",
+      "1539970134544748563",
+      "1539970134565982311",
+      "1539970134565982312",
+      "1539970134565982313"
+    ],
+    "exempt_channels": [],
+    "trigger_metadata": {
+      "keyword_filter": [],
+      "regex_patterns": [
+        "<@&1539970134482092038>"
+      ],
+      "allow_list": []
+    }
+  },
+  "verified": true,
+  "allowed_roles": [
+    {
+      "id": "1539970134519578766",
+      "name": "Capitan"
+    },
+    {
+      "id": "1539970134519578767",
+      "name": "Comandante"
+    },
+    {
+      "id": "1539970134519578768",
+      "name": "Teniente Coronel"
+    },
+    {
+      "id": "1539970134519578771",
+      "name": "[----ALTO MANDO POLICIAL----]"
+    },
+    {
+      "id": "1539970134519578774",
+      "name": "DIRECTIVA"
+    },
+    {
+      "id": "1539970134544748555",
+      "name": "Admin Staff Policial"
+    },
+    {
+      "id": "1539970134544748556",
+      "name": "Staff"
+    },
+    {
+      "id": "1539970134544748558",
+      "name": "Sub Jefe de Division"
+    },
+    {
+      "id": "1539970134544748559",
+      "name": "Jefe de Division"
+    },
+    {
+      "id": "1539970134544748560",
+      "name": "Coronel"
+    },
+    {
+      "id": "1539970134544748561",
+      "name": "Comisionado"
+    },
+    {
+      "id": "1539970134544748562",
+      "name": "[----Alta Directiva----]"
+    },
+    {
+      "id": "1539970134544748563",
+      "name": "Ministro Defensa"
+    },
+    {
+      "id": "1539970134565982311",
+      "name": "VICE PRESIDENTE"
+    },
+    {
+      "id": "1539970134565982312",
+      "name": "Presidente"
+    },
+    {
+      "id": "1539970134565982313",
+      "name": "[----Gobierno----]"
+    }
+  ]
+}
