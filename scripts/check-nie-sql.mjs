@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import {readFileSync,readdirSync} from 'node:fs';
+import {PGlite} from '@electric-sql/pglite';
+const db=new PGlite(),u='111111111111111111',other='222222222222222222';
+await db.exec("create role anon;create role authenticated;create role service_role bypassrls;create table public.police_personnel(discord_user_id text primary key,status text,unit text,full_name text,plate text,rank_name text);insert into police_personnel values('"+u+"','active','POLICIA','Agente Prueba','0001','Raso'),('"+other+"','active','CIC','Otro Agente','0002','Cabo');");
+const migration=readdirSync('supabase/migrations').find(x=>x.endsWith('_nie_applications.sql'));await db.exec(readFileSync('supabase/migrations/'+migration,'utf8'));
+const answers=[null,{full_name:'Nombre IC',current_rank:'Raso',motivation:'Quiero investigar.',experience:'Sin experiencia previa.'},{kidnapping:'Respuesta privada',restraints:'Procedimiento de rol',priority_crimes:'Delitos',seizure:'Antes, durante y después'},{confidentiality:'Respuesta confidencial',evidence_integrity:'Protección de evidencias',terms:'yes'}];
+const step=async(user,id,n,patch=answers[n])=>(await db.query('select public.police_nie_step($1,$2,$3,$4::jsonb,$5) as result',[user,id,n,JSON.stringify(patch),'Usuario Discord'])).rows[0].result;
+let id=crypto.randomUUID();
+assert.equal((await step(u,id,3)).ok,false,'Cannot skip steps');
+assert.equal((await step(u,id,1,{})).code,'invalid');
+assert.equal((await step(u,id,1)).step,2);assert.equal((await step(u,id,1)).step,2,'First-step replay preserves progress');
+assert.equal((await step(other,id,2)).ok,false,'Cannot use another user’s draft');
+assert.equal((await step(u,id,3)).code,'order');
+assert.equal((await step(u,id,2)).step,3);assert.equal((await step(u,id,2)).step,3,'Replay does not revert progress');
+assert.equal((await step(u,id,3,{...answers[3],terms:'maybe'})).code,'invalid');
+await db.exec("update police_personnel set status='inactive' where discord_user_id='"+u+"'");assert.equal((await step(u,id,3)).code,'inactive');await db.exec("update police_personnel set status='active' where discord_user_id='"+u+"'");
+const sent=await step(u,id,3);assert.equal(sent.submitted,true);assert.equal(sent.reference,id);
+assert.equal((await step(u,id,3)).reference,id,'Final replay reuses the application');
+assert.equal((await step(u,crypto.randomUUID(),1)).reference,id,'One pending application per user');
+assert.equal((await db.query('select count(*)::int as n from police_nie_applications')).rows[0].n,1);
+const saved=(await db.query('select * from police_nie_applications')).rows[0];assert.equal(Object.keys(saved.answers).length,11);assert.equal(saved.answers.seizure,answers[2].seizure);assert.equal(saved.personnel_plate,'0001');assert.equal(saved.status,'pending');
+assert.deepEqual((await db.query('select payload from police_nie_drafts where id=$1',[id])).rows[0].payload,{},'Draft cleared after atomic submit');
+assert.equal((await step(other,id,3)).ok,false,'Submission replay is owner-bound');
+await db.query("update police_nie_applications set status='approved',reviewed_by='director',reviewed_at=now() where id=$1",[id]);
+id=crypto.randomUUID();assert.equal((await step(u,id,1)).step,2);await db.query("update police_nie_drafts set expires_at=now()-interval '1 minute' where id=$1",[id]);assert.equal((await step(u,id,2)).code,'expired');
+const next=crypto.randomUUID();assert.equal((await step(u,next,1)).step,2);assert.equal((await step(u,id,2)).code,'expired','Replaced draft cannot submit');
+await step(u,next,2);assert.equal((await step(u,next,3,{...answers[3],terms:'no'})).submitted,true,'No is recorded for human review');assert.equal((await db.query('select answers from police_nie_applications where id=$1',[next])).rows[0].answers.terms,'no');
+for(const role of ['anon','authenticated']){
+ const grants=(await db.query("select has_table_privilege($1,'police_nie_applications','SELECT') as read,has_function_privilege($1,'police_nie_step(text,uuid,integer,jsonb,text)','EXECUTE') as execute",[role])).rows[0];assert.equal(grants.read,false);assert.equal(grants.execute,false);
+}
+assert.equal((await db.query("select relrowsecurity as rls from pg_class where oid='public.police_nie_applications'::regclass")).rows[0].rls,true);
+const roleMigration=readdirSync('supabase/migrations').find(x=>x.endsWith('_nie_police_role_eligibility.sql'));await db.exec(readFileSync('supabase/migrations/'+roleMigration,'utf8'));
+const withoutProfile='333333333333333333',application=crypto.randomUUID();
+assert.equal((await step(withoutProfile,application,1)).step,2);await step(withoutProfile,application,2);assert.equal((await step(withoutProfile,application,3)).submitted,true);
+const noProfile=(await db.query('select personnel_name,personnel_plate from police_nie_applications where id=$1',[application])).rows[0];assert.equal(noProfile.personnel_name,answers[1].full_name);assert.equal(noProfile.personnel_plate,'');
+assert.equal((await db.query("select has_function_privilege('anon','police_nie_step(text,uuid,integer,jsonb,text)','EXECUTE') as allowed")).rows[0].allowed,false);
+await db.close();console.log('NIE SQL: all 11 answers, ordered/owner-bound/expiring drafts, replay-safe atomic submission, one pending record, Police eligibility without a personnel file and private grants: PASS');

@@ -23,6 +23,7 @@ jobs:
       - name: Check client scripts
         run: |
           node --check app.js
+          node --check nie-ui.js
           node --check application-review-ui.js
           node --check personnel-profile.js
           node --check auto-plates.js
@@ -67,6 +68,8 @@ jobs:
           node --experimental-strip-types scripts/check-personnel-membership.mjs
           node --experimental-strip-types scripts/check-real-ranks.mjs
           node --experimental-strip-types scripts/check-division-leadership.mjs
+          node --experimental-strip-types scripts/check-nie.mjs
+          node scripts/check-nie-sql.mjs
           node --experimental-strip-types scripts/check-promotion-announcements.mjs
           node --experimental-strip-types scripts/check-application-permissions.mjs
           node --experimental-strip-types scripts/check-personnel-status.mjs

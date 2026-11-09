@@ -1,3 +1,4 @@
+import {nieRoute,niePermission} from './nie.ts';
 import {syncH50Status} from '../_shared/h50-status.ts';
 import {h50Route} from './h50.ts';
 import { parseApplicationIdentity } from "../_shared/application-identity.ts";
@@ -610,6 +611,7 @@ async function routePanel(req: Request): Promise<Response> {
    const member=await accessMember(actor);return managePersonnelProfile(req,action,actor,{db,discord,json,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});
   }
   if(['absence-summary','absence-review','absence-roster','absence-register'].includes(action||'')){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);return manageAbsences(req,action,actor,{db,json,notify:sendPrivateDiscordMessage,audit:postAuditLog});}
+  if(action==='nie-records'||action==='nie-review'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada.'},403);const member=await accessMember(actor,true);return nieRoute(req,action,actor,{db,json,member});}
   if(action==='h50-records'||action==='h50-close'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);if(applicationPermissions(member.roles||[]).applicationsOnly)return json({error:'Sin permiso para consultar H-50.'},403);return h50Route(req,action,actor,{db,json,status:()=>EdgeRuntime.waitUntil(syncH50Status().catch(error=>console.error('H50 public status:',String(error)))),canManage:(member.roles||[]).some((id:string)=>['1539970134565982313','1539970134544748562','1539970134519578774','1539970134519578773'].includes(id))});}
   if (action === "evidence-records") {
    const actor=await authorizedUser(req);
@@ -733,7 +735,7 @@ async function currentUser(req: Request) {
       : "https://cdn.discordapp.com/embed/avatars/" + String(Number((BigInt(userId) >> 22n) % 6n)) + ".png";
     const roles: string[] = member?.roles ?? [];
     const accessRoles = roles.filter((role) => MANAGER_ROLE_IDS.has(role)).map((role) => MANAGER_ROLE_LABELS.get(role) ?? "Gestión autorizada");
-    return json({ user: { id: userId, username, display_name: displayName, avatar_url: avatarUrl, access_roles: accessRoles, restricted_to_applications: applicationPermissions(roles).applicationsOnly, can_decide_applications_direct: applicationPermissions(roles).direct, can_manage_shifts_direct: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774","1539970134519578773"].includes(id)), can_authorize_promotions: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774"].includes(id)) } });
+    return json({ user: { id: userId, username, display_name: displayName, avatar_url: avatarUrl, access_roles: accessRoles, can_review_nie:await niePermission(userId,roles,db), restricted_to_applications: applicationPermissions(roles).applicationsOnly, can_decide_applications_direct: applicationPermissions(roles).direct, can_manage_shifts_direct: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774","1539970134519578773"].includes(id)), can_authorize_promotions: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774"].includes(id)) } });
   } catch (e) {
     console.error("Discord profile lookup failed:", String(e));
     return json({ error: "No se pudo cargar tu perfil de Discord." }, 502);
