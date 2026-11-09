@@ -1,0 +1,94 @@
+{
+  "guild_id": "1539970134469378068",
+  "alerts_channel": {
+    "id": "1539970137686413406",
+    "name": "🛡️┇𝐑𝐀𝐈𝐃𝐏𝐑𝐎𝐓𝐄𝐂𝐓-𝐋𝐎𝐆𝐒",
+    "parent_id": "1539970137686413405"
+  },
+  "before": {
+    "safety_alerts_channel_id": null,
+    "raid_alerts_disabled": true,
+    "police_mentionable": false
+  },
+  "after": {
+    "safety_alerts_channel_id": "1539970137686413406",
+    "raid_alerts_disabled": false,
+    "police_mentionable": true
+  },
+  "automod_rule": {
+    "id": "1569472668506259560",
+    "guild_id": "1539970134469378068",
+    "creator_id": "1540484542354428025",
+    "name": "PRIME POLICE · Mención Policía desde Capitán",
+    "event_type": 1,
+    "actions": [
+      {
+        "type": 1,
+        "metadata": {
+          "custom_message": "Solo Capitán, rangos superiores y jefaturas pueden mencionar al rol Policía."
+        }
+      }
+    ],
+    "trigger_type": 1,
+    "enabled": true,
+    "exempt_roles": [
+      "1539970134519578768",
+      "1539970134544748560",
+      "1539970134544748561",
+      "1539970134544748558",
+      "1539970134544748559",
+      "1539970134519578766",
+      "1539970134519578767"
+    ],
+    "exempt_channels": [],
+    "trigger_metadata": {
+      "keyword_filter": [],
+      "regex_patterns": [
+        "<@&1539970134482092038>"
+      ],
+      "allow_list": []
+    }
+  },
+  "allowed_role_names": [
+    {
+      "id": "1539970134519578766",
+      "name": "Capitan"
+    },
+    {
+      "id": "1539970134519578767",
+      "name": "Comandante"
+    },
+    {
+      "id": "1539970134519578768",
+      "name": "Teniente Coronel"
+    },
+    {
+      "id": "1539970134544748558",
+      "name": "Sub Jefe de Division"
+    },
+    {
+      "id": "1539970134544748559",
+      "name": "Jefe de Division"
+    },
+    {
+      "id": "1539970134544748560",
+      "name": "Coronel"
+    },
+    {
+      "id": "1539970134544748561",
+      "name": "Comisionado"
+    }
+  ],
+  "limitations": [
+    "Discord exempts bots/webhooks and members with Administrator or Manage Server from AutoMod.",
+    "No real raid or Police mention message was sent for testing."
+  ],
+  "unchanged": [
+    "Role permission bitfields",
+    "Existing AutoMod rules",
+    "MFA and verification settings",
+    "Channel order and permissions",
+    "Member role assignments"
+  ],
+  "verified_at": "2026-11-09T22:05:17.938Z"
+}
