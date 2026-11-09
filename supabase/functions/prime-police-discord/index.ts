@@ -1,3 +1,5 @@
+import {handleNie} from './nie.ts';
+import {NIE_CHANNEL,NIE_PANEL} from '../_shared/nie-questions.ts';
 import {syncH50Status} from '../_shared/h50-status.ts';
 import {handleH50,h50Panel,H50_CHANNEL_ID} from './h50.ts';
 import { parseApplicationIdentity } from "../_shared/application-identity.ts";
@@ -136,6 +138,7 @@ async function handle(i:any){
  if(String(i.data?.custom_id||" ").startsWith("prime_evidence_")||(i.type===2&&i.data?.name==="publicar_evidencias"))return ephemeral("El registro de evidencias en Discord está desactivado. El historial se conserva en la web PRIME POLICE.");
  const user=i.member?.user||i.user;const userId=String(user?.id||"");const username=String(user?.global_name||user?.username||"Usuario Discord");
  if((i.member?.roles||[]).includes(RECRUITMENT_VETO_ROLE)&&(/^(prime_apply|prime_application|prime_transfer|prime_rank_request)/.test(String(i.data?.custom_id||''))||['postulacion','traslado'].includes(i.data?.name)))return ephemeral(RECRUITMENT_VETO_MESSAGE);
+ const nie=await handleNie(i,userId,username,{db,discord,input:modalInput,response,ephemeral,edit:editInteractionResponse,waitUntil:(task:Promise<void>)=>EdgeRuntime.waitUntil(task)});if(nie)return nie;
  const applicationStep=await handleApplicationSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processApplicationSubmit});if(applicationStep)return applicationStep;
  const transferStep=await handleTransferSteps(i,userId,username,{db,input:modalInput,response,ephemeral,values,edit:editInteractionResponse,process:processTransferSubmit});if(transferStep)return transferStep;
  const h50=handleH50(i,userId,{db,discord,response,ephemeral,reply:editInteractionReply,waitUntil:task=>EdgeRuntime.waitUntil(task),status:()=>EdgeRuntime.waitUntil(syncH50Status().catch(error=>console.error('H50 public status:',String(error))))});if(h50)return h50;
@@ -155,7 +158,8 @@ async function handle(i:any){
      await publishOrUpdatePanel("1539970136302288946","prime_duty_start",{embeds:[{title:"◷ PRIME POLICE · Control de servicio",description:"Registra tu entrada al comenzar el servicio y tu salida al finalizar.",color:6593023,footer:{text:"PRIME POLICE · Bitácoras"}}],components:[{type:1,components:[{type:2,style:3,label:"Entrar en servicio",custom_id:"prime_duty_start"},{type:2,style:4,label:"Salir de servicio",custom_id:"prime_duty_end"}]}]});
      await publishOrUpdatePanel(H50_CHANNEL_ID,"prime_h50_start",h50Panel);
      await publishOrUpdatePanel(ABSENCE_CHANNEL_ID,"prime_absence",absencePanel);
-     await editInteractionReply(i,"Paneles de postulaciones, ingreso, traslados, servicio, ausencias y H-50 actualizados.");
+     await publishOrUpdatePanel(NIE_CHANNEL,"prime_nie_apply",NIE_PANEL);
+     await editInteractionReply(i,"Paneles de postulaciones, ingreso, traslados, servicio, ausencias, H-50 y NIE · CIC actualizados.");
     }catch(error){
      console.error("Could not publish application announcement:",String(error));
      try{await editInteractionReply(i,"No se pudo publicar el formulario. Comprueba los permisos del bot y vuelve a intentarlo.");}catch(replyError){console.error("Could not update deferred interaction:",String(replyError));}
@@ -212,7 +216,7 @@ async function handle(i:any){
 }
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:CORS});
- if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",duty_service:true,h50_service:true,h50_capacity:2,h50_auto_close_hours:2,evidence_registration:false,evidence_form:"disabled-web-history-preserved",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
+ if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",nie_applications:true,nie_questionnaire_version:1,duty_service:true,h50_service:true,h50_capacity:2,h50_auto_close_hours:2,evidence_registration:false,evidence_form:"disabled-web-history-preserved",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
  if(req.method!=="POST")return json({error:"Method not allowed"},405);
  const body=await req.text();if(!await validSignature(req,body))return json({error:"Invalid Discord signature or DISCORD_PUBLIC_KEY not configured"},401);
  let i:any;try{i=JSON.parse(body)}catch{return json({error:"Invalid JSON"},400)}

@@ -87,3 +87,16 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - Jefe (`1539970134544748559`) y Subjefe (`1539970134544748558`) comparten los roles existentes de Discord entre CIC y UCOP. No inventar nuevos IDs ni conceder acceso a toda la rama CIC.
 - Al asignar estos cargos es obligatorio elegir CIC o UCOP; se conserva la división en `unit` y el nombre del cargo en la ficha. Ambos roles permiten entrar al panel y a Personal, conservando las autorizaciones de Directiva y las protecciones de roles elevados.
 - Los apodos de estos cargos usan CIC cuando llevan esa rama. No se cambian fichas ni roles de personas de forma retroactiva al desplegar.
+
+## Postulaciones NIE · CIC
+
+- Canal autorizado del panel: `1539970136302288950`, botón `prime_nie_apply`. Once preguntas en tres pasos privados (4 + 4 + 3); Sí/No mediante selector. No reutilizar los formularios de ingreso general ni evidencias.
+- `nie.ts` en el bot y `_shared/nie-questions.ts` definen el formulario. Revalidar el rol Policía actual y ausencia de bajas/veto al guardar cada paso. Todos los que tengan Policía pueden postular sin necesitar ficha previa en la web; si existe ficha activa se conserva su identificación como referencia. Borrador privado por usuario durante una hora; pasos ordenados, UUID propio, final atómico e idempotente, una postulación pendiente por agente.
+- Tablas privadas `police_nie_drafts` y `police_nie_applications`, RLS y acceso por service_role. La RPC `police_nie_step` no puede ejecutarse con anon/authenticated. No publicar respuestas ni datos del formulario en canales de Discord ni guardar el correo de Google del texto original.
+- Web: `nie-ui.js`, endpoints `nie-records` y `nie-review`. Acceso exclusivamente para Directiva, Jefe de División UCOP o CIC y Subjefe de División CIC. Las jefaturas deben tener Policía, rol de rama coincidente y ficha activa con esa división; Subjefe UCOP y el resto quedan excluidos. Validar permisos en servidor con roles actuales, no solo esconder el apartado.
+- Revisión con motivo, responsable, fecha y control de versión para evitar decisiones dobles. No autorrevisión. Aprobar/rechazar solo guarda la decisión: no asigna roles, no admite personal y no envía mensajes ni privados.
+- Pruebas aisladas: `scripts/check-nie.mjs` y `scripts/check-nie-sql.mjs`. No enviar una postulación ficticia a producción para probar.
+
+- Migraciones aplicadas: `20261109153327_nie_applications.sql` y `20261109153549_nie_police_role_eligibility.sql`. La segunda permite postular con Policía aunque no exista ficha previa; no abre la lectura de respuestas.
+- El anuncio de resultados lo publica el equipo manualmente. No crear avisos de solicitudes ni de decisiones; solo confirmación privada de envío con referencia.
+- `scripts/maintenance/install-nie-panel.ts` es una plantilla de instalación puntual limitada a este canal. No desplegar sin autorización y capacidad con caducidad; retirarla tras comprobar el mensaje.
