@@ -75,3 +75,9 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - Las horas del calendario se reparten por día en Europe/Paris, incluidos cambios de horario y turnos que cruzan medianoche. Los totales no se calculan a partir de las 50 filas de una página. «Turnos breves» significa completados de menos de 30 minutos y es solo un indicador.
 - La columna «Rango actual» usa la ficha actual disponible; no inventar un rango histórico. No existe aún registro de horas/aprobación H-50: no mostrar aprobaciones o tiempos simulados en producción. Cierre forzado y eliminación mantienen sus permisos, peticiones de Directiva y auditoría.
 - `docs/previews/prime-police-bitacoras.html` es una vista previa interactiva con datos ficticios, sin acceso a producción. Se conserva fuera de los archivos públicos. Al publicar cambios, coordinar la migración y el despliegue de prime-police-panel con el frontend. El propietario ha elegido mantener esta versión sin H-50.
+
+## Roles de baja
+
+- La opción «Baja» usa el rol Discord `1569323526610092234` y el valor `discharged`. Se añade junto a Baja Voluntaria, Expulsado y Vetado, conservando sus IDs y las sugerencias actuales por motivo.
+- Al reingresar se retiran Baja y Baja Voluntaria. Expulsado y Vetado siguen bloqueando el reingreso y no se pueden rebajar usando Baja. La sincronización de accesos no debe reactivar por sí sola a quien tenga un rol de baja.
+- El valor adicional requiere la migración `20261109121953_general_departure_role.sql` antes de activar la opción y desplegar las funciones afectadas. No se aplican bajas ni asignaciones retroactivas.

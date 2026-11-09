@@ -45,7 +45,7 @@ console.log('Personnel status: restricted role changes, rollback, uncertain comm
 const data={eventId:crypto.randomUUID(),userId:target,name:'Agente Prueba',plate:'0123',rank:'Raso',type:'Despido',date:today,approvedBy:'Directiva Prueba',timestamp:new Date().toISOString()};const card=departureCard(data);assert.deepEqual(card.allowed_mentions,{parse:[]});assert(card.nonce.length<=25);assert(!JSON.stringify(card).includes('Observación privada'));let notices=[],failOnce=true;assert.equal(await announceDeparture(data,async(path,init)=>{notices.push({path,init});if(init.method==='GET')return{guild_id:'1539970134469378068',type:0};if(failOnce){failOnce=false;throw Error('Connection interrupted');}return{id:'notice'};}),'');assert.equal(notices.length,3);assert.equal(notices[1].init.body,notices[2].init.body);assert(notices[1].path.includes(DEPARTURE_CHANNEL));assert(await announceDeparture(data,async()=>({guild_id:'other',type:0})));console.log('Departure notices: configured destination, safe fields/mentions, stable retries and announcement errors do not undo a departure: PASS');
 
 assert.equal(departureRoleChoice('renuncia'),'voluntary');assert.equal(departureRoleChoice('jubilacion'),'voluntary');assert.equal(departureRoleChoice('corrupcion'),'expelled');assert.equal(departureRoleChoice('ck'),'none');assert.equal(departureRoleChoice('otro','banned'),'banned');assert.equal(departureRoleChoice('otro','constructor'),null);
-for(const role of ['voluntary','expelled','banned']){t=scenario();t.body.departure_role=role;assert.equal((await t.run()).status,200);assert(t.state.roles.has(DEPARTURE_ROLES[role].id));assert.equal(t.state.person.departure_role,role);}
+for(const role of ['discharged','voluntary','expelled','banned']){t=scenario();t.body.departure_role=role;assert.equal((await t.run()).status,200);assert(t.state.roles.has(DEPARTURE_ROLES[role].id));assert.equal(t.state.person.departure_role,role);}
 t=scenario({reentry:true});t.state.roles.add(DEPARTURE_ROLES.voluntary.id);assert.equal((await t.run()).status,200);assert(!t.state.roles.has(DEPARTURE_ROLES.voluntary.id));
 for(const role of ['expelled','banned']){t=scenario({reentry:true});t.state.roles.add(DEPARTURE_ROLES[role].id);assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);}
 t=scenario({reentry:true});t.state.person.departure_role='banned';assert.equal((await t.run()).status,409);assert.equal(t.state.calls,0);
@@ -62,3 +62,11 @@ t=scenario({partialRoleFailure:true});assert.equal((await t.run()).status,502);a
 t=scenario();t.state.roles.add('integration-role');const automatic=await t.run();assert.equal(automatic.status,200);assert.deepEqual([...t.state.roles].sort(),['integration-role',DEPARTURE_ROLES.expelled.id].sort());assert((await automatic.json()).warning.includes('automático'));
 t=scenario();t.body.departure_role='none';assert.equal((await t.run()).status,409);assert.equal(t.state.calls,0);
 console.log('Full departure removal: staff and 80 other manual roles removed in one update; hierarchy blocks before writes; failed confirmation rolls back; automatic roles reported; marker required: PASS');
+
+// The general Baja marker is reversible and cannot bypass a veto or expulsion.
+assert.equal(DEPARTURE_ROLES.discharged.id,'1569323526610092234');
+assert.equal(departureRoleChoice('otro','discharged'),'discharged');
+assert.equal(hasPersonnelRestriction([DEPARTURE_ROLES.discharged.id]),false);
+t=scenario({reentry:true});t.state.person.departure_role='discharged';t.state.roles.add(DEPARTURE_ROLES.discharged.id);assert.equal((await t.run()).status,200);assert(!t.state.roles.has(DEPARTURE_ROLES.discharged.id));assert(t.state.roles.has(police));
+for(const restricted of ['expelled','banned']){t=scenario();t.state.roles.add(DEPARTURE_ROLES[restricted].id);t.body.departure_role='discharged';assert.equal((await t.run()).status,409);assert.equal(t.state.writes.length,0);}
+console.log('General Baja: selected role assigned, saved as discharged, removed on reentry, veto/expulsion cannot be downgraded: PASS');

@@ -4,7 +4,7 @@ import {writeAudit} from './audit-events.ts';
 const POLICE='1539970134482092038',UCOP='1539970134519578773',CIC='1539970134519578772';
 export function expectedPersonnelAccess(person:any,roles:string[]){
  const wanted=person.unit==='CIC'?CIC:person.unit==='UCOP'&&shouldAssignUcopBranch(roles,person.rank_role_id)?UCOP:null;
- return{wanted,police:roles.includes(POLICE),branch:(!wanted||roles.includes(wanted))&&[UCOP,CIC].every(r=>r===wanted||!roles.includes(r)),restricted:hasPersonnelRestriction(roles)||roles.includes(DEPARTURE_ROLES.voluntary.id)};
+ return{wanted,police:roles.includes(POLICE),branch:(!wanted||roles.includes(wanted))&&[UCOP,CIC].every(r=>r===wanted||!roles.includes(r)),restricted:hasPersonnelRestriction(roles)||roles.includes(DEPARTURE_ROLES.voluntary.id)||roles.includes(DEPARTURE_ROLES.discharged.id)};
 }
 export async function personnelAccess(req:Request,actor:string,c:any){
  const write=req.method==='POST',body=write?await req.json():{},target=String(write?body.discord_user_id:new URL(req.url).searchParams.get('discord_user_id')||'');
@@ -12,7 +12,7 @@ export async function personnelAccess(req:Request,actor:string,c:any){
  const people=await c.db('police_personnel?select=*&discord_user_id=eq.'+target+'&limit=1'),person=people?.[0];if(!person)return c.json({error:'La ficha ya no existe.'},404);
  const path='/guilds/1539970134469378068/members/'+target,member=await c.discord(path),roles:string[]=member.roles||[],state=expectedPersonnelAccess(person,roles);
  if(!write)return c.json({ok:true,...state,active:person.status==='active',director:roles.some(r=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(r))});
- if(person.status!=='active'||state.restricted)return c.json({error:'La ficha debe estar activa y sin expulsión o veto. Usa Reingresar para resolver una baja.'},409);
+ if(person.status!=='active'||state.restricted)return c.json({error:'La ficha debe estar activa y sin roles de baja. Usa Reingresar para resolver una baja.'},409);
  if(String(body.expected_updated_at)!==String(person.updated_at))return c.json({error:'La ficha cambió. Actualiza antes de sincronizar los roles.'},409);
  const added:string[]=[],removed:string[]=[];
  try{
