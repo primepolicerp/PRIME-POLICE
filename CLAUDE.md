@@ -100,3 +100,11 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - Migraciones aplicadas: `20261109153327_nie_applications.sql` y `20261109153549_nie_police_role_eligibility.sql`. La segunda permite postular con Policía aunque no exista ficha previa; no abre la lectura de respuestas.
 - El anuncio de resultados lo publica el equipo manualmente. No crear avisos de solicitudes ni de decisiones; solo confirmación privada de envío con referencia.
 - `scripts/maintenance/install-nie-panel.ts` es una plantilla de instalación puntual limitada a este canal. No desplegar sin autorización y capacidad con caducidad; retirarla tras comprobar el mensaje.
+
+## Bonos de personal
+
+- `bonuses-ui.js` y `bonuses.css`: Semanal (lunes–domingo), Mensual y Especial (por fecha). Listado de la plantilla activa, búsqueda por nombre/placa/rango, paginación de 30 y resumen completo del período. La opción «Incluir bajas con registro» conserva el acceso a históricos sin volver a activar fichas.
+- Registro manual de dinero de rol, estados Pendiente/Pagado/No corresponde, importe y motivo. Sin registro equivale a pendiente sin importe. Un registro por agente, tipo y período; varios conceptos especiales en la misma fecha se resumen en ese registro y su historial. No hay entrega de dinero, avisos de Discord ni cambios de roles.
+- Consulta: gestores del panel, excluyendo acceso limitado a postulaciones. Edición: Directiva con los mismos tres IDs de autorización del panel, validada en servidor y con roles actuales. La petición sobre apodos de Discord no modifica estos permisos web.
+- `prime-police-panel/bonuses.ts`, endpoints privados `bonus-records`, `bonus-history` y `bonus-save`. Tablas `police_bonuses` y `police_bonus_history`, RLS y acceso exclusivo por servicio. Guardado y auditoría en una transacción, versión esperada y bloqueo por agente/período. No borrar registros ni recalcular pagos al cambiar rangos o dar bajas.
+- Antes de publicar: aplicar `20261110005228_bonus_register.sql`, desplegar `prime-police-panel`, y después publicar el frontend. Esta preparación no aplica la migración ni modifica producción. Pruebas: `node --experimental-strip-types scripts/check-bonuses.mjs` y `node scripts/check-bonuses-sql.mjs`, además de TypeScript y compilación pública.
