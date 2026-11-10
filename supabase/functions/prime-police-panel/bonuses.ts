@@ -1,4 +1,4 @@
-export function canManageBonuses(roles:string[]){return roles.some(id=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(id));}
+export function canManageBonuses(roles:string[]){return roles.some(id=>['1539970134565982313','1539970134544748562','1539970134519578774','1539970134519578773'].includes(id));}
 export function validBonusPeriod(kind:string,period:string){
  if(!['weekly','monthly','special'].includes(kind)||!/^\d{4}-\d{2}-\d{2}$/.test(period)||period<'2020-01-01'||period>'2100-12-31')return false;
  const date=new Date(period+'T00:00:00Z');
@@ -20,7 +20,7 @@ export async function bonusRoute(req:Request,action:string,actor:string,c:any){
   return c.json({records:rows.slice(0,20),next_offset:rows.length>20?offset+20:null});
  }
  if(action!=='bonus-save'||req.method!=='POST')return c.json({error:'Método no permitido.'},405);
- if(!c.canManage)return c.json({error:'Solo Directiva puede registrar bonos.'},403);
+ if(!c.canManage)return c.json({error:'Solo Directiva o gestión UCOP puede registrar bonos.'},403);
  let b:any;try{b=await req.json();}catch{return c.json({error:'Solicitud inválida.'},400);}
  const user=String(b.discord_user_id||''),kind=String(b.kind||''),period=String(b.period||''),reason=String(b.reason||'').trim(),amount=b.amount,expected=b.expected_version;
  if(!/^\d{17,20}$/.test(user)||!validBonusPeriod(kind,period)||typeof amount!=='number'||!Number.isFinite(amount)||amount<0||amount>9999999999.99||Math.abs(amount*100-Math.round(amount*100))>0.0001||!['pending','paid','excluded'].includes(b.status)||(b.status==='paid'&&amount<=0)||reason.length<3||reason.length>1000||!Number.isSafeInteger(expected)||expected<0)return c.json({error:'Revisa el importe, estado y motivo.'},400);
