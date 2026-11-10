@@ -106,11 +106,18 @@ async function performApiRequest(action,options,method,sessionAtStart){
   if(!response.ok){
    if(method==='GET'&&attempt===0&&[429,502,503,504].includes(response.status)){await new Promise(r=>setTimeout(r,600));continue;}
    if(token===sessionAtStart&&action!=='login'&&(response.status===401||(response.status===403&&/sesión|permiso|autorizado/i.test(result.error||''))))showLogin();
-   throw Error('Error'+(reference?' · Ref. '+reference.slice(0,8):' · Referencia no disponible.'));
+   throw Error((safeBusinessError(result,response.status)||'Error')+(reference?' · Ref. '+reference.slice(0,8):' · Referencia no disponible.'));
   }
   if(result.pending_approval)window.dispatchEvent(new Event('pending-change-created'));
   return result;
  }
+}
+function safeBusinessError(result,status){
+ if(![400,409].includes(status))return null;
+ const messages={plate_in_use:'Esta placa ya está asignada. Elige otra.',personnel_exists:'Esta persona ya tiene una ficha. Revísala en Personal.',record_changed:'El registro cambió. Actualiza la lista antes de continuar.',admission_not_pending:'Esta persona ya no está pendiente de ingreso. Actualiza la lista.',rank_unavailable:'El rango seleccionado ya no está disponible. Actualiza y elige otro.'};
+ if(!Object.hasOwn(messages,result.public_error))return null;
+ if(result.public_error==='plate_in_use'&&typeof result.plate==='string'&&/^\d{1,10}$/.test(result.plate))return 'La placa '+result.plate+' ya está asignada. Elige otra.';
+ return messages[result.public_error];
 }
 let accountProfileSequence=0;
 function accountFallbackAvatar(name='PP'){
