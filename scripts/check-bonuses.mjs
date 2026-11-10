@@ -5,7 +5,7 @@ const context={json,canManage:false,actorName:'Directiva',db:async(path,init)=>{
 for(const r of ['1539970134565982313','1539970134544748562','1539970134519578774'])assert.equal(canManageBonuses([r]),true);
 for(const r of ['1539970134519578773','1539970134544748559','1539970134544748558','1564308664557506691'])assert.equal(canManageBonuses([r]),false);
 assert.equal(validBonusPeriod('weekly','2026-11-09'),true);assert.equal(validBonusPeriod('weekly','2026-11-10'),false);assert.equal(validBonusPeriod('monthly','2026-11-01'),true);assert.equal(validBonusPeriod('monthly','2026-11-02'),false);assert.equal(validBonusPeriod('special','2026-02-30'),false);
-const body={discord_user_id:actor,kind:'weekly',period:'2026-11-09',amount:1500,status:'paid',reason:'Actividad semanal',expected_version:0};
+const body={discord_user_id:actor,kind:'weekly',period:'2026-11-09',amount:1500,status:'paid',reason:'Actividad semanal',expected_version:0,delivered_on:'2026-11-10'};
 const save=b=>new Request('https://test/?panel=bonus-save',{method:'POST',body:JSON.stringify(b)});
 assert.equal((await bonusRoute(save(body),'bonus-save',actor,context)).status,403);assert.equal(calls.length,0,'No database writes without Directiva');
 context.canManage=true;
@@ -17,3 +17,9 @@ context.db=async()=>{throw Error('Must not query');};
 for(const query of ['kind=weekly&period=2026-11-10','kind=monthly&period=2026-11-01&offset=-1','kind=special&period=2026-11-10&archived=yes'])assert.equal((await bonusRoute(new Request('https://test/?'+query),'bonus-records',actor,context)).status,400);
 assert.equal((await bonusRoute(new Request('https://test/?id=bad'),'bonus-history',actor,context)).status,400);
 console.log('Bonuses: Directiva-only edits, real calendar validation, numeric amounts, server-owned actor, conflict handling and input rejection: PASS');
+context.db=async(path,init)=>{calls.push({path,body:init?.body&&JSON.parse(init.body)});return path.startsWith('police_rank_roles?')?[{role_name:'Sargento'}]:{ok:true,record:{}};};
+assert.equal((await bonusRoute(save({...body,kind:'promotion',period:'2026-11-10',promoted_rank:'Sargento'}),'bonus-save',actor,context)).status,200);
+assert.equal(calls.at(-1).body.p_promoted_rank,'Sargento');assert.equal(calls.at(-1).body.p_delivered_on,'2026-11-10');
+context.db=async()=>[];assert.equal((await bonusRoute(save({...body,kind:'promotion',period:'2026-11-10',promoted_rank:'Inventado'}),'bonus-save',actor,context)).status,400);
+assert.equal((await bonusRoute(save({...body,delivered_on:'2026-02-30'}),'bonus-save',actor,context)).status,400);
+console.log('Promotion bonus API: delivery date, configured rank validation and server RPC fields: PASS');
