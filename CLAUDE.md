@@ -115,3 +115,9 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - Cuarta categoría «Por ascenso», rango elegido del catálogo configurado. Solo documenta el bono: no ejecuta ascensos, pagos, solicitudes ni avisos de Discord. Un registro por agente, tipo y fecha/período; correcciones conservadas en el historial.
 - Migración aplicada `20261110014848_bonus_delivery_form.sql`: añade `delivered_on` y `promoted_rank` conservando importes e historial existentes; no inventa fechas de entrega para pagos históricos. Actualiza las RPC privadas y mantiene RLS y las autorizaciones.
 - Migración aplicada y API preparada para publicación coordinada con el frontend. Pruebas: `scripts/check-bonus-delivery-ui.mjs`, `scripts/check-bonus-delivery-sql.mjs`, las pruebas previas de bonos, TypeScript y compilación pública.
+
+## Avisos de ingreso comprensibles
+
+- `preselection-admit` / `transfer-admit` devuelven códigos públicos limitados para placa ocupada, ficha existente, registro cambiado, ingreso ya no pendiente y rango retirado. El cliente traduce únicamente esos códigos a frases fijas y conserva la referencia.
+- Nunca mostrar directamente `result.error`, mensajes SQL, Supabase o Discord. Una placa solo se inserta en el mensaje si contiene 1–10 cifras. Los fallos desconocidos o técnicos mantienen «Error · Ref. …». No hay reintentos automáticos de escrituras; los permisos y la sesión conservan su validación.
+- Si un conflicto de placa aparece después de intentar guardar, solo mostrar ese motivo específico si la restauración de roles finaliza correctamente; en caso contrario conservar el error genérico para revisar el resultado.
