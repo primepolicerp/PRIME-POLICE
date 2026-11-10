@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {PGlite} from '@electric-sql/pglite';
+import {readFileSync,readdirSync} from 'node:fs';
+const db=new PGlite(),u='111111111111111111',actor='222222222222222222';
+await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create table police_personnel(discord_user_id text primary key,full_name text,plate text,rank_name text,unit text,status text);insert into police_personnel values('${u}','Prueba','0001','Cabo','UCOP','active');`);
+for(const suffix of ['_bonus_register.sql'])await db.exec(readFileSync('supabase/migrations/'+readdirSync('supabase/migrations').find(f=>f.endsWith(suffix)),'utf8'));
+await db.query("select police_bonus_save($1,'weekly','2026-11-09',100,'paid','Registro previo',0,$2,'Directiva')",[u,actor]);
+await db.exec(readFileSync('supabase/migrations/'+readdirSync('supabase/migrations').find(f=>f.endsWith('_bonus_delivery_form.sql')),'utf8'));
+let saved=(await db.query('select * from police_bonuses')).rows;assert.equal(saved.length,1);assert.equal(saved[0].amount,'100.00');assert.equal(saved[0].delivered_on,null,'Do not invent old delivery dates');assert.equal((await db.query('select count(*)::int n from police_bonus_history')).rows[0].n,1);
+const save=async(version=0,rank='Sargento',date='2026-11-10')=>(await db.query("select police_bonus_save($1,'promotion','2026-11-10',50000,'paid','Bono de ascenso',$2,$3,'Directiva',$4,$5) result",[u,version,actor,date,rank])).rows[0].result;
+assert.equal((await save(0,'')).code,'invalid');let result=await save();assert.equal(result.ok,true);assert.equal(result.record.delivered_on,'2026-11-10');assert.equal(result.record.promoted_rank,'Sargento');assert.equal((await save()).code,'conflict');
+const register=(await db.query("select police_bonus_register('promotion','2026-11-10') result")).rows[0].result;assert.equal(register.summary.paid_amount,50000);assert.equal(register.records[0].promoted_rank,'Sargento');assert.equal(register.records[0].delivered_on,'2026-11-10');
+assert.equal((await db.query('select rank_name from police_personnel')).rows[0].rank_name,'Cabo','A bonus never changes rank');assert.equal((await db.query('select count(*)::int n from police_bonus_history')).rows[0].n,2);
+await save(1,'Inspector','2026-11-09');const history=(await db.query('select * from police_bonus_history order by id desc limit 1')).rows[0];assert.equal(history.before_record.promoted_rank,'Sargento');assert.equal(history.after_record.promoted_rank,'Inspector');assert.equal(history.after_record.delivered_on,'2026-11-09');
+for(const role of ['anon','authenticated'])assert.equal((await db.query("select has_function_privilege($1,'police_bonus_save(text,text,date,numeric,text,text,integer,text,text,date,text)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+await db.close();console.log('Bonus delivery SQL: old payments preserved, delivery date/rank snapshots, separate promotion category, version conflicts, audit and private grants: PASS');

@@ -75,3 +75,58 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - Las horas del calendario se reparten por día en Europe/Paris, incluidos cambios de horario y turnos que cruzan medianoche. Los totales no se calculan a partir de las 50 filas de una página. «Turnos breves» significa completados de menos de 30 minutos y es solo un indicador.
 - La columna «Rango actual» usa la ficha actual disponible; no inventar un rango histórico. No existe aún registro de horas/aprobación H-50: no mostrar aprobaciones o tiempos simulados en producción. Cierre forzado y eliminación mantienen sus permisos, peticiones de Directiva y auditoría.
 - `docs/previews/prime-police-bitacoras.html` es una vista previa interactiva con datos ficticios, sin acceso a producción. Se conserva fuera de los archivos públicos. Al publicar cambios, coordinar la migración y el despliegue de prime-police-panel con el frontend. El propietario ha elegido mantener esta versión sin H-50.
+
+## Roles de baja
+
+- La opción «Baja» usa el rol Discord `1569323526610092234` y el valor `discharged`. Se añade junto a Baja Voluntaria, Expulsado y Vetado, conservando sus IDs y las sugerencias actuales por motivo.
+- Al reingresar se retiran Baja y Baja Voluntaria. Expulsado y Vetado siguen bloqueando el reingreso y no se pueden rebajar usando Baja. La sincronización de accesos no debe reactivar por sí sola a quien tenga un rol de baja.
+- El valor adicional requiere la migración `20261109122410_general_departure_role.sql` antes de activar la opción y desplegar las funciones afectadas. No se aplican bajas ni asignaciones retroactivas.
+
+## Jefaturas de división
+
+- Jefe (`1539970134544748559`) y Subjefe (`1539970134544748558`) comparten los roles existentes de Discord entre CIC y UCOP. No inventar nuevos IDs ni conceder acceso a toda la rama CIC.
+- Al asignar estos cargos es obligatorio elegir CIC o UCOP; se conserva la división en `unit` y el nombre del cargo en la ficha. Ambos roles permiten entrar al panel y a Personal, conservando las autorizaciones de Directiva y las protecciones de roles elevados.
+- Los apodos de estos cargos usan CIC cuando llevan esa rama. No se cambian fichas ni roles de personas de forma retroactiva al desplegar.
+
+## Postulaciones NIE · CIC
+
+- Canal autorizado del panel: `1539970136302288950`, botón `prime_nie_apply`. Once preguntas en tres pasos privados (4 + 4 + 3); Sí/No mediante selector. No reutilizar los formularios de ingreso general ni evidencias.
+- `nie.ts` en el bot y `_shared/nie-questions.ts` definen el formulario. Revalidar el rol Policía actual y ausencia de bajas/veto al guardar cada paso. Todos los que tengan Policía pueden postular sin necesitar ficha previa en la web; si existe ficha activa se conserva su identificación como referencia. Borrador privado por usuario durante una hora; pasos ordenados, UUID propio, final atómico e idempotente, una postulación pendiente por agente.
+- Tablas privadas `police_nie_drafts` y `police_nie_applications`, RLS y acceso por service_role. La RPC `police_nie_step` no puede ejecutarse con anon/authenticated. No publicar respuestas ni datos del formulario en canales de Discord ni guardar el correo de Google del texto original.
+- Web: `nie-ui.js`, endpoints `nie-records` y `nie-review`. Acceso exclusivamente para Directiva, Jefe de División UCOP o CIC y Subjefe de División CIC. Las jefaturas deben tener Policía, rol de rama coincidente y ficha activa con esa división; Subjefe UCOP y el resto quedan excluidos. Validar permisos en servidor con roles actuales, no solo esconder el apartado.
+- Revisión con motivo, responsable, fecha y control de versión para evitar decisiones dobles. No autorrevisión. Aprobar/rechazar solo guarda la decisión: no asigna roles, no admite personal y no envía mensajes ni privados.
+- Pruebas aisladas: `scripts/check-nie.mjs` y `scripts/check-nie-sql.mjs`. No enviar una postulación ficticia a producción para probar.
+
+- Migraciones aplicadas: `20261109153327_nie_applications.sql` y `20261109153549_nie_police_role_eligibility.sql`. La segunda permite postular con Policía aunque no exista ficha previa; no abre la lectura de respuestas.
+- El anuncio de resultados lo publica el equipo manualmente. No crear avisos de solicitudes ni de decisiones; solo confirmación privada de envío con referencia.
+- `scripts/maintenance/install-nie-panel.ts` es una plantilla de instalación puntual limitada a este canal. No desplegar sin autorización y capacidad con caducidad; retirarla tras comprobar el mensaje.
+
+## Bonos de personal
+
+- `bonuses-ui.js` y `bonuses.css`: Semanal (lunes–domingo), Mensual y Especial (por fecha). Listado de la plantilla activa, búsqueda por nombre/placa/rango, paginación de 30 y resumen completo del período. La opción «Incluir bajas con registro» conserva el acceso a históricos sin volver a activar fichas.
+- Registro manual de dinero de rol, estados Pendiente/Pagado/No corresponde, importe y motivo. Sin registro equivale a pendiente sin importe. Un registro por agente, tipo y período; varios conceptos especiales en la misma fecha se resumen en ese registro y su historial. No hay entrega de dinero, avisos de Discord ni cambios de roles.
+- Consulta: gestores del panel, excluyendo acceso limitado a postulaciones. Edición: Directiva con los mismos tres IDs de autorización del panel, validada en servidor y con roles actuales. La petición sobre apodos de Discord no modifica estos permisos web.
+- `prime-police-panel/bonuses.ts`, endpoints privados `bonus-records`, `bonus-history` y `bonus-save`. Tablas `police_bonuses` y `police_bonus_history`, RLS y acceso exclusivo por servicio. Guardado y auditoría en una transacción, versión esperada y bloqueo por agente/período. No borrar registros ni recalcular pagos al cambiar rangos o dar bajas.
+- Antes de publicar: aplicar `20261110010837_bonus_register.sql`, desplegar `prime-police-panel`, y después publicar el frontend. Migración aplicada y API prime-police-panel v117 desplegada el 10/11/2026. Pruebas: `node --experimental-strip-types scripts/check-bonuses.mjs` y `node scripts/check-bonuses-sql.mjs`, además de TypeScript y compilación pública.
+
+### Formulario visible de entrega de bonos
+
+- Editor integrado sobre el listado: búsqueda por nombre/placa (la placa corta se completa a cuatro cifras), selección de agente, importe que admite escritura/pegado en formato español, fecha de entrega, estado y concepto. Conserva el control de edición exclusivo de Directiva y la comprobación de roles en servidor. No ampliar permisos a UCOP para resolver problemas de interfaz.
+- Cuarta categoría «Por ascenso», rango elegido del catálogo configurado. Solo documenta el bono: no ejecuta ascensos, pagos, solicitudes ni avisos de Discord. Un registro por agente, tipo y fecha/período; correcciones conservadas en el historial.
+- Migración aplicada `20261110014848_bonus_delivery_form.sql`: añade `delivered_on` y `promoted_rank` conservando importes e historial existentes; no inventa fechas de entrega para pagos históricos. Actualiza las RPC privadas y mantiene RLS y las autorizaciones.
+- Migración aplicada y API preparada para publicación coordinada con el frontend. Pruebas: `scripts/check-bonus-delivery-ui.mjs`, `scripts/check-bonus-delivery-sql.mjs`, las pruebas previas de bonos, TypeScript y compilación pública.
+
+## Avisos de ingreso comprensibles
+
+- `preselection-admit` / `transfer-admit` devuelven códigos públicos limitados para placa ocupada, ficha existente, registro cambiado, ingreso ya no pendiente y rango retirado. El cliente traduce únicamente esos códigos a frases fijas y conserva la referencia.
+- Nunca mostrar directamente `result.error`, mensajes SQL, Supabase o Discord. Una placa solo se inserta en el mensaje si contiene 1–10 cifras. Los fallos desconocidos o técnicos mantienen «Error · Ref. …». No hay reintentos automáticos de escrituras; los permisos y la sesión conservan su validación.
+- Si un conflicto de placa aparece después de intentar guardar, solo mostrar ese motivo específico si la restauración de roles finaliza correctamente; en caso contrario conservar el error genérico para revisar el resultado.
+
+## Revisión de fiabilidad y rendimiento · 10/11/2026
+
+- Las cargas de directorio, resumen, bandeja, rangos y sesiones se invalidan al cambiar de cuenta; una lectura antigua no puede repoblar la caché de otra sesión ni invalidar su tarea más reciente. Los cambios guardados invalidan el directorio en curso. Se vacían los registros visibles al cerrar sesión.
+- La búsqueda de agente de Bonos limpia la selección anterior al escribir otro nombre/placa. No conservar un destinatario antiguo junto a una búsqueda nueva. Una fecha inválida permite seguir usando Actualizar; el botón Guardar queda deshabilitado sin selección.
+- La API de cliente normaliza respuestas nulas, arrays o texto inesperado, conservando caducidad de sesión y referencias de errores. Solo se traducen códigos públicos que sean cadenas conocidas.
+- `public-accepted.ts` compara los datos propios de cada tarjeta con Discord e ignora metadatos añadidos por Discord. Omite PATCH de tarjetas idénticas, conservando los IDs y actualizando las que cambian. No se envían mensajes de prueba ni se modifica la lógica de aceptación.
+- Migración aplicada `20261110122929_web_review_indexes.sql`: índices de FK en Bonos y borradores NIE. No cambia filas, RLS ni roles. El asesor de rendimiento dejó de señalar ambas claves externas sin índice.
+- Regresiones: `scripts/check-web-session-races.mjs`, `scripts/check-accepted-card-dedup.mjs` y `scripts/check-private-error-notices.mjs`; auditoría resumida en `docs/operations/2026-11-10-web-review.md`.

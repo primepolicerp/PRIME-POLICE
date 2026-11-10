@@ -1,4 +1,4 @@
-const departureRoleLabels={none:'Sin rol adicional',voluntary:'Baja Voluntaria',expelled:'Expulsado',banned:'Vetado'};
+const departureRoleLabels={discharged:'Baja',none:'Sin rol adicional',voluntary:'Baja Voluntaria',expelled:'Expulsado',banned:'Vetado'};
 function suggestedDepartureRole(type){return ['renuncia','jubilacion'].includes(type)?'voluntary':['despido','corrupcion'].includes(type)?'expelled':'';}
 const departureLabels={pkt:'PKT',ck:'Muerte (CK)',despido:'Despido',corrupcion:'Corrupción',renuncia:'Renuncia',jubilacion:'Jubilación',transferencia:'Transferencia',inactividad:'Inactividad',otro:'Otro'};
 let statusPerson=null,statusBusy=false,statusOperation='',profileMovementOffset=0,profileMovementNext=null;
@@ -24,7 +24,7 @@ async function openPersonnelStatus(person){
  $('personnelStatusFeedback').textContent='';$('personnelStatusSave').textContent=canAuthorizePromotions?(reentry?'Confirmar reingreso':'Confirmar baja'):'Enviar a Directiva';$('personnelStatusSave').disabled=reentry;
  $('personnelStatusSave').className='btn '+(reentry?'accept':'reject');
  $('personnelStatusDialog').showModal();
- if(reentry)try{const data=await request('rank-config',{method:'GET'});if(statusPerson?.discord_user_id!==person.discord_user_id)return;const select=$('personnelReentryRank');select.replaceChildren(new Option('Selecciona un rango',''));for(const rank of data.ranks||[])select.add(new Option(rank.role_name,rank.role_id));select.value=person.rank_role_id||'';updateRestoreRankChoice();$('personnelStatusSave').disabled=false;}catch(error){$('personnelStatusFeedback').textContent=error.message;}
+ if(reentry)try{const data=await request('rank-config',{method:'GET'});if(statusPerson?.discord_user_id!==person.discord_user_id)return;const select=$('personnelReentryRank');select.replaceChildren(new Option('Selecciona un rango',''));for(const rank of data.ranks||[])select.add(new Option(divisionRoleLabel(rank.role_id)||rank.role_name,rank.role_id));select.value=person.rank_role_id||'';updateDivisionChoice('personnelReentryRank','personnelReentryUnit');updateRestoreRankChoice();$('personnelStatusSave').disabled=false;}catch(error){$('personnelStatusFeedback').textContent=error.message;}
 }
 function closePersonnelStatus(){if(!statusBusy){$('personnelStatusDialog').close();statusPerson=null;}}
 $('personnelStatusForm').addEventListener('submit',async event=>{

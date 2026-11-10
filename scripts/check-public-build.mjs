@@ -17,3 +17,6 @@ const evidenceScript=await fs.readFile('dist/assets/'+assets.find(name=>name.end
 assert(evidenceScript.includes('evidence-records')&&evidenceScript.includes('evidenceOfficerFilter'),'Evidence workspace must be included in the production bundle');
 assert(html.includes('id="h50View"')&&evidenceScript.includes('h50-records'),'H50 workspace must be present in the public build');
 console.log('Public artifact allowlist, single compact script, evidence workspace included, no backend credentials/names or source maps: PASS');
+
+assert(html.includes('id="cicView"')&&evidenceScript.includes('cic-records'),'CIC must be included in the public build');
+assert(!evidenceScript.includes('Los Cuervos'),'Preview fixtures must not enter the production bundle');
