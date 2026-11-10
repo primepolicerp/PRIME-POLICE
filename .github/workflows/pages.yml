@@ -73,6 +73,8 @@ jobs:
           node scripts/check-nie-sql.mjs
           node --experimental-strip-types scripts/check-bonuses.mjs
           node scripts/check-bonuses-sql.mjs
+          node scripts/check-bonus-delivery-ui.mjs
+          node scripts/check-bonus-delivery-sql.mjs
           node --experimental-strip-types scripts/check-promotion-announcements.mjs
           node --experimental-strip-types scripts/check-application-permissions.mjs
           node --experimental-strip-types scripts/check-personnel-status.mjs
