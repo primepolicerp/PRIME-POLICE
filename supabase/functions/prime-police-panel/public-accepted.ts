@@ -43,6 +43,13 @@ export function acceptedCards(rows:any[],groupIndex:number){
  }],allowed_mentions:{parse:[]}}));
 }
 
+// Discord adds metadata such as type:rich. Compare only the card's authored data.
+export function acceptedMessageUnchanged(message:any,payload:any){
+ const normalize=(embeds:any[])=>embeds.map(e=>({title:e.title||'',description:e.description||'',color:e.color??null,footer:e.footer?.text||'',fields:(e.fields||[]).map((f:any)=>({name:f.name,value:f.value,inline:Boolean(f.inline)}))}));
+ const old=message?.embeds;if(!Array.isArray(old)||!Array.isArray(payload?.embeds)||old.some(e=>e.image||e.thumbnail||e.url||e.author||e.timestamp||e.footer?.icon_url))return false;
+ return JSON.stringify(normalize(old))===JSON.stringify(normalize(payload.embeds));
+}
+
 async function publish(){
  const channel=await discordRequest('/channels/'+CHANNEL);
  if(channel.guild_id!==GUILD||![0,5].includes(channel.type))throw Error('Accepted list channel is not a text channel in PRIME POLICE');
@@ -66,12 +73,13 @@ async function publish(){
    const old=existing.get(group.kind+':'+(page+1));
    const payload:any=cards[page];
    const nonce='accepted-'+index+'-'+page;
-   const message=await discordRequest('/channels/'+CHANNEL+'/messages'+(old?'/'+old.id:''),{method:old?'PATCH':'POST',body:JSON.stringify(old?payload:{...payload,nonce,enforce_nonce:true})});
+   const message=old&&acceptedMessageUnchanged(old,payload)?old:await discordRequest('/channels/'+CHANNEL+'/messages'+(old?'/'+old.id:''),{method:old?'PATCH':'POST',body:JSON.stringify(old?payload:{...payload,nonce,enforce_nonce:true})});
    messageIds.push(message.id);
   }
   // Keep older surplus pages accurate without deleting unrelated channel history.
   for(const [key,old] of existing)if(key.startsWith(group.kind+':')&&Number(key.split(':')[1])>cards.length){
-   await discordRequest('/channels/'+CHANNEL+'/messages/'+old.id,{method:'PATCH',body:JSON.stringify({embeds:[{title:group.title,description:'El listado actualizado está en las primeras '+cards.length+' tarjetas.',color:group.color,footer:old.embeds[0].footer}],allowed_mentions:{parse:[]}})});
+   const payload={embeds:[{title:group.title,description:'El listado actualizado está en las primeras '+cards.length+' tarjetas.',color:group.color,footer:old.embeds[0].footer}],allowed_mentions:{parse:[]}};
+   if(!acceptedMessageUnchanged(old,payload))await discordRequest('/channels/'+CHANNEL+'/messages/'+old.id,{method:'PATCH',body:JSON.stringify(payload)});
   }
   totals[group.kind]=Number(cards[0].embeds[0].fields[1].value);
  }

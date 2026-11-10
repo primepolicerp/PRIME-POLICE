@@ -23,3 +23,14 @@ for(const [payload,status,expected] of [[{public_error:'plate_in_use',plate:'020
  vm.runInContext(requestSource,ctx);await assert.rejects(()=>ctx.performApiRequest('preselection-admit',{},'POST','session'),e=>{assert.equal(e.message,expected+' · Ref. 0830bea5');return true;});
 }
 console.log('Safe admission errors: curated business reasons with references; technical messages and untrusted plate text stay hidden: PASS');
+for(const payload of [null,[],true,'upstream unavailable',{public_error:{toString:'invalid'}}]){
+ let logouts=0;const ctx=vm.createContext({token:'session',API_BASE:'https://test',URLSearchParams,AbortSignal,showLogin(){logouts++;},fetch:async()=>({ok:false,status:401,headers:new Headers({'X-Request-ID':'0830bea5-test'}),json:async()=>payload}),window:{dispatchEvent(){}}});
+ vm.runInContext(requestSource,ctx);await assert.rejects(()=>ctx.performApiRequest('me',{},'POST','session'),e=>{assert.equal(e.message,'Error · Ref. 0830bea5');return true;});assert.equal(logouts,1);
+}
+console.log('Malformed API responses: null/array/text payloads preserve safe references and session expiry: PASS');
+
+for(const payload of [null,[],'unexpected success']){
+ let calls=0;const ctx=vm.createContext({token:'session',API_BASE:'https://test',URLSearchParams,AbortSignal,fetch:async()=>{calls++;return{ok:true,status:200,headers:new Headers({'X-Request-ID':'0830bea5-test'}),json:async()=>payload};},window:{dispatchEvent(){}}});
+ vm.runInContext(requestSource,ctx);await assert.rejects(()=>ctx.performApiRequest('save',{},'POST','session'),/Error · Ref. 0830bea5/);assert.equal(calls,1);
+}
+console.log('Malformed successful responses: never appear as successful empty saves and never retry a write: PASS');
