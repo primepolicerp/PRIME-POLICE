@@ -1,3 +1,4 @@
+import {cicRoute,cicPermissions,CIC_ROLE,CIC_DIRECTORS} from './cic.ts';
 import {syncH50Status} from '../_shared/h50-status.ts';
 import {h50Route} from './h50.ts';
 import { parseApplicationIdentity } from "../_shared/application-identity.ts";
@@ -273,7 +274,7 @@ async function finishDiscordOAuth(req: Request) {
 
     const member = await discord("/guilds/" + GUILD_ID + "/members/" + encodeURIComponent(String(identity.id))) as any;
     const roles: string[] = member?.roles ?? [];
-    if (!roles.some((role) => MANAGER_ROLE_IDS.has(role))) {
+    if (!roles.some((role) => MANAGER_ROLE_IDS.has(role)) && !(await cicAccessForRoles(roles)).allowed) {
       return siteRedirect({ auth_error: "role_not_authorized" }, true);
     }
 
@@ -578,6 +579,12 @@ async function decide(req: Request) {
   });
 }
 
+let cicTraineeRoles:string[]=['1564308664557506691'],cicRolesUntil=0;
+async function cicAccessForRoles(roles:string[]){
+ if(!roles.includes(CIC_ROLE)||roles.some(r=>CIC_DIRECTORS.includes(r)))return cicPermissions(roles,cicTraineeRoles);
+ if(cicRolesUntil<Date.now()){const guildRoles=await discord('/guilds/'+GUILD_ID+'/roles') as any[];cicTraineeRoles=[...new Set(['1564308664557506691',...guildRoles.filter(r=>/pasant/i.test(String(r.name).normalize('NFKD'))).map(r=>String(r.id))])];cicRolesUntil=Date.now()+30000;}
+ return cicPermissions(roles,cicTraineeRoles);
+}
 async function routePanel(req: Request): Promise<Response> {
  try {
   const action = new URL(req.url).searchParams.get("panel");
@@ -598,6 +605,7 @@ async function routePanel(req: Request): Promise<Response> {
     return String(candidate.nick||candidate.user?.global_name||candidate.user?.username||id);
    }});
   }
+  if(action==='cic-records'||action==='cic-save'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada.'},403);const member=await accessMember(actor,req.method!=='GET'),access=await cicAccessForRoles(member.roles||[]);return cicRoute(req,action,{db,json,actor,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor),...access});}
   if(action==='external-ai-review'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return externalAiReview(req,{db,json,actor,applicationsOnly:applicationPermissions(member.roles||[]).applicationsOnly,provider:Deno.env.get('TRUTHSCAN_API_KEY')?'TruthScan':'Sapling',key:Deno.env.get('TRUTHSCAN_API_KEY')||Deno.env.get('SAPLING_API_KEY')||''});}
   if(action==='application-review'){if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return applicationReview(req,db,json);}
   if(action==='application-review-save'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return saveApplicationReview(req,db,json,actor,String(member.nick||member.user?.global_name||member.user?.username||actor));}
@@ -669,7 +677,9 @@ async function dispatchHttp(req:Request):Promise<Response>{try{
   const actor=await authorizedUser(req);
   if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);
   const member=await accessMember(actor);
-  if(applicationPermissions(member.roles||[]).applicationsOnly&&!applicationScopeAllowed(action,new URL(req.url).searchParams))return json({error:'Este apartado está reservado al personal gestor.',code:'trainee_scope'},403);
+  const roles=member.roles||[],cicAction=action==='cic-records'||action==='cic-save';
+  if(!roles.some((role:string)=>MANAGER_ROLE_IDS.has(role))&&!['me','cic-records','cic-save'].includes(action))return json({error:'La cuenta CIC solo tiene acceso a Investigación.',code:'cic_scope'},403);
+  if(applicationPermissions(roles).applicationsOnly&&!(cicAction&&(await cicAccessForRoles(roles)).allowed)&&!applicationScopeAllowed(action,new URL(req.url).searchParams))return json({error:'Este apartado está reservado al personal gestor.',code:'trainee_scope'},403);
  }
  const prepared=await preparePlate(req,action,db,authorizedUser);if(prepared instanceof Response)return prepared;
  const assignedPlate=prepared!==req?String((await prepared.clone().json()).plate||''):'';req=prepared;
@@ -709,7 +719,7 @@ async function authorizedUser(req: Request): Promise<string | null> {
   if (!userId) return null;
   try {
     const member = await accessMember(userId,req.method!=="GET");
-    const result=(member.roles ?? []).some((role: string) => MANAGER_ROLE_IDS.has(role)) ? userId : null; authorizedRequests.set(req,result);return result;
+    const result=((member.roles ?? []).some((role: string) => MANAGER_ROLE_IDS.has(role))||(await cicAccessForRoles(member.roles||[])).allowed) ? userId : null; authorizedRequests.set(req,result);return result;
   } catch (e) {
     console.error("Manager role verification failed:", String(e));
     if(String(e).includes("404"))return null;throw e;
@@ -733,7 +743,7 @@ async function currentUser(req: Request) {
       : "https://cdn.discordapp.com/embed/avatars/" + String(Number((BigInt(userId) >> 22n) % 6n)) + ".png";
     const roles: string[] = member?.roles ?? [];
     const accessRoles = roles.filter((role) => MANAGER_ROLE_IDS.has(role)).map((role) => MANAGER_ROLE_LABELS.get(role) ?? "Gestión autorizada");
-    return json({ user: { id: userId, username, display_name: displayName, avatar_url: avatarUrl, access_roles: accessRoles, restricted_to_applications: applicationPermissions(roles).applicationsOnly, can_decide_applications_direct: applicationPermissions(roles).direct, can_manage_shifts_direct: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774","1539970134519578773"].includes(id)), can_authorize_promotions: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774"].includes(id)) } });
+    return json({ user: { id: userId, username, display_name: displayName, avatar_url: avatarUrl, access_roles: [...accessRoles,...(roles.includes(CIC_ROLE)?['CIC']:[])], can_access_cic: (await cicAccessForRoles(roles)).allowed, cic_only: !roles.some(role=>MANAGER_ROLE_IDS.has(role)), restricted_to_applications: applicationPermissions(roles).applicationsOnly, can_decide_applications_direct: applicationPermissions(roles).direct, can_manage_shifts_direct: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774","1539970134519578773"].includes(id)), can_authorize_promotions: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774"].includes(id)) } });
   } catch (e) {
     console.error("Discord profile lookup failed:", String(e));
     return json({ error: "No se pudo cargar tu perfil de Discord." }, 502);

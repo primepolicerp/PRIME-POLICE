@@ -4,7 +4,7 @@ function configureWorkspaceRole(){
  heading.textContent=canAuthorizePromotions?'Decisiones de Directiva':'Mis propuestas';
  copy.textContent=canAuthorizePromotions?'Comprueba la propuesta y confirma su aplicación. Descartarla no cambia el expediente.':'Consulta las propuestas que has enviado y la decisión de Directiva.';
 }
-function openGlobalSearch(){$('globalSearchDialog').showModal();$('globalSearchInput').focus();}
+function openGlobalSearch(){if(cicOnly){document.querySelector('[data-view="cic"]').click();$('pc-search').focus();return;}$('globalSearchDialog').showModal();$('globalSearchInput').focus();}
 async function runGlobalSearch(){
  const sequence=++globalSearchSequence,session=token,q=$('globalSearchInput').value.trim(),box=$('globalSearchResults');
  box.replaceChildren();if(q.length<2){box.textContent='Escribe al menos dos caracteres para buscar por nombre, placa o Discord.';return;}
@@ -55,7 +55,7 @@ $('profileAccessSync').onclick=async()=>{if(!profilePerson)return;const person={
 document.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'&&token){event.preventDefault();openGlobalSearch();}});
 window.addEventListener('panel-session-ended',()=>{globalSearchSequence++;accessSequence++;syncSequence++;$('globalSearchInput').value='';$('globalSearchResults').replaceChildren();$('syncJobList').replaceChildren();$('operationOutcome').hidden=true;});
 const workspaceRequest=request;request=async(action,options={})=>{const write=options.method==='POST'&&!['login','logout','logout-others','application-review-save'].includes(action);try{const result=await workspaceRequest(action,options);if(write)showOperationOutcome(result);return result;}catch(error){if(write){const badge=document.createElement('span');badge.className='operation-chip attention';badge.textContent='Comprueba el resultado antes de repetir la operación';$('operationOutcome').replaceChildren(badge);$('operationOutcome').hidden=false;}throw error;}};
-const workspaceAccountProfile=loadAccountProfile;loadAccountProfile=async()=>{await workspaceAccountProfile();$('openGlobalSearch').hidden=!token;$('openSyncCenter').hidden=restrictedToApplications||!token;configureWorkspaceRole();};
-window.addEventListener('panel-account-ready',()=>{$('openGlobalSearch').hidden=!token;$('openSyncCenter').hidden=restrictedToApplications||!token;configureWorkspaceRole();});
+const workspaceAccountProfile=loadAccountProfile;loadAccountProfile=async()=>{await workspaceAccountProfile();$('openGlobalSearch').hidden=!token||cicOnly;$('openSyncCenter').hidden=restrictedToApplications||cicOnly||!token;configureWorkspaceRole();};
+window.addEventListener('panel-account-ready',()=>{$('openGlobalSearch').hidden=!token||cicOnly;$('openSyncCenter').hidden=restrictedToApplications||cicOnly||!token;configureWorkspaceRole();});
 
 document.querySelectorAll('.workspace-tab').forEach(button=>button.addEventListener('click',()=>window.scrollTo({top:0,behavior:'instant'})));

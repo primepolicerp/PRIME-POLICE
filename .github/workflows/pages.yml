@@ -34,6 +34,7 @@ jobs:
           node --check records-ui.js
           node --check evidence-ui.js
           node --check h50-ui.js
+          node --check cic-ui.js
           node --check app-shell.js
           node --check absence-ui.js
           node --check dashboard.js
@@ -87,6 +88,8 @@ jobs:
           node scripts/check-evidence-disabled.mjs
           node --experimental-strip-types scripts/check-h50.mjs
           node scripts/check-h50-sql.mjs
+          node --experimental-strip-types scripts/check-cic.mjs
+          node scripts/check-cic-sql.mjs
           node --experimental-strip-types scripts/check-h50-status.mjs
           node --experimental-strip-types scripts/check-evidence-form.mjs
           node --experimental-strip-types scripts/check-evidence-channel-move.mjs

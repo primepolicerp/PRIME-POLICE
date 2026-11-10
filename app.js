@@ -56,6 +56,7 @@ let canAuthorizePromotions=false;
 let canManageShiftsDirect=false;
 let canDecideApplicationsDirect=false;
 let restrictedToApplications=false;
+let canAccessCic=false,cicOnly=false;
 
 const $ = (id) => document.getElementById(id);
 function showToast(message) {
@@ -77,7 +78,7 @@ function showLogin() {
   $("appView").classList.add("hidden");
   if(hadSession)window.dispatchEvent(new Event("panel-session-ended"));
 }
-function openDashboardWhenReady(){const open=()=>{if(token&&typeof loadDashboard==='function')document.querySelector(restrictedToApplications?'button[data-view="applications"]':'button[data-view="dashboard"]').click();};if(typeof loadDashboard==='function')open();else document.addEventListener('DOMContentLoaded',open,{once:true});}
+function openDashboardWhenReady(){const open=()=>{if(token&&typeof loadDashboard==='function')document.querySelector(cicOnly?'button[data-view="cic"]':restrictedToApplications?'button[data-view="applications"]':'button[data-view="dashboard"]').click();};if(typeof loadDashboard==='function')open();else document.addEventListener('DOMContentLoaded',open,{once:true});}
 function showApp() {
   $("menuToggle").hidden=false;
   $("sideNav").classList.remove("hidden");
@@ -105,7 +106,7 @@ async function performApiRequest(action,options,method,sessionAtStart){
   if(!response.ok){
    if(method==='GET'&&attempt===0&&[429,502,503,504].includes(response.status)){await new Promise(r=>setTimeout(r,600));continue;}
    if(token===sessionAtStart&&action!=='login'&&(response.status===401||(response.status===403&&/sesión|permiso|autorizado/i.test(result.error||''))))showLogin();
-   throw Error('Error'+(reference?' · Ref. '+reference.slice(0,8):' · Referencia no disponible.'));
+   throw Error((action.startsWith('cic-')&&result.error?result.error:'Error')+(reference?' · Ref. '+reference.slice(0,8):' · Referencia no disponible.'));
   }
   if(result.pending_approval)window.dispatchEvent(new Event('pending-change-created'));
   return result;
@@ -130,10 +131,13 @@ async function loadAccountProfile() {
   $('accountId').textContent='@'+user.username+' · ID '+user.id;$('accountId').title='@'+user.username+' · ID '+user.id;
   const accessRoles=Array.isArray(user.access_roles)?user.access_roles:[];$('accountRoles').textContent=accessRoles.join(' · ')||'Gestión autorizada';$('accountRoles').title=accessRoles.join(' · ');
   avatar.alt='Avatar de @'+user.username;avatar.onerror=()=>{avatar.onerror=null;avatar.alt='';avatar.src=fallback;};avatar.src=typeof user.avatar_url==='string'&&user.avatar_url.startsWith('https://cdn.discordapp.com/')?user.avatar_url:fallback;
-  canAuthorizePromotions=Boolean(user.can_authorize_promotions);canManageShiftsDirect=Boolean(user.can_manage_shifts_direct);canDecideApplicationsDirect=Boolean(user.can_decide_applications_direct);restrictedToApplications=Boolean(user.restricted_to_applications);
-  document.querySelectorAll('.workspace-tab').forEach(button=>button.classList.toggle('hidden',restrictedToApplications&&button.dataset.view!=='applications'));
+  canAuthorizePromotions=Boolean(user.can_authorize_promotions);canManageShiftsDirect=Boolean(user.can_manage_shifts_direct);canDecideApplicationsDirect=Boolean(user.can_decide_applications_direct);restrictedToApplications=Boolean(user.restricted_to_applications);canAccessCic=Boolean(user.can_access_cic);cicOnly=Boolean(user.cic_only);
+  document.querySelectorAll('.workspace-tab').forEach(button=>button.classList.toggle('hidden',button.dataset.view==='cic'?!canAccessCic:cicOnly||(restrictedToApplications&&button.dataset.view!=='applications')));
   window.dispatchEvent(new Event('panel-account-ready'));
-  $('managementPolicy').textContent=canAuthorizePromotions?'Directiva: puedes aplicar cambios y revisar las propuestas del panel principal.':restrictedToApplications?'Pasante UCOP: tus propuestas de aceptación o rechazo se envían a Directiva. Mientras se revisan, salen de Postulaciones para evitar decisiones duplicadas.':canDecideApplicationsDirect?'UCOP: puedes aceptar y rechazar postulaciones directamente. Los ascensos y demás cambios conservan su aprobación correspondiente.':'Puedes preparar cambios para que Directiva los revise en el panel principal.';
+  if(cicOnly)$('openAdministrativeAlerts').hidden=true;
+  document.querySelector('.sidebar-brand .eyebrow').textContent=cicOnly?'CIC · INVESTIGACIÓN':'UCOP · ASUNTOS INTERNOS';
+  document.querySelector('.sidebar-brand span').textContent=cicOnly?'Archivo de investigación':'Panel de RR. HH.';
+  $('managementPolicy').textContent=cicOnly?'CIC: acceso al archivo de investigación. Cierres y reaperturas requieren Directiva.':canAuthorizePromotions?'Directiva: puedes aplicar cambios y revisar las propuestas del panel principal.':restrictedToApplications?'Pasante UCOP: tus propuestas de aceptación o rechazo se envían a Directiva. Mientras se revisan, salen de Postulaciones para evitar decisiones duplicadas.':canDecideApplicationsDirect?'UCOP: puedes aceptar y rechazar postulaciones directamente. Los ascensos y demás cambios conservan su aprobación correspondiente.':'Puedes preparar cambios para que Directiva los revise en el panel principal.';
  } catch(error) {
   if(sequence!==accountProfileSequence||session!==token)return;
   if(!$('accountCard').dataset.userId){$('accountName').textContent='Perfil no disponible';$('accountId').textContent='No se pudo consultar tu cuenta';$('accountRoles').textContent='Reintenta la conexión con Discord';$('accountAvatar').src=accountFallbackAvatar();}
@@ -568,7 +572,7 @@ document.querySelectorAll("#rankRequestStatusTabs .tab").forEach(button=>button.
 document.querySelectorAll("#applicationStatusTabs .tab").forEach(button=>button.addEventListener("click",()=>{activeStatus=button.dataset.status;activeRecordPage('applications');}));
 $("rankRequestSearch").addEventListener("input",()=>scheduleRecordSearch("intakes"));
 $("refreshRankRequests").addEventListener("click",loadRankRequests);
-document.querySelectorAll(".workspace-tab").forEach(button=>button.addEventListener("click",()=>{const view=button.dataset.view;$("dashboardView").classList.toggle("hidden",view!=="dashboard");$("shiftsView").classList.toggle("hidden",view!=="shifts");$("h50View").classList.toggle("hidden",view!=="h50");if(view==="h50")loadH50(true);$("evidenceView").classList.toggle("hidden",view!=="evidence");if(view==="evidence")loadEvidenceRecords(true);if(view==="dashboard")loadDashboard();if(view==="shifts")loadShifts();const apps=view==="applications",rankReq=view==="rank-requests",preselection=view==="preselections",sanctions=view==="sanctions",staff=view==="personnel",ranks=view==="ranks",transfer=view==="transfers";$("sanctionsView").classList.toggle("hidden",!sanctions);$("rankRequestsView").classList.toggle("hidden",!rankReq);$("preselectionsView").classList.toggle("hidden",!preselection);$("personnelView").classList.toggle("hidden",!staff);$("rankView").classList.toggle("hidden",!ranks);$("transfersView").classList.toggle("hidden",!transfer);["applicationsIntro","applicationStats","applicationsToolbar","applicationStatusTabs"].forEach(id=>$(id).classList.toggle("hidden",!apps));$("candidateList").classList.toggle("hidden",!apps);document.querySelectorAll(".workspace-tab").forEach(b=>b.classList.toggle("active",b===button));$("workspaceTitle").textContent=button.dataset.title||button.textContent.trim();if(apps)loadApplications();if(rankReq)loadRankRequests();if(preselection)loadPreselections();if(transfer)loadTransfers();if(sanctions){loadSanctions();}if(staff){loadPersonnel();loadRankConfig();}if(ranks){loadRankConfig();loadPersonnel();}}));$("refreshButton").addEventListener("click", loadApplications);
+document.querySelectorAll(".workspace-tab").forEach(button=>button.addEventListener("click",()=>{const view=button.dataset.view;$("cicView").classList.toggle("hidden",view!=="cic");if(view==="cic")loadCic();$("dashboardView").classList.toggle("hidden",view!=="dashboard");$("shiftsView").classList.toggle("hidden",view!=="shifts");$("h50View").classList.toggle("hidden",view!=="h50");if(view==="h50")loadH50(true);$("evidenceView").classList.toggle("hidden",view!=="evidence");if(view==="evidence")loadEvidenceRecords(true);if(view==="dashboard")loadDashboard();if(view==="shifts")loadShifts();const apps=view==="applications",rankReq=view==="rank-requests",preselection=view==="preselections",sanctions=view==="sanctions",staff=view==="personnel",ranks=view==="ranks",transfer=view==="transfers";$("sanctionsView").classList.toggle("hidden",!sanctions);$("rankRequestsView").classList.toggle("hidden",!rankReq);$("preselectionsView").classList.toggle("hidden",!preselection);$("personnelView").classList.toggle("hidden",!staff);$("rankView").classList.toggle("hidden",!ranks);$("transfersView").classList.toggle("hidden",!transfer);["applicationsIntro","applicationStats","applicationsToolbar","applicationStatusTabs"].forEach(id=>$(id).classList.toggle("hidden",!apps));$("candidateList").classList.toggle("hidden",!apps);document.querySelectorAll(".workspace-tab").forEach(b=>b.classList.toggle("active",b===button));$("workspaceTitle").textContent=button.dataset.title||button.textContent.trim();if(apps)loadApplications();if(rankReq)loadRankRequests();if(preselection)loadPreselections();if(transfer)loadTransfers();if(sanctions){loadSanctions();}if(staff){loadPersonnel();loadRankConfig();}if(ranks){loadRankConfig();loadPersonnel();}}));$("refreshButton").addEventListener("click", loadApplications);
 $("refreshTransfers").addEventListener("click",loadTransfers);
 document.querySelectorAll("[data-transfer-status]").forEach(button=>button.addEventListener("click",()=>{activeTransferStatus=button.dataset.transferStatus;activeRecordPage('transfers');}));
 $("logoutButton").addEventListener("click", async () => {const button=$("logoutButton");button.disabled=true;try{await request('logout',{method:'POST'});showLogin();$("loginError").textContent="";showToast("Sesión cerrada en el servidor.");}catch(error){showToast("No se pudo confirmar el cierre en el servidor. "+error.message);}finally{button.disabled=false;}});
