@@ -7,7 +7,8 @@ function dashboardEmpty(title,copy,icon='clock'){return '<div class="dashboard-e
 async function loadDashboard(){
  const sequence=++dashboardSequence,session=token,box=$('dashboardContent');
  const refresh=box.querySelector('[data-dashboard-refresh]');if(refresh){refresh.disabled=true;refresh.textContent='Actualizando…';}
- let packed;try{packed=await request('workspace-summary',{method:'GET'});}catch(error){if(sequence===dashboardSequence)box.innerHTML='<div class="panel"><h2>No se pudo actualizar el resumen</h2><p>'+safeText(error.message)+'</p><button class="btn" data-dashboard-refresh>Reintentar</button></div>';return;}
+ let packed;try{packed=await request('workspace-summary',{method:'GET'});}catch(error){if(sequence===dashboardSequence&&session===token)box.innerHTML='<div class="panel"><h2>No se pudo actualizar el resumen</h2><p>'+safeText(error.message)+'</p><button class="btn" data-dashboard-refresh>Reintentar</button></div>';return;}
+ if(sequence!==dashboardSequence||session!==token)return;
  const pendingTask=loadPendingChanges(packed.inbox&&packed.legacy?packed:null);
  const results=[{summary:[]},{shifts:packed.shifts||[]},{total:packed.applications},{total:packed.intakes},{total:packed.transfers},{events:packed.events||[]},packed.availability].map(value=>({status:'fulfilled',value}));
  if(sequence!==dashboardSequence||session!==token)return;
@@ -42,4 +43,4 @@ $('dashboardContent').addEventListener('click',event=>{const target=event.target
  if(view==='shifts'){shiftTab='open';shiftOffset=0;}
  if(view==='personnel'){$('personnelStatusFilter').value='active';$('personnelSearch').value='';$('personnelRankFilter').value='';recordState('personnel').offset=0;}
  const button=document.querySelector('.workspace-tab[data-view="'+view+'"]');if(button)button.click();});
-window.addEventListener('panel-session-ended',()=>{dashboardSequence++;});
+window.addEventListener('panel-session-ended',()=>{dashboardSequence++;$('dashboardView').append($('pendingChangesPanel'));$('dashboardContent').replaceChildren();});

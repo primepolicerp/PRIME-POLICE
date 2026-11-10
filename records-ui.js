@@ -1,4 +1,4 @@
-const recordPages={};let directoryExpires=0,directoryTask=null;
+const recordPages={};let directoryExpires=0,directoryTask=null,directorySession='';
 const recordConfig={
  applications:{container:'candidateList',search:'search',status:()=>activeStatus==='rejected-ai'?'rejected':activeStatus,render:()=>renderApplications(),assign:rows=>{applications=rows;},stats:['countPending','countAccepted','countRejected']},
  transfers:{container:'transferList',search:'transferSearch',status:()=>activeTransferStatus,render:()=>renderTransfers(),assign:rows=>{transfers=rows;},stats:['transferPendingCount','transferAcceptedCount','transferRejectedCount']},
@@ -37,12 +37,17 @@ async function loadRecordPage(kind){
  finally{if(sequence===state.sequence){$(config.container).removeAttribute('aria-busy');$(config.container).inert=false;}}
 }
 async function loadPersonnelDirectory(){
- if(directoryExpires>Date.now())return;
- if(directoryTask)return directoryTask;
- const session=token;
- directoryTask=(async()=>{const all=[];let offset=0;do{const result=await request('records',{method:'GET',query:{kind:'personnel',directory:'true',limit:100,offset}});all.push(...result.records);offset=result.next_offset;}while(offset!==null);if(token===session){personnel=all;directoryExpires=Date.now()+60000;}})();
- try{await directoryTask;}finally{directoryTask=null;}
+ const session=token;if(!session||directoryExpires>Date.now())return;
+ if(directoryTask&&directorySession===session)return directoryTask;
+ const task=(async()=>{const all=[];let offset=0;do{
+  const result=await request('records',{method:'GET',query:{kind:'personnel',directory:'true',limit:100,offset}});
+  if(token!==session||directoryTask!==task)return;all.push(...result.records);const next=result.next_offset;
+  if(next!==null&&(!Number.isSafeInteger(next)||next<=offset))throw Error('No se pudo completar la lista de personal. Actualiza para reintentar.');offset=next;
+ }while(offset!==null);if(token===session&&directoryTask===task){personnel=all;directoryExpires=Date.now()+60000;}})();
+ directoryTask=task;directorySession=session;
+ try{await task;}finally{if(directoryTask===task){directoryTask=null;directorySession='';}}
 }
+
 async function loadPersonSanctions(userId){const records=[];let offset=0;do{const result=await request('records',{method:'GET',query:{kind:'sanctions',discord_user_id:userId,limit:100,offset}});records.push(...result.records);offset=result.next_offset;}while(offset!==null);return{records};}
 loadApplications=()=>loadRecordPage('applications');loadTransfers=()=>loadRecordPage('transfers');
 loadRankRequests=()=>loadRecordPage('intakes');loadPreselections=()=>loadRecordPage('preselections');loadSanctions=()=>loadRecordPage('sanctions');

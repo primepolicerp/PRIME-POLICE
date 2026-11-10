@@ -121,3 +121,12 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - `preselection-admit` / `transfer-admit` devuelven códigos públicos limitados para placa ocupada, ficha existente, registro cambiado, ingreso ya no pendiente y rango retirado. El cliente traduce únicamente esos códigos a frases fijas y conserva la referencia.
 - Nunca mostrar directamente `result.error`, mensajes SQL, Supabase o Discord. Una placa solo se inserta en el mensaje si contiene 1–10 cifras. Los fallos desconocidos o técnicos mantienen «Error · Ref. …». No hay reintentos automáticos de escrituras; los permisos y la sesión conservan su validación.
 - Si un conflicto de placa aparece después de intentar guardar, solo mostrar ese motivo específico si la restauración de roles finaliza correctamente; en caso contrario conservar el error genérico para revisar el resultado.
+
+## Revisión de fiabilidad y rendimiento · 10/11/2026
+
+- Las cargas de directorio, resumen, bandeja, rangos y sesiones se invalidan al cambiar de cuenta; una lectura antigua no puede repoblar la caché de otra sesión ni invalidar su tarea más reciente. Los cambios guardados invalidan el directorio en curso. Se vacían los registros visibles al cerrar sesión.
+- La búsqueda de agente de Bonos limpia la selección anterior al escribir otro nombre/placa. No conservar un destinatario antiguo junto a una búsqueda nueva. Una fecha inválida permite seguir usando Actualizar; el botón Guardar queda deshabilitado sin selección.
+- La API de cliente normaliza respuestas nulas, arrays o texto inesperado, conservando caducidad de sesión y referencias de errores. Solo se traducen códigos públicos que sean cadenas conocidas.
+- `public-accepted.ts` compara los datos propios de cada tarjeta con Discord e ignora metadatos añadidos por Discord. Omite PATCH de tarjetas idénticas, conservando los IDs y actualizando las que cambian. No se envían mensajes de prueba ni se modifica la lógica de aceptación.
+- Migración aplicada `20261110122929_web_review_indexes.sql`: índices de FK en Bonos y borradores NIE. No cambia filas, RLS ni roles. El asesor de rendimiento dejó de señalar ambas claves externas sin índice.
+- Regresiones: `scripts/check-web-session-races.mjs`, `scripts/check-accepted-card-dedup.mjs` y `scripts/check-private-error-notices.mjs`; auditoría resumida en `docs/operations/2026-11-10-web-review.md`.

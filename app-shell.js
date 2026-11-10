@@ -5,13 +5,16 @@ $('toast').setAttribute('role','status');$('toast').setAttribute('aria-live','po
 const originalToast=showToast;
 showToast=message=>{originalToast(message);$('operationStatus').textContent=message;$('operationStatus').hidden=false;};
 $('dismissOperationStatus').addEventListener('click',()=>{$('operationStatus').hidden=true;});
+let sessionListSequence=0;
 async function openSessionManager(){
+ const sequence=++sessionListSequence,session=token;if(!session)return;
  $('sessionDialog').showModal();$('sessionList').textContent='Cargando sesiones…';$('sessionFeedback').textContent='';
- try{const result=await request('sessions',{method:'GET'});$('sessionList').replaceChildren();for(const item of result.sessions){const row=document.createElement('div');row.className='activity-row';const copy=document.createElement('div');const title=document.createElement('strong');title.textContent=item.device_label+(item.current?' · Esta sesión':'');const info=document.createElement('small');info.textContent='Última actividad: '+niceDate(item.last_seen_at);copy.append(title,info);row.append(copy);$('sessionList').append(row);}}
- catch(error){$('sessionList').textContent=error.message;}
+ try{const result=await request('sessions',{method:'GET'});if(sequence!==sessionListSequence||session!==token||!$('sessionDialog').open)return;$('sessionList').replaceChildren();for(const item of result.sessions){const row=document.createElement('div');row.className='activity-row';const copy=document.createElement('div');const title=document.createElement('strong');title.textContent=item.device_label+(item.current?' · Esta sesión':'');const info=document.createElement('small');info.textContent='Última actividad: '+niceDate(item.last_seen_at);copy.append(title,info);row.append(copy);$('sessionList').append(row);}}
+ catch(error){if(sequence===sessionListSequence&&session===token&&$('sessionDialog').open)$('sessionList').textContent=error.message;}
 }
 $('openSessionManager').addEventListener('click',openSessionManager);$('closeSessionManager').addEventListener('click',()=>$('sessionDialog').close());
-$('logoutOtherSessions').addEventListener('click',async()=>{const button=$('logoutOtherSessions');button.disabled=true;try{const result=await request('logout-others',{method:'POST'});await openSessionManager();$('sessionFeedback').textContent=result.message;}catch(error){$('sessionFeedback').textContent=error.message;}finally{button.disabled=false;}});
+$('sessionDialog').addEventListener('close',()=>{sessionListSequence++;});
+$('logoutOtherSessions').addEventListener('click',async()=>{const session=token;const button=$('logoutOtherSessions');button.disabled=true;try{const result=await request('logout-others',{method:'POST'});if(session!==token)return;await openSessionManager();if(session!==token)return;$('sessionFeedback').textContent=result.message;}catch(error){if(session===token)$('sessionFeedback').textContent=error.message;}finally{if(session===token)button.disabled=false;}});
 const mobileTableMedia=matchMedia('(max-width:620px)'),pendingMobileTables=new Set();let mobileTableFrame=0;
 function labelMobileTables(tables=document.querySelectorAll('.table-wrap table')){
  for(const table of tables){if(!table.isConnected)continue;table.classList.add('mobile-record-table');if(!mobileTableMedia.matches)continue;const headers=[...table.querySelectorAll('thead th')].map(th=>th.textContent.trim());
@@ -25,10 +28,12 @@ const mobileTableObserver=new MutationObserver(changes=>{
  }
 });mobileTableObserver.observe($('appView'),{childList:true,subtree:true});labelMobileTables();
 mobileTableMedia.addEventListener('change',()=>labelMobileTables());
-window.addEventListener('panel-data-changed',()=>{directoryExpires=0;rankReadCache=null;});
+window.addEventListener('panel-data-changed',()=>{directoryExpires=0;directoryTask=null;directorySession='';rankReadCache=null;});
 window.addEventListener('panel-session-ended',()=>{
- for(const state of Object.values(recordPages))state.sequence++;
- dutyShifts=[];dutyPeople=[];rosterPage=null;rosterPageInfo=null;directoryExpires=0;rankReadCache=null;
+ sessionListSequence++;rankConfigSequence++;rankHistorySequence++;$('rankHistoryRows').replaceChildren();$('sessionList').replaceChildren();$('sessionFeedback').textContent='';$('logoutOtherSessions').disabled=false;directoryTask=null;directorySession='';
+ for(const state of Object.values(recordPages)){state.sequence++;clearTimeout(state.timer);}
+ for(const config of Object.values(recordConfig)){config.assign([]);$(config.container).replaceChildren();$(config.container).removeAttribute('aria-busy');$(config.container).inert=false;if(config.stats)for(const id of config.stats)$(id).textContent='—';}
+ personnel=[];rankRoles=[];availableRoles=[];editingPersonnelId=null;dutyShifts=[];dutyPeople=[];rosterPage=null;rosterPageInfo=null;directoryExpires=0;rankReadCache=null;
  document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());closePersonnelProfile();
  $('sideNav').classList.remove('mobile-open');$('openSessionManager').hidden=true;
 });
@@ -41,6 +46,6 @@ request=async(action,options={})=>{
  if(action==='rank-config'&&method==='GET'&&rankReadCache?.token===token&&rankReadCache.expires>Date.now())return structuredClone(rankReadCache.value);
  const session=token;const result=await rawRequest(action,options);
  if(action==='rank-config'&&method==='GET'&&session===token)rankReadCache={token,value:structuredClone(result),expires:Date.now()+30000};
- if(options.method==='POST'&&!['login','logout','logout-others'].includes(action)&&!result.pending_approval)window.dispatchEvent(new Event('panel-data-changed'));
+ if(session===token&&options.method==='POST'&&!['login','logout','logout-others'].includes(action)&&!result.pending_approval)window.dispatchEvent(new Event('panel-data-changed'));
  return result;
 };

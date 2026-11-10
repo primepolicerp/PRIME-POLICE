@@ -44,12 +44,12 @@ function changeContext(item,record){
  return context;
 }
 async function loadPendingChanges(preloaded=null){
- if(restrictedToApplications)return;
- const sequence=++pendingChangeSequence,box=$('pendingChanges');box.textContent='Cargando pendientes…';
+ if(!token||restrictedToApplications)return;
+ const session=token,sequence=++pendingChangeSequence,box=$('pendingChanges');box.textContent='Cargando pendientes…';
  document.querySelectorAll('[data-change-status]').forEach(b=>b.classList.toggle('active',b.dataset.changeStatus===pendingChangeStatus));
  try{
   const [result,legacyResult]=preloaded&&pendingChangeStatus==='pending'&&pendingChangeOffset===0?[preloaded.inbox,preloaded.legacy]:await Promise.all([request('change-requests',{method:'GET',query:{status:pendingChangeStatus,offset:pendingChangeOffset}}),pendingChangeOffset===0?request('rank-authorizations',{method:'GET'}).catch(()=>({authorizations:[]})):Promise.resolve({authorizations:[]})]);
-  if(sequence!==pendingChangeSequence)return;box.replaceChildren();
+  if(sequence!==pendingChangeSequence||session!==token)return;box.replaceChildren();
   const legacy=(legacyResult.authorizations||[]).filter(r=>pendingChangeStatus==='pending'?['pending','processing'].includes(r.status):!['pending','processing'].includes(r.status)).map(r=>({...r,legacy:true,action:'rank-change',requested_by_name:r.requested_by,payload:{full_name:r.full_name,rank_role_id:r.new_rank_name},before_state:{}}));
   const rows=[...(result.requests||[]),...legacy];
   if(!rows.length){const empty=document.createElement('div');empty.className='dashboard-inbox-empty';const icon=document.createElement('span');icon.className='dashboard-empty-check';icon.setAttribute('aria-hidden','true');icon.textContent=pendingChangeStatus==='pending'?'✓':'↗';const title=document.createElement('strong');title.textContent=pendingChangeStatus==='pending'?'Todo al día':'Sin decisiones registradas';const copy=document.createElement('p');copy.textContent=pendingChangeStatus==='pending'?'No hay propuestas pendientes de Directiva. Los nuevos cambios aparecerán aquí.':'Aquí podrás consultar las decisiones y el resultado de cada cambio.';empty.append(icon,title,copy);box.append(empty);}
@@ -70,15 +70,17 @@ async function loadPendingChanges(preloaded=null){
     const actions=document.createElement('div');actions.className='candidate-actions';
     for(const [decision,label,cls]of [['approve',plan.approve,'btn pending-apply-'+plan.tone],['reject','Descartar propuesta','btn ghost']]){
      const button=document.createElement('button');button.className=cls;button.type='button';button.textContent=label;
-     button.addEventListener('click',async()=>{const reason=prompt(decision==='approve'?'Nota de Directiva sobre esta propuesta (opcional)':'¿Por qué descartas esta propuesta? No se aplicará el cambio al registro.');if(reason===null)return;const effect=decision==='approve'?plan.effect:'Se descartará la propuesta. No se aplicará el cambio al registro.';if(!confirm(label+' · '+title.textContent+'\n\n'+effect))return;actions.querySelectorAll('button').forEach(b=>b.disabled=true);try{const r=await request(item.legacy?'rank-authorization-review':'change-request-review',{method:'POST',body:{id:item.id,decision,reason}});showToast((r.message||'Propuesta revisada.')+(r.warning||''));await loadPendingChanges();if(typeof loadDashboard==='function')loadDashboard();}catch(e){status.textContent=e.message;actions.querySelectorAll('button').forEach(b=>b.disabled=false);}});
+     button.addEventListener('click',async()=>{const session=token;const reason=prompt(decision==='approve'?'Nota de Directiva sobre esta propuesta (opcional)':'¿Por qué descartas esta propuesta? No se aplicará el cambio al registro.');if(reason===null)return;const effect=decision==='approve'?plan.effect:'Se descartará la propuesta. No se aplicará el cambio al registro.';if(!confirm(label+' · '+title.textContent+'\n\n'+effect))return;actions.querySelectorAll('button').forEach(b=>b.disabled=true);try{const r=await request(item.legacy?'rank-authorization-review':'change-request-review',{method:'POST',body:{id:item.id,decision,reason}});if(session!==token)return;showToast((r.message||'Propuesta revisada.')+(r.warning||''));await loadPendingChanges();if(typeof loadDashboard==='function')loadDashboard();}catch(e){if(session!==token)return;status.textContent=e.message;actions.querySelectorAll('button').forEach(b=>b.disabled=false);}});
      actions.append(button);
     }const help=document.createElement('small');help.className='pending-action-help';help.textContent='Confirmar aplica lo propuesto. Descartar conserva el registro sin cambios.';card.append(actions,help);
    }box.append(card);
   }
   const pagination=document.createElement('div');pagination.className='toolbar';for(const [label,next,disabled]of [['Anterior',Math.max(0,pendingChangeOffset-25),pendingChangeOffset===0],['Siguiente',result.next_offset,result.next_offset==null]]){const b=document.createElement('button');b.className='btn';b.type='button';b.textContent=label;b.disabled=disabled;b.addEventListener('click',()=>{pendingChangeOffset=next;loadPendingChanges();});pagination.append(b);}if(pendingChangeOffset>0||result.next_offset!=null)box.append(pagination);
- }catch(e){if(sequence===pendingChangeSequence)box.textContent=e.message;}
+ }catch(e){if(sequence===pendingChangeSequence&&session===token)box.textContent=e.message;}
 }
 $('refreshPendingChanges').addEventListener('click',loadPendingChanges);
 document.querySelectorAll('[data-change-status]').forEach(b=>b.addEventListener('click',()=>{pendingChangeStatus=b.dataset.changeStatus;pendingChangeOffset=0;loadPendingChanges();}));
 window.addEventListener('pending-change-created',()=>{pendingChangeStatus='pending';pendingChangeOffset=0;loadPendingChanges();});
 // The dashboard loads the inbox after account permissions have been checked.
+
+window.addEventListener('panel-session-ended',()=>{pendingChangeSequence++;pendingChangeOffset=0;pendingChangeStatus='pending';$('pendingChanges').replaceChildren();});

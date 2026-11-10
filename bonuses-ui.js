@@ -17,7 +17,7 @@ function bonusElement(tag,text,className){const el=document.createElement(tag);i
 function bonusClear(){bonusRecords=[];bonusTotal=0;$('bonusTable').replaceChildren();$('bonusSummary').replaceChildren();$('bonusPrevious').disabled=true;$('bonusNext').disabled=true;$('bonusPage').textContent='';}
 async function loadBonuses(reset=false){
  if(!token||restrictedToApplications)return;if(reset){bonusOffset=0;clearBonusSelection();}const sequence=++bonusSequence,session=token,period=bonusPeriod();bonusClear();
- if(!period){$('bonusNotice').textContent='Selecciona un período válido.';return;}
+ if(!period){$('bonusRefresh').disabled=false;$('bonusNotice').textContent='Selecciona un período válido.';return;}
  $('bonusPeriodLabel').textContent=bonusPeriodText(bonusKind,period);$('bonusNotice').textContent='Consultando agentes y bonos…';$('bonusRefresh').disabled=true;
  try{const result=await request('bonus-records',{method:'GET',query:{kind:bonusKind,period,search:$('bonusSearch').value.trim(),offset:bonusOffset,archived:String($('bonusArchived').checked)}});if(session!==token||sequence!==bonusSequence)return;
  bonusRecords=result.records||[];bonusTotal=Number(result.total)||0;bonusCanManage=Boolean(result.can_manage);bonusRankOptions=result.ranks||[];$('bonusAccess').textContent=bonusCanManage?'Edición autorizada':'Solo consulta · Gestión';
@@ -66,7 +66,7 @@ for(const id of ['bonusDate','bonusMonth','bonusArchived'])$(id).onchange=()=>lo
 $('bonusSearch').oninput=()=>{clearTimeout(bonusSearchTimer);bonusSequence++;bonusClear();bonusSearchTimer=setTimeout(()=>loadBonuses(true),300);};
 document.querySelectorAll('[data-bonus-kind]').forEach(button=>button.onclick=()=>{bonusKind=button.dataset.bonusKind;document.querySelectorAll('[data-bonus-kind]').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-pressed',String(b===button));});$('bonusMonthLabel').hidden=bonusKind!=='monthly';$('bonusDateLabel').hidden=bonusKind==='monthly';$('bonusDateLabel').firstChild.textContent=bonusKind==='promotion'?'Fecha del ascenso':bonusKind==='special'?'Fecha del bono especial':'Semana que contiene';loadBonuses(true);});
 document.querySelectorAll('.workspace-tab').forEach(button=>button.addEventListener('click',()=>{$('bonusesView').classList.toggle('hidden',button.dataset.view!=='bonuses');if(button.dataset.view==='bonuses')loadBonuses(true);}));
-window.addEventListener('panel-session-ended',()=>{bonusSequence++;bonusHistorySequence++;clearTimeout(bonusSearchTimer);bonusSelected=null;bonusSaving=false;bonusCanManage=false;bonusClear();clearBonusSelection();$('bonusForm').reset();$('bonusHistory').replaceChildren();for(const id of ['bonusNotice','bonusSaveNotice','bonusHistoryNotice','bonusIdentity','bonusDetailPeriod','bonusAccess','bonusPeriodLabel'])$(id).textContent='';$('bonusDetailTitle').textContent='Bono del agente';$('bonusesView').classList.add('hidden');$('bonusSave').disabled=false;$('bonusRefresh').disabled=false;});
+window.addEventListener('panel-session-ended',()=>{bonusSequence++;bonusHistorySequence++;clearTimeout(bonusSearchTimer);bonusSelected=null;bonusSaving=false;bonusCanManage=false;bonusClear();clearBonusSelection();$('bonusForm').reset();$('bonusHistory').replaceChildren();for(const id of ['bonusNotice','bonusSaveNotice','bonusHistoryNotice','bonusIdentity','bonusDetailPeriod','bonusAccess','bonusPeriodLabel'])$(id).textContent='';$('bonusDetailTitle').textContent='Bono del agente';$('bonusesView').classList.add('hidden');$('bonusSave').disabled=true;$('bonusRefresh').disabled=false;});
 $('bonusDate').value=bonusToday();$('bonusMonth').value=bonusToday().slice(0,7);
 
 function parseBonusAmount(value){
@@ -92,3 +92,5 @@ $('bonusAgentSearchForm').addEventListener('submit',async event=>{
  finally{if(sequence===bonusAgentSequence&&session===token)$('bonusFindAgent').disabled=false;}
 });
 window.addEventListener('panel-session-ended',()=>{bonusAgentSequence++;$('bonusAgentSearchForm').reset();$('bonusFindAgent').disabled=false;bonusRankOptions=[];});
+
+$('bonusAgentSearch').addEventListener('input',()=>{if(!bonusSaving)clearBonusSelection();});
