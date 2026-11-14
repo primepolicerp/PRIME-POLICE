@@ -28,15 +28,17 @@ async function loadCaptureOrders(){
  const feedback=captureEl('captureOrdersFeedback');feedback.textContent='Consultando órdenes…';
  try{
   const result=await request('capture-orders',{method:'GET'});captureOrders=result.orders||[];capturePersonnel=result.personnel||[];captureCanManage=Boolean(result.can_manage);
-  const select=captureEl('captureAgent');select.replaceChildren(new Option('Selecciona un agente de la plantilla',''));
-  capturePersonnel.forEach(p=>select.add(new Option((p.full_name||'Sin nombre')+' · Placa '+(p.plate||'—')+' · '+(p.rank_name||'Sin rango'),p.discord_user_id)));
+  const select=captureEl('captureAgent'),search=captureEl('captureAgentSearch'),list=captureEl('captureAgentOptions');select.replaceChildren(new Option('Selecciona un agente',''));list.replaceChildren();search.value='';
+  capturePersonnel.forEach(p=>{const label=(p.full_name||'Sin nombre')+' · Placa '+(p.plate||'—')+' · '+(p.rank_name||'Sin rango');select.add(new Option(label,p.discord_user_id));const option=document.createElement('option');option.value=label;list.append(option);});
+  search.placeholder='Escribe nombre o número de placa…';search.disabled=!capturePersonnel.length;
   captureEl('captureCreatePanel').classList.toggle('hidden',!captureCanManage);
   captureEl('captureReadOnlyNotice').classList.toggle('hidden',captureCanManage);
   renderCaptureStats();renderCaptureOrders();feedback.textContent='';
  }catch(error){feedback.textContent=error.message||'No se pudieron cargar las órdenes.';}
 }
+captureEl('captureAgentSearch').addEventListener('input',()=>{const value=captureEl('captureAgentSearch').value.trim().toLocaleLowerCase('es'),match=capturePersonnel.find(p=>{const label=(p.full_name||'Sin nombre')+' · Placa '+(p.plate||'—')+' · '+(p.rank_name||'Sin rango');return label.toLocaleLowerCase('es')===value;});captureEl('captureAgent').value=match?.discord_user_id||'';});
 captureEl('captureOrdersForm').addEventListener('submit',async event=>{
- event.preventDefault();const button=captureEl('captureCreateButton');button.disabled=true;button.textContent='Registrando…';
+ event.preventDefault();if(!captureEl('captureAgent').value){showToast('Busca y selecciona un agente de la lista antes de emitir la orden.');captureEl('captureAgentSearch').focus();return;}const button=captureEl('captureCreateButton');button.disabled=true;button.textContent='Registrando…';
  try{const result=await request('capture-orders',{method:'POST',body:{operation:'create',discord_user_id:captureEl('captureAgent').value,desertion_date:captureEl('captureDate').value,notes:captureEl('captureNotes').value}});showToast(result.message||'Orden registrada.');captureEl('captureOrdersForm').reset();await loadCaptureOrders();}
  catch(error){showToast(error.message||'No se pudo registrar la orden.');}
  finally{button.disabled=false;button.textContent='Emitir orden administrativa';}
