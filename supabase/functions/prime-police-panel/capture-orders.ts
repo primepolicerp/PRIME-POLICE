@@ -9,6 +9,28 @@ export function captureOrderPermissions(roles:string[]){
  return {canView:director||ucop||cic,canManage:director||ucop};
 }
 type Context={db:(path:string,init?:RequestInit)=>Promise<any>,json:(v:any,status?:number)=>Response,actorName:string,roles:string[]};
+const CAPTURE_ANNOUNCEMENTS_CHANNEL='1571262882753151096';
+const POLICE_ROLE_ID='1539970134482092038';
+async function publishCaptureAnnouncement(order:any){
+ const token=Deno.env.get('DISCORD_BOT_TOKEN')||'';
+ if(!token)throw new Error('DISCORD_BOT_TOKEN no está configurado');
+ const payload={
+  content:'<@&'+POLICE_ROLE_ID+'>',
+  embeds:[{title:'🔎 ORDEN DE BÚSQUEDA Y CAPTURA · PRIME POLICE',description:'Se informa a todo el cuerpo policial que se ha emitido una nueva orden administrativa de búsqueda y captura.',color:0xc0392b,fields:[
+   {name:'Agente',value:String(order.full_name||'No registrado'),inline:true},
+   {name:'Placa',value:String(order.plate||'No registrada'),inline:true},
+   {name:'Último rango',value:String(order.last_rank||'No registrado'),inline:true},
+   {name:'Fecha de abandono',value:String(order.desertion_date||'No registrada'),inline:true},
+   {name:'Motivo',value:'Abandono del cuerpo policial sin presentar la baja correspondiente.',inline:false},
+   {name:'Emitida por',value:String(order.issued_by_name||'UCOP / Directiva'),inline:true},
+   {name:'Instrucciones',value:'Si alguna unidad localiza al individuo, deberá proceder conforme a la normativa policial y comunicarlo a UCOP.',inline:false}
+  ],footer:{text:'PRIME POLICE · UCOP / DIRECTIVA · Aviso automático'},timestamp:new Date().toISOString()}],
+  allowed_mentions:{parse:[],roles:[POLICE_ROLE_ID]}
+ };
+ const response=await fetch('https://discord.com/api/v10/channels/'+CAPTURE_ANNOUNCEMENTS_CHANNEL+'/messages',{method:'POST',headers:{Authorization:'Bot '+token,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(8000)});
+ if(!response.ok)throw new Error('Discord anuncio '+response.status+' '+(await response.text()).slice(0,500));
+ return await response.json();
+}
 const uuid=(v:unknown)=>typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(v);
 export async function captureOrdersRoute(req:Request,actor:string,c:Context){
  const permission=captureOrderPermissions(c.roles);
@@ -35,7 +57,10 @@ export async function captureOrdersRoute(req:Request,actor:string,c:Context){
    const inserted=await c.db('police_capture_orders',{method:'POST',body:JSON.stringify({id,discord_user_id:target,full_name:person.full_name,plate:person.plate,last_rank:person.rank_name||'',desertion_date:date,reason:'Abandono del cuerpo sin presentar la baja correspondiente',issued_by_id:actor,issued_by_name:c.actorName,status:'active',capture_notes:notes})});
    if(!inserted?.[0]?.id)return c.json({error:'No se pudo confirmar la creación de la orden.'},502);
    await writeAudit('🔎 Orden administrativa de búsqueda y captura emitida',[{name:'Agente',value:String(person.full_name)+' · Placa '+String(person.plate)},{name:'Emitida por',value:c.actorName},{name:'Fecha de abandono',value:date},{name:'Motivo',value:'Abandono sin presentar baja'}]);
-   return c.json({ok:true,order:inserted[0],message:'Orden administrativa registrada.'});
+   let announcementSent=false;
+   try{await publishCaptureAnnouncement(inserted[0]);announcementSent=true;}
+   catch(error){console.error('No se pudo publicar el aviso de búsqueda y captura en Discord:',String(error));}
+   return c.json({ok:true,order:inserted[0],announcement_sent:announcementSent,message:announcementSent?'Orden registrada y aviso publicado en Discord.':'Orden registrada, pero no se pudo publicar el aviso en Discord. Revisa los permisos del bot en el canal.'});
   }catch(error){if(String(error).includes('23505')||String(error).includes('duplicate'))return c.json({error:'Este agente ya tiene una orden activa.'},409);throw error;}
  }
  if(operation==='capture'||operation==='cancel'){
