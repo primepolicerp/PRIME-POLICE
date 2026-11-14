@@ -23,6 +23,33 @@ function normalizeRankName(value: unknown) {
 }
 const APPLICATION_ID = "1540484542354428025";
 const MANAGER_ROLE_IDS = new Set(["1539970134565982313", "1539970134544748562", "1539970134544748556", "1539970134544748557", "1539970134519578773", "1539970134519578774"]);
+const STAFF_ROLE_ID = "1539970134544748556";
+const AUDIT_LOG_PERMISSION = 1n << 7n;
+const MANAGE_ROLES_PERMISSION = 1n << 28n;
+const DISCORD_ADMIN_ROLE_IDS = new Set(["1539970134519578774", "1539970134544748562", "1539970134565982313", "1539970134544748557"]);
+const canManageDiscordRoles = (i:any) => (i.member?.roles || []).some((role:string) => DISCORD_ADMIN_ROLE_IDS.has(role));
+async function removeStaffAuditLogPermission(actorId:string) {
+ const [guildRoles, botMember] = await Promise.all([
+  discord("/guilds/"+GUILD_ID+"/roles") as Promise<any[]>,
+  discord("/guilds/"+GUILD_ID+"/members/"+APPLICATION_ID) as Promise<any>
+ ]);
+ const staffRole = guildRoles.find((role:any) => String(role.id) === STAFF_ROLE_ID);
+ if (!staffRole) throw Error("No se encontró el rol STAFF.");
+ const botRoleIds = new Set<string>(botMember.roles || []);
+ const botRoles = guildRoles.filter((role:any) => botRoleIds.has(String(role.id)));
+ const botTopPosition = botRoles.reduce((top:number, role:any) => Math.max(top, Number(role.position)||0), 0);
+ const botCanManageRoles = botRoles.some((role:any) => (BigInt(String(role.permissions||"0")) & MANAGE_ROLES_PERMISSION) !== 0n);
+ if (!botCanManageRoles) throw Error("RH Police no tiene Gestionar roles.");
+ if (botTopPosition <= Number(staffRole.position||0)) throw Error("El rol de RH Police no está por encima de STAFF.");
+ const previous = BigInt(String(staffRole.permissions||"0"));
+ if ((previous & AUDIT_LOG_PERMISSION) === 0n) return {changed:false, message:"STAFF ya no tiene el permiso Ver registro de auditoría."};
+ const next = previous & ~AUDIT_LOG_PERMISSION;
+ const updated = await discord("/guilds/"+GUILD_ID+"/roles/"+STAFF_ROLE_ID,{method:"PATCH",body:JSON.stringify({permissions:next.toString()})});
+ const confirmed = BigInt(String(updated?.permissions||"0"));
+ if ((confirmed & AUDIT_LOG_PERMISSION) !== 0n) throw Error("Discord no confirmó la retirada del permiso.");
+ console.info("STAFF audit-log permission removed",JSON.stringify({guild_id:GUILD_ID,role_id:STAFF_ROLE_ID,actor_id:actorId,previous_permissions:previous.toString(),updated_permissions:confirmed.toString()}));
+ return {changed:true,message:"Se retiró Ver registro de auditoría del rol STAFF. Los demás permisos se conservaron."};
+}
 const canManage = (i:any) => (i.member?.roles || []).some((role:string) => MANAGER_ROLE_IDS.has(role));
 const BOT_TOKEN = Deno.env.get("DISCORD_BOT_TOKEN") ?? "";
 const DISCORD_PUBLIC_KEY = "00d2404753364bae3875ef0fb6f98707e642a08405a1fb3b97bcd391bd183d57";
@@ -145,6 +172,19 @@ async function handle(i:any){
  const absence=await handleAbsenceInteraction(i,{db,discord,response,ephemeral,values,reply:editInteractionReply});if(absence)return absence;
  if(i.type===2){
   const name=i.data?.name;
+  if(name==="retirar_auditoria_staff"){
+   if(!canManageDiscordRoles(i))return ephemeral("No tienes autorización para modificar permisos administrativos del servidor.");
+   EdgeRuntime.waitUntil((async()=>{
+    try{
+     const result=await removeStaffAuditLogPermission(userId);
+     await editInteractionReply(i,result.message);
+    }catch(error){
+     console.error("Could not remove STAFF audit-log permission:",String(error));
+     try{await editInteractionReply(i,"No se pudo modificar el permiso de STAFF. Comprueba la jerarquía y el permiso Gestionar roles de RH Police.");}catch(replyError){console.error("Could not update permission command reply:",String(replyError));}
+    }
+   })());
+   return ephemeral("Comprobando permisos y jerarquía de RH Police…");
+  }
   if(name==="publicar_postulaciones"){
    if(!canManage(i))return ephemeral("No tienes permiso para publicar las postulaciones.");
    EdgeRuntime.waitUntil((async()=>{
@@ -216,7 +256,7 @@ async function handle(i:any){
 }
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:CORS});
- if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",nie_applications:true,nie_questionnaire_version:1,duty_service:true,h50_service:true,h50_capacity:2,h50_auto_close_hours:2,evidence_registration:false,evidence_form:"disabled-web-history-preserved",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
+ if(req.method==="GET")return json({ok:true,service:"PRIME POLICE Discord applications",release:"application-two-step-2026-10-31",nie_applications:true,nie_questionnaire_version:1,duty_service:true,h50_service:true,h50_capacity:2,h50_auto_close_hours:2,evidence_registration:false,evidence_form:"disabled-web-history-preserved",configured:{discord:Boolean(BOT_TOKEN),database:Boolean(SUPABASE_URL&&SERVICE_KEY),public_key:Boolean(DISCORD_PUBLIC_KEY)},application_id:APPLICATION_ID,guild_id:GUILD_ID,commands:["publicar_postulaciones","postulacion","traslado","retirar_auditoria_staff"],message:DISCORD_PUBLIC_KEY?"Endpoint disponible.":"Falta configurar DISCORD_PUBLIC_KEY en los secretos de Supabase."});
  if(req.method!=="POST")return json({error:"Method not allowed"},405);
  const body=await req.text();if(!await validSignature(req,body))return json({error:"Invalid Discord signature or DISCORD_PUBLIC_KEY not configured"},401);
  let i:any;try{i=JSON.parse(body)}catch{return json({error:"Invalid JSON"},400)}
