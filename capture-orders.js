@@ -44,5 +44,4 @@ captureEl('captureOrdersForm').addEventListener('submit',async event=>{
 captureEl('captureOrdersSearch').addEventListener('input',()=>{clearTimeout(captureSearchTimer);captureSearchTimer=setTimeout(renderCaptureOrders,180);});
 captureEl('captureOrdersRefresh').addEventListener('click',loadCaptureOrders);
 document.querySelectorAll('[data-capture-filter]').forEach(button=>button.addEventListener('click',()=>{captureFilter=button.dataset.captureFilter;document.querySelectorAll('[data-capture-filter]').forEach(b=>b.classList.toggle('active',b===button));renderCaptureOrders();}));
-document.querySelectorAll('.workspace-tab').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.view==='capture-orders')loadCaptureOrders();}));
 window.addEventListener('panel-session-ended',()=>{captureOrders=[];capturePersonnel=[];captureCanManage=false;captureEl('captureOrdersRows').replaceChildren();captureEl('captureOrdersView').classList.add('hidden');});
