@@ -18,6 +18,7 @@ import { personnelAccess } from "./personnel-access.ts";
 import { evidenceRecords } from "./evidence-records.ts";
 import { personnelCareer } from "./personnel-career.ts";
 import { changePersonnelStatus } from "./personnel-status.ts";
+import {captureOrdersRoute,captureOrderPermissions} from './capture-orders.ts';
 import { managePersonnelProfile } from "./personnel-profile.ts";
 import { manageAbsences } from "./absences.ts";
 import { listPagedRecords } from "./paged-records.ts";
@@ -607,6 +608,7 @@ async function routePanel(req: Request): Promise<Response> {
     return String(candidate.nick||candidate.user?.global_name||candidate.user?.username||id);
    }});
   }
+  if(action==='capture-orders'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos.'},403);const member=await accessMember(actor,req.method!=='GET');return captureOrdersRoute(req,actor,{db,json,roles:member.roles||[],actorName:String(member.nick||member.user?.global_name||member.user?.username||actor)});}
   if(action==='cic-records'||action==='cic-save'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada.'},403);const member=await accessMember(actor,req.method!=='GET'),access=await cicAccessForRoles(member.roles||[]);return cicRoute(req,action,{db,json,actor,actorName:String(member.nick||member.user?.global_name||member.user?.username||actor),...access});}
   if(action==='external-ai-review'){const actor=await authorizedUser(req);if(!actor)return json({error:'Sesión caducada o sin permisos de gestión.'},403);const member=await accessMember(actor);return externalAiReview(req,{db,json,actor,applicationsOnly:applicationPermissions(member.roles||[]).applicationsOnly,provider:Deno.env.get('TRUTHSCAN_API_KEY')?'TruthScan':'Sapling',key:Deno.env.get('TRUTHSCAN_API_KEY')||Deno.env.get('SAPLING_API_KEY')||''});}
   if(action==='application-review'){if(!await authorizedUser(req))return json({error:'Sesión caducada o sin permisos de gestión.'},403);return applicationReview(req,db,json);}
@@ -747,7 +749,7 @@ async function currentUser(req: Request) {
       : "https://cdn.discordapp.com/embed/avatars/" + String(Number((BigInt(userId) >> 22n) % 6n)) + ".png";
     const roles: string[] = member?.roles ?? [];
     const accessRoles = roles.filter((role) => MANAGER_ROLE_IDS.has(role)).map((role) => MANAGER_ROLE_LABELS.get(role) ?? "Gestión autorizada");
-    return json({ user: { id: userId, username, display_name: displayName, avatar_url: avatarUrl, access_roles: [...accessRoles,...(roles.includes(CIC_ROLE)?['CIC']:[])], can_access_cic: (await cicAccessForRoles(roles)).allowed, cic_only: !roles.some(role=>MANAGER_ROLE_IDS.has(role)), can_review_nie:await niePermission(userId,roles,db), restricted_to_applications: applicationPermissions(roles).applicationsOnly, can_decide_applications_direct: applicationPermissions(roles).direct, can_manage_shifts_direct: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774","1539970134519578773"].includes(id)), can_authorize_promotions: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774"].includes(id)) } });
+    return json({ user: { id: userId, username, display_name: displayName, avatar_url: avatarUrl, access_roles: [...accessRoles,...(roles.includes(CIC_ROLE)?['CIC']:[])], can_access_cic: (await cicAccessForRoles(roles)).allowed, can_access_capture_orders:captureOrderPermissions(roles).canView, cic_only: !roles.some(role=>MANAGER_ROLE_IDS.has(role)), can_review_nie:await niePermission(userId,roles,db), restricted_to_applications: applicationPermissions(roles).applicationsOnly, can_decide_applications_direct: applicationPermissions(roles).direct, can_manage_shifts_direct: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774","1539970134519578773"].includes(id)), can_authorize_promotions: roles.some((id:string)=>["1539970134565982313","1539970134544748562","1539970134519578774"].includes(id)) } });
   } catch (e) {
     console.error("Discord profile lookup failed:", String(e));
     return json({ error: "No se pudo cargar tu perfil de Discord." }, 502);

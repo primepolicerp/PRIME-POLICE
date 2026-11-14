@@ -42,6 +42,7 @@ jobs:
           node --check dashboard.js
           node --check administration.js
           node --check departures.js
+          node --check capture-orders.js
           node --check clean-workspace.js
           node --check personnel-register.js
           node --check promotions-workspace.js
