@@ -18,6 +18,7 @@ import { personnelAccess } from "./personnel-access.ts";
 import { evidenceRecords } from "./evidence-records.ts";
 import { personnelCareer } from "./personnel-career.ts";
 import { changePersonnelStatus } from "./personnel-status.ts";
+import {captureOrdersRoute,captureOrderPermissions} from './capture-orders.ts';
 import { managePersonnelProfile } from "./personnel-profile.ts";
 import { manageAbsences } from "./absences.ts";
 import { listPagedRecords } from "./paged-records.ts";
