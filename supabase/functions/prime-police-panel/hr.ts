@@ -698,6 +698,8 @@ export async function handleHr(req: Request, action: string): Promise<Response |
   if(action==="rank-request-edit"&&req.method==="POST")return await editRankRequest(req);
   if(action==="audit-events"&&req.method==="GET"){
    const auth=await allowed(req);if(auth.error)return auth.error;
+   // UCOP · Asuntos Internos may manage the web panel, but audit records remain restricted.
+   if((requestMembers.get(req)?.roles||[]).includes("1539970134519578773"))return json({error:"UCOP no tiene acceso al registro de auditoría."},403);
    try{return json({ok:true,events:await db("police_audit_events?select=*&order=created_at.desc&limit=30")});}catch{return json({error:"No se pudo cargar el historial administrativo."},502);}
   }
   if(action==='shift-overview'){
