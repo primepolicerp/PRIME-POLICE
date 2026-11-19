@@ -7,11 +7,11 @@ import {canReviewNie,niePermission,nieRoute} from '../supabase/functions/prime-p
 import {NIE_QUESTIONS,NIE_CHANNEL,NIE_GUILD,NIE_POLICE,NIE_CIC,NIE_PANEL,nieStepQuestions} from '../supabase/functions/_shared/nie-questions.ts';
 const chief='1539970134544748559',deputy='1539970134544748558',ucop='1539970134519578773',director='1539970134544748562',user='111111111111111111',actor='222222222222222222',uuid='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 assert.equal(NIE_CHANNEL,'1539970136302288950');assert.equal(NIE_QUESTIONS.length,11);assert.equal(new Set(NIE_QUESTIONS.map(q=>q.key)).size,11);assert.deepEqual(NIE_PANEL.allowed_mentions,{parse:[]});
-assert(canReviewNie([director]));
+assert(canReviewNie([director]));assert(canReviewNie([ucop]));
 for(const role of [chief,deputy])assert(canReviewNie([role,NIE_CIC,NIE_POLICE],{status:'active',unit:'CIC'}));
 assert(canReviewNie([chief,ucop,NIE_POLICE],{status:'active',unit:'UCOP'}));
-for(const [roles,person]of [[[deputy,ucop,NIE_POLICE],{status:'active',unit:'UCOP'}],[[NIE_CIC,NIE_POLICE],{status:'active',unit:'CIC'}],[[chief,ucop,NIE_POLICE],{status:'active',unit:'CIC'}],[[chief,NIE_CIC,NIE_POLICE],{status:'inactive',unit:'CIC'}],[[chief,NIE_CIC],{status:'active',unit:'CIC'}]])assert(!canReviewNie(roles,person));
-assert.equal(await niePermission(actor,[deputy,ucop,NIE_POLICE],async()=>[{status:'active',unit:'UCOP'}]),false);
+for(const [roles,person]of [[[NIE_CIC,NIE_POLICE],{status:'active',unit:'CIC'}],[[chief,NIE_CIC,NIE_POLICE],{status:'inactive',unit:'CIC'}],[[chief,NIE_CIC],{status:'active',unit:'CIC'}]])assert(!canReviewNie(roles,person));
+assert.equal(await niePermission(actor,[deputy,ucop,NIE_POLICE],async()=>[{status:'active',unit:'UCOP'}]),true);
 const response=(type,data)=>Response.json({type,data}),ephemeral=content=>response(4,{content,flags:64});
 const input=(custom_id,placeholder,required,style,max_length)=>({type:4,custom_id,placeholder,required,style,max_length});
 for(const step of [1,2,3]){const modal=await nieModal(step,uuid,{response,input}).json();assert.equal(modal.type,9);assert(modal.data.components.length<=5);assert(modal.data.custom_id.length<=100);assert(modal.data.title.length<=45);for(const q of nieStepQuestions(step))assert(JSON.stringify(modal).includes(q.question));}
@@ -32,7 +32,7 @@ const review=()=>new Request('https://test/?panel=nie-review',{method:'POST',bod
 assert.equal((await nieRoute(review(),'nie-review',user,admin)).status,403,'No self-review');assert.equal(saved,null);
 assert.equal((await nieRoute(review(),'nie-review',actor,admin)).status,200);assert(saved.path.includes('status=eq.pending&updated_at=eq.'));assert.equal(saved.body.reviewed_by,actor);assert.equal((await nieRoute(review(),'nie-review',actor,admin)).status,409);
 assert.equal((await nieRoute(new Request('https://test/?status=all'),'nie-records',actor,admin)).status,400);
-const forbidden={...admin,member:{roles:[ucop,deputy,NIE_POLICE]},db:async()=>[{status:'active',unit:'UCOP'}]};assert.equal((await nieRoute(new Request('https://test/'),'nie-records',actor,forbidden)).status,403);
+const forbidden={...admin,member:{roles:[deputy,NIE_POLICE]},db:async()=>[{status:'active',unit:'UCOP'}]};assert.equal((await nieRoute(new Request('https://test/'),'nie-records',actor,forbidden)).status,403);
 const source=readFileSync('nie-ui.js','utf8');assert(source.includes("window.addEventListener('panel-session-ended'"));assert(source.includes('session!==token'));assert(source.includes('nieDetailSequence'));assert(!source.includes('innerHTML'));
 console.log('NIE: all questions, Discord component limits, private replies, live membership, exact reviewer access, no self-review, stale decisions and session cleanup: PASS');
 

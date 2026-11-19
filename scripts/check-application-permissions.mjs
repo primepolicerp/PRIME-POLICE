@@ -8,7 +8,8 @@ import {validateDecisionCorrection} from '../supabase/functions/prime-police-pan
 const director='1539970134544748562',staff='1539970134544748556';
 for(const role of UCOP_APPLICATION_ROLES)assert(applicationPermissions([role]).direct);
 assert(!applicationPermissions([UCOP_TRAINEE_ROLE]).direct);
-assert(!applicationPermissions([UCOP_TRAINEE_ROLE,UCOP_APPLICATION_ROLES[0]]).direct);
+assert(applicationPermissions([UCOP_TRAINEE_ROLE,UCOP_APPLICATION_ROLES[0]]).direct);
+assert(!applicationPermissions([UCOP_TRAINEE_ROLE,UCOP_APPLICATION_ROLES[0]]).applicationsOnly);
 assert(applicationPermissions([UCOP_TRAINEE_ROLE,UCOP_APPLICATION_ROLES[1]]).direct);
 assert(applicationPermissions([UCOP_TRAINEE_ROLE,director]).direct);
 assert(!applicationPermissions([staff]).direct);
@@ -57,7 +58,7 @@ function setup(roles,profileExists=true){
 for(const role of UCOP_APPLICATION_ROLES)for(const action of ['accept','reject']){
  const t=setup([role]);assert.equal((await t.run('decision',{id,action})).status,200);assert.equal(t.state.executed,1);assert.equal(t.state.queue.length,0);
 }
-for(const roles of [[UCOP_TRAINEE_ROLE],[UCOP_TRAINEE_ROLE,UCOP_APPLICATION_ROLES[0]],[staff]])for(const action of ['accept','reject']){
+for(const roles of [[UCOP_TRAINEE_ROLE],[staff]])for(const action of ['accept','reject']){
  const t=setup(roles);const result=await t.run('decision',{id,action,reason:'Observación'});assert((await result.json()).pending_approval);assert.equal(t.state.executed,0);
  t.state.roles=[director];assert.equal((await t.run('decision',{id,action})).status,409,'A stale tab cannot bypass the queue, even as Directiva');
  assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);assert.equal(t.state.executed,1);
@@ -73,8 +74,8 @@ for(const roles of [[UCOP_TRAINEE_ROLE],[UCOP_TRAINEE_ROLE,UCOP_APPLICATION_ROLE
 }
 console.log('Application permissions: UCOP direct accept/reject, trainee approval, restricted data, concurrent proposals, stale tabs, discard, stale records and single execution: PASS');
 
-for(const action of ['personnel-departure','personnel-reentry']){const t=setup([UCOP_APPLICATION_ROLES[0]]);t.state.record.status=action==='personnel-departure'?'active':'inactive';const body={discord_user_id:target,operation_id:crypto.randomUUID(),expected_updated_at:'2026-11-01T00:00:00Z',effective_date:new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'}),departure_type:'despido',rank_role_id:'1564309793802428567',unit:'POLICIA',reason:'Motivo comprobado'};assert((await (await t.run(action,body)).json()).pending_approval);assert.equal(t.state.executed,0);t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);assert.equal(t.state.executed,1);}
-console.log('Personnel departures and reentries preserve UCOP proposals and Directiva approval: PASS');
+for(const action of ['personnel-departure','personnel-reentry']){const t=setup([staff]);t.state.record.status=action==='personnel-departure'?'active':'inactive';const body={discord_user_id:target,operation_id:crypto.randomUUID(),expected_updated_at:'2026-11-01T00:00:00Z',effective_date:new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'}),departure_type:'despido',rank_role_id:'1564309793802428567',unit:'POLICIA',reason:'Motivo comprobado'};assert((await (await t.run(action,body)).json()).pending_approval);assert.equal(t.state.executed,0);t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);assert.equal(t.state.executed,1);}
+console.log('Personnel departures and reentries preserve staff proposals and manager approval: PASS');
 
 for(const status of ['pending','rejected']){const t=setup([UCOP_TRAINEE_ROLE]);t.state.record.status=status;const r=await t.run('decision',{id,action:'reject',veto:true,reason:'Motivo de veto verificado'});assert((await r.json()).pending_approval);assert.equal(t.state.executed,0);t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);assert.equal(t.state.executed,1);}
 {const t=setup([UCOP_APPLICATION_ROLES[0]]);assert.equal((await t.run('decision',{id,action:'reject',veto:true,reason:'Motivo de veto verificado'})).status,200);assert.equal(t.state.queue.length,0);}
@@ -83,5 +84,9 @@ console.log('Recruitment veto proposals: trainee waits for Directiva on pending/
 {const t=setup([UCOP_TRAINEE_ROLE]);await t.run('decision',{id,action:'reject',reason:'Motivo anterior'});Object.assign(t.state.record,{vetoed_at:null,vetoed_by_discord_id:null,vetoed_by_name:null,answers:null});t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);}
 console.log('Existing queued decisions survive newly added null veto audit and transfer-answer columns: PASS');
 
-for(const action of ['preselection-admit','transfer-admit']){const t=setup([UCOP_APPLICATION_ROLES[0]],false);t.state.record.status='accepted';const r=await t.run(action,{discord_user_id:target,transfer_id:id,operation_id:crypto.randomUUID(),full_name:'Agente de prueba',plate:'0175',approved_by_name:'Entrevistador',interview_confirmed:true,unit:'POLICIA'});assert.equal(r.status,200);assert((await r.json()).pending_approval);assert.equal(t.state.executed,0);t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);assert.equal(t.state.executed,1);}
-console.log('Admissions without Steam: UCOP preselection/transfer proposals and Directiva approval remain valid: PASS');
+for(const action of ['preselection-admit','transfer-admit']){const t=setup([staff],false);t.state.record.status='accepted';const r=await t.run(action,{discord_user_id:target,transfer_id:id,operation_id:crypto.randomUUID(),full_name:'Agente de prueba',plate:'0175',approved_by_name:'Entrevistador',interview_confirmed:true,unit:'POLICIA'});assert.equal(r.status,200);assert((await r.json()).pending_approval);assert.equal(t.state.executed,0);t.state.roles=[director];assert.equal((await t.run('change-request-review',{id:t.state.queue[0].id,decision:'approve'})).status,200);assert.equal(t.state.executed,1);}
+console.log('Admissions without Steam: staff preselection/transfer proposals and Directiva approval remain valid: PASS');
+
+for(const action of ["personnel-register","personnel-departure","personnel-reentry","rank-change","rank-config-save","transfer-decision","sanction","sanction-delete","preselection-admit","transfer-admit","personnel-note-edit"]){const t=setup([UCOP_APPLICATION_ROLES[0]]);assert.equal(await t.run(action,{discord_user_id:target}),null,action+" must pass directly to its validated handler");assert.equal(t.state.queue.length,0);}
+{const t=setup([staff]);await t.run("decision",{id,action:"accept"});t.state.roles=[UCOP_APPLICATION_ROLES[0]];assert.equal((await t.run("change-request-review",{id:t.state.queue[0].id,decision:"approve"})).status,200);assert.equal(t.state.executed,1);}
+console.log("UCOP direct management and existing proposal review: PASS");

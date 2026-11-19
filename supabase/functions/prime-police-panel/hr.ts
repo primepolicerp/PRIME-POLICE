@@ -19,7 +19,7 @@ const POLICE_ONLY_RANK_LABEL = "Solo rol de Policía (sin rango configurado)";
 function normalizeRankName(value: unknown) {
   return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es").replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
 }
-const DIRECTOR_ROLE_IDS = new Set(["1539970134565982313","1539970134544748562","1539970134519578774"]);
+const DIRECTOR_ROLE_IDS = new Set(["1539970134565982313","1539970134544748562","1539970134519578774","1539970134519578773"]);
 const requestMembers = new WeakMap<Request, any>();
 const MANAGER_ROLE_IDS = new Set(["1539970134544748558","1539970134544748559","1539970134565982313", "1539970134544748562", "1539970134544748556", "1539970134544748557", "1539970134519578773", "1539970134519578774"]);
 const PROTECTED_ROLE_IDS = new Set([
@@ -698,8 +698,6 @@ export async function handleHr(req: Request, action: string): Promise<Response |
   if(action==="rank-request-edit"&&req.method==="POST")return await editRankRequest(req);
   if(action==="audit-events"&&req.method==="GET"){
    const auth=await allowed(req);if(auth.error)return auth.error;
-   // UCOP · Asuntos Internos may manage the web panel, but audit records remain restricted.
-   if((requestMembers.get(req)?.roles||[]).includes("1539970134519578773"))return json({error:"UCOP no tiene acceso al registro de auditoría."},403);
    try{return json({ok:true,events:await db("police_audit_events?select=*&order=created_at.desc&limit=30")});}catch{return json({error:"No se pudo cargar el historial administrativo."},502);}
   }
   if(action==='shift-overview'){

@@ -1,5 +1,5 @@
 import {NIE_CIC,NIE_POLICE} from '../_shared/nie-questions.ts';
-const directors=['1539970134565982313','1539970134544748562','1539970134519578774'];
+const directors=['1539970134565982313','1539970134544748562','1539970134519578774','1539970134519578773'];
 const chief='1539970134544748559',deputy='1539970134544748558',ucop='1539970134519578773';
 export function canReviewNie(roles:string[],person?:any){
  if(roles.some(id=>directors.includes(id)))return true;

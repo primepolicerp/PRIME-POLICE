@@ -130,3 +130,9 @@ Revisar `.github/workflows/pages.yml` para las comprobaciones adicionales del m�
 - `public-accepted.ts` compara los datos propios de cada tarjeta con Discord e ignora metadatos añadidos por Discord. Omite PATCH de tarjetas idénticas, conservando los IDs y actualizando las que cambian. No se envían mensajes de prueba ni se modifica la lógica de aceptación.
 - Migración aplicada `20261110122929_web_review_indexes.sql`: índices de FK en Bonos y borradores NIE. No cambia filas, RLS ni roles. El asesor de rendimiento dejó de señalar ambas claves externas sin índice.
 - Regresiones: `scripts/check-web-session-races.mjs`, `scripts/check-accepted-card-dedup.mjs` y `scripts/check-private-error-notices.mjs`; auditoría resumida en `docs/operations/2026-11-10-web-review.md`.
+
+## Gestión directa de UCOP · 19/11/2026
+
+- Por petición del propietario, el rol UCOP `1539970134519578773` dispone de gestión completa del panel sin aprobación de Directiva. Puede aplicar cambios, revisar pendientes, autorizar ascensos, gestionar bonos y tareas, consultar el historial administrativo y gestionar CIC y NIE. Esta autorización sustituye las restricciones de UCOP descritas anteriormente.
+- Se valida el rol en backend y se mantienen caducidad, revocación, validación de datos, concurrencia y auditoría. El rol Pasante por sí solo conserva su acceso limitado. Tener también UCOP concede la gestión completa solicitada.
+- Las propuestas antiguas se conservan para revisión explícita. No aplicar automáticamente cambios pendientes.

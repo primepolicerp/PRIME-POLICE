@@ -7,7 +7,7 @@ assert(cicPermissions([CIC_ROLE]).allowed);
 assert(!cicPermissions([CIC_ROLE,'1564308664557506691']).allowed);
 assert(!cicPermissions([CIC_ROLE,'new-trainee'],['new-trainee']).allowed);
 for(const id of CIC_DIRECTORS)assert(cicPermissions([id,'1564308664557506691']).allowed);
-for(const roles of [[],['1539970134519578773'],['1539970134544748556']])assert(!cicPermissions(roles).allowed);
+for(const roles of [[],['1539970134544748556']])assert(!cicPermissions(roles).allowed);
 let called=0,last;
 const context={actor:'111111111111111111',actorName:'Investigador',allowed:true,director:false,json:(v,status=200)=>Response.json(v,{status}),db:async(path,init)=>{called++;last=JSON.parse(init.body);return {ok:true,case:{id:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'}};}};
 const req=(body)=>new Request('https://test/?panel=cic-save',{method:'POST',body:JSON.stringify(body)});
@@ -28,4 +28,4 @@ for(const action of ['personnel','sanctions','records','data','decision','rank-c
 assert.equal(routed,0);
 for(const action of ['me','cic-records','cic-save'])assert.equal((await ctx.dispatchHttp(new Request('https://test/?panel='+action))).status,200);
 assert.equal(routed,3);
-console.log('CIC: CIC/Directiva access, trainee/UCOP/staff denial, server-side HR isolation, actor binding, close permissions, evidence links and filter validation PASS');
+console.log('CIC: CIC/Directiva access, trainee/staff denial and UCOP management, server-side HR isolation, actor binding, close permissions, evidence links and filter validation PASS');

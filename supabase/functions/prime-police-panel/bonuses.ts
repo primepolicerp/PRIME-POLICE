@@ -1,4 +1,4 @@
-export function canManageBonuses(roles:string[]){return roles.some(id=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(id));}
+export function canManageBonuses(roles:string[]){return roles.some(id=>['1539970134565982313','1539970134544748562','1539970134519578774','1539970134519578773'].includes(id));}
 export function validBonusPeriod(kind:string,period:string){
  if(!['weekly','monthly','special','promotion'].includes(kind)||!/^\d{4}-\d{2}-\d{2}$/.test(period)||period<'2020-01-01'||period>'2100-12-31')return false;
  const date=new Date(period+'T00:00:00Z');

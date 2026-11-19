@@ -11,7 +11,7 @@ export async function personnelAccess(req:Request,actor:string,c:any){
  if(!/^\d{17,20}$/.test(target))return c.json({error:'Agente inválido.'},400);
  const people=await c.db('police_personnel?select=*&discord_user_id=eq.'+target+'&limit=1'),person=people?.[0];if(!person)return c.json({error:'La ficha ya no existe.'},404);
  const path='/guilds/1539970134469378068/members/'+target,member=await c.discord(path),roles:string[]=member.roles||[],state=expectedPersonnelAccess(person,roles);
- if(!write)return c.json({ok:true,...state,active:person.status==='active',director:roles.some(r=>['1539970134565982313','1539970134544748562','1539970134519578774'].includes(r))});
+ if(!write)return c.json({ok:true,...state,active:person.status==='active',director:roles.some(r=>['1539970134565982313','1539970134544748562','1539970134519578774','1539970134519578773'].includes(r))});
  if(person.status!=='active'||state.restricted)return c.json({error:'La ficha debe estar activa y sin roles de baja. Usa Reingresar para resolver una baja.'},409);
  if(String(body.expected_updated_at)!==String(person.updated_at))return c.json({error:'La ficha cambió. Actualiza antes de sincronizar los roles.'},409);
  const added:string[]=[],removed:string[]=[];

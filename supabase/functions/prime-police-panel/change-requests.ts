@@ -14,7 +14,7 @@ export const CHANGE_ACTIONS:Record<string,string>={
  'decision':'Resolver postulación','transfer-decision':'Resolver traslado','rank-request-review':'Resolver nuevo ingreso','rank-request-edit':'Corregir datos de nuevo ingreso',
  'sanction':'Aplicar sanción','sanction-delete':'Eliminar sanción','nickname-sync':'Sincronizar nombre y placa','shift-close':'Cerrar bitácora','shift-delete':'Eliminar bitácora','absence-review':'Revisar ausencia','absence-register':'Registrar ausencia'
 };
-const directors=new Set(['1539970134565982313','1539970134544748562','1539970134519578774']);
+const directors=new Set(['1539970134565982313','1539970134544748562','1539970134519578774','1539970134519578773']);
 const uuid=(s:string)=>/^[0-9a-f-]{36}$/i.test(s);
 const id=(s:string)=>/^\d{17,20}$/.test(s);
 const canonical=(v:any):any=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).filter(k=>!(['departure_role','vetoed_at','vetoed_by_discord_id','vetoed_by_name','answers'].includes(k)&&v[k]===null)).sort().map(k=>[k,canonical(v[k])])):v;

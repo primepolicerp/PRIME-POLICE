@@ -1,5 +1,5 @@
 export const CIC_ROLE='1539970134519578772';
-export const CIC_DIRECTORS=['1539970134565982313','1539970134544748562','1539970134519578774'];
+export const CIC_DIRECTORS=['1539970134565982313','1539970134544748562','1539970134519578774','1539970134519578773'];
 export function cicPermissions(roles:string[],trainees:string[]=['1564308664557506691']){
  const director=roles.some(r=>CIC_DIRECTORS.includes(r));
  return {director,allowed:director||(roles.includes(CIC_ROLE)&&!roles.some(r=>trainees.includes(r)))};
