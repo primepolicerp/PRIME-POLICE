@@ -1,0 +1,3 @@
+:root{--bg:#080a0e;--panel:#11141ccc;--line:#59616d88;--text:#f7f7fb;--muted:#c0c3cf;--gold:#40e9ff;--green:#69e6bc;--red:#ff4ab8}
+body{background-color:var(--bg)!important;background-image:linear-gradient(180deg,#05070aa8 0%,#07090ac7 58%,#07090af0 100%),url("guetto-background.png")!important;background-position:center,center;background-size:cover;background-repeat:no-repeat;background-attachment:fixed}
+@media(max-width:700px){body{background-attachment:scroll;background-position:center top,center top;background-size:cover,auto 78vh}}
