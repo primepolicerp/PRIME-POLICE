@@ -23,6 +23,6 @@ html=html.replace("script-src 'self';", "script-src '"+jsIntegrity+"'; script-sr
 html=html.replace('</head>','<link rel="stylesheet" href="assets/'+cssFile+'" integrity="'+cssIntegrity+'" crossorigin="anonymous"></head>').replace('</body>','<script src="assets/'+jsFile+'" integrity="'+jsIntegrity+'" crossorigin="anonymous" defer></script></body>');
 html=html.replace(/<!--[^]*?-->/g,'').replace(/>\s+</g,'><').trim();
 await fs.mkdir('dist/assets',{recursive:true});
-await Promise.all([fs.writeFile('dist/index.html',html),fs.writeFile('dist/assets/'+jsFile,js.code),fs.writeFile('dist/assets/'+cssFile,css.code),fs.copyFile('manifest.webmanifest','dist/manifest.webmanifest'),fs.copyFile('icon.svg','dist/icon.svg'),fs.copyFile('guetto-background.png','dist/guetto-background.png'),fs.copyFile('CNAME','dist/CNAME'),fs.writeFile('dist/.nojekyll','')]);
+await Promise.all([fs.writeFile('dist/index.html',html),fs.writeFile('dist/assets/'+jsFile,js.code),fs.writeFile('dist/assets/'+cssFile,css.code),fs.copyFile('manifest.webmanifest','dist/manifest.webmanifest'),fs.copyFile('icon.svg','dist/icon.svg'),fs.copyFile('guetto-background.png','dist/guetto-background.png'),fs.copyFile('guetto-theme.css','dist/guetto-theme.css'),fs.copyFile('CNAME','dist/CNAME'),fs.writeFile('dist/.nojekyll','')]);
 console.log('Public build: Guetto Police index, manifest, icon, background and compact assets. No server files or source maps.');
 console.log(JSON.stringify({javascript_bytes:Buffer.byteLength(js.code),stylesheet_bytes:Buffer.byteLength(css.code)}));
